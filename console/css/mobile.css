@@ -1,0 +1,42 @@
+/* Arus Console — Mobile Overrides */
+/* Only mobile-specific overrides not already in style.css */
+
+@media (max-width: 768px) {
+  /* Mobile sidebar overlay */
+  .sidebar-overlay { display: none; }
+  .sidebar-overlay.active { display: block; }
+
+  /* Pipeline stats */
+  .pipeline-item .pi-stats .ps-item .ps-val { font-size: 13px; }
+  .pipeline-item .pi-stats .ps-item .ps-label { font-size: 9px; }
+
+  /* Source cards stack */
+  .source-grid { grid-template-columns: 1fr; }
+
+  /* Table horizontal scroll */
+  .table-wrap { overflow-x: auto; }
+
+  /* DAG cards stack */
+  .dag-pipeline-selector { flex-direction: column; }
+  .dag-pipeline-card { min-width: auto; }
+}
+
+@media (max-width: 480px) {
+  /* Smaller stat values */
+  .stat-card .stat-value { font-size: 22px; }
+  .stat-card { padding: 14px 16px; }
+  .stat-card .stat-icon { width: 30px; height: 30px; font-size: 15px; top: 14px; right: 14px; }
+
+  /* Sidebar full width on mobile */
+  .sidebar.open { width: 100%; max-width: 300px; }
+
+  /* Login page */
+  .login-left { padding: 24px; }
+  .login-left .login-tagline { margin-bottom: 24px; }
+
+  /* Pipeline flow */
+  .pipeline-flow { flex-wrap: wrap; justify-content: center; }
+
+  /* DAG graph */
+  .dag-graph-toolbar { flex-direction: column; gap: 8px; align-items: flex-start; }
+}

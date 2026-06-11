@@ -1,0 +1,2022 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arus — Data Pipeline Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg-primary: #0b0d11;
+    --bg-secondary: #111318;
+    --bg-tertiary: #191b21;
+    --bg-card: #14171d;
+    --bg-hover: #1c1f26;
+    --bg-input: #1a1d24;
+    --border: #23262e;
+    --border-light: #2a2d35;
+    --text-primary: #e8eaed;
+    --text-secondary: #9aa0a8;
+    --text-tertiary: #5c626e;
+    --emerald: #10b981;
+    --emerald-dim: rgba(16,185,129,0.12);
+    --emerald-glow: rgba(16,185,129,0.08);
+    --blue: #3b82f6;
+    --blue-dim: rgba(59,130,246,0.12);
+    --amber: #f59e0b;
+    --amber-dim: rgba(245,158,11,0.12);
+    --red: #ef4444;
+    --red-dim: rgba(239,68,68,0.12);
+    --purple: #8b5cf6;
+    --purple-dim: rgba(139,92,246,0.12);
+    --sidebar-w: 240px;
+    --header-h: 56px;
+    --radius: 10px;
+    --radius-sm: 6px;
+    --radius-lg: 14px;
+    --shadow-card: 0 1px 3px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3);
+    --shadow-elevated: 0 4px 12px rgba(0,0,0,0.5), 0 2px 6px rgba(0,0,0,0.4);
+    --transition: 180ms ease;
+  }
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    overflow: hidden;
+    height: 100vh;
+    display: flex;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #2a2d35; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: #3a3d45; }
+
+  /* ===== SIDEBAR ===== */
+  .sidebar {
+    width: var(--sidebar-w);
+    height: 100vh;
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    z-index: 10;
+  }
+  .sidebar-logo {
+    height: var(--header-h);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 20px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .sidebar-logo .logo-icon {
+    width: 28px;
+    height: 28px;
+    background: linear-gradient(135deg, #10b981, #059669);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 14px;
+    color: #fff;
+  }
+  .sidebar-logo span {
+    font-weight: 700;
+    font-size: 16px;
+    letter-spacing: -0.3px;
+  }
+  .sidebar-logo span em {
+    font-style: normal;
+    color: var(--emerald);
+  }
+
+  .sidebar-nav {
+    flex: 1;
+    padding: 12px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    overflow-y: auto;
+  }
+  .sidebar-nav .nav-label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.1px;
+    color: var(--text-tertiary);
+    padding: 12px 10px 6px;
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all var(--transition);
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-decoration: none;
+    position: relative;
+  }
+  .nav-item:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+  }
+  .nav-item.active {
+    background: var(--emerald-dim);
+    color: var(--emerald);
+  }
+  .nav-item .nav-icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    line-height: 1;
+    opacity: 0.8;
+  }
+  .nav-item .badge {
+    margin-left: auto;
+    background: var(--bg-tertiary);
+    font-size: 11px;
+    padding: 2px 7px;
+    border-radius: 20px;
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+  .nav-item .badge.green { background: var(--emerald-dim); color: var(--emerald); }
+  .nav-item .badge.amber { background: var(--amber-dim); color: var(--amber); }
+
+  .sidebar-footer {
+    border-top: 1px solid var(--border);
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .sidebar-footer .avatar {
+    width: 30px; height: 30px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 600; font-size: 12px; color: #fff;
+  }
+  .sidebar-footer .user-info { flex: 1; }
+  .sidebar-footer .user-info .name { font-size: 13px; font-weight: 600; }
+  .sidebar-footer .user-info .role { font-size: 11px; color: var(--text-tertiary); }
+
+  /* ===== MAIN ===== */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* Header */
+  .header {
+    height: var(--header-h);
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    gap: 16px;
+    flex-shrink: 0;
+  }
+  .header-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-tertiary);
+  }
+  .header-breadcrumb .sep { color: var(--text-tertiary); opacity: 0.5; }
+  .header-breadcrumb .current { color: var(--text-primary); font-weight: 600; }
+
+  .header-search {
+    margin-left: auto;
+    position: relative;
+  }
+  .header-search input {
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 7px 14px 7px 32px;
+    font-size: 13px;
+    color: var(--text-primary);
+    width: 220px;
+    outline: none;
+    transition: border var(--transition);
+    font-family: inherit;
+  }
+  .header-search input::placeholder { color: var(--text-tertiary); }
+  .header-search input:focus { border-color: var(--emerald); }
+  .header-search .icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-tertiary);
+    font-size: 14px;
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 8px;
+  }
+  .header-actions .btn-icon {
+    width: 32px; height: 32px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+    transition: all var(--transition);
+  }
+  .header-actions .btn-icon:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+    border-color: var(--border-light);
+  }
+
+  /* Content */
+  .content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px 28px;
+  }
+
+  /* ===== PAGE: DASHBOARD ===== */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+  }
+  .page-header h1 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.4px;
+  }
+  .page-header .subtitle {
+    font-size: 13px;
+    color: var(--text-tertiary);
+    margin-top: 4px;
+  }
+  .page-header .header-actions-right {
+    display: flex;
+    gap: 8px;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    font-family: inherit;
+    transition: all var(--transition);
+    text-decoration: none;
+  }
+  .btn-primary {
+    background: var(--emerald);
+    color: #fff;
+  }
+  .btn-primary:hover {
+    background: #059669;
+    box-shadow: 0 0 20px var(--emerald-glow);
+  }
+  .btn-secondary {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover {
+    background: var(--bg-hover);
+    border-color: var(--border-light);
+  }
+  .btn-ghost {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid transparent;
+  }
+  .btn-ghost:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+  }
+  .btn-sm { padding: 6px 12px; font-size: 12px; }
+  .btn-xs { padding: 3px 8px; font-size: 11px; border-radius: 4px; }
+
+  /* Stat Cards */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    box-shadow: var(--shadow-card);
+    transition: border-color var(--transition);
+  }
+  .stat-card:hover { border-color: var(--border-light); }
+  .stat-card .stat-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+  .stat-card .stat-value {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+  .stat-card .stat-change {
+    font-size: 12px;
+    font-weight: 500;
+    margin-top: 4px;
+  }
+  .stat-change.up { color: var(--emerald); }
+  .stat-change.down { color: var(--red); }
+
+  .stat-card .stat-icon {
+    float: right;
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .stat-icon.green { background: var(--emerald-dim); color: var(--emerald); }
+  .stat-icon.blue { background: var(--blue-dim); color: var(--blue); }
+  .stat-icon.amber { background: var(--amber-dim); color: var(--amber); }
+  .stat-icon.purple { background: var(--purple-dim); color: var(--purple); }
+
+  /* Card */
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+  }
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .card-header h3 {
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .card-body { padding: 20px; }
+  .card-body.pt-0 { padding-top: 0; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+
+  /* Table */
+  .table-wrap { overflow-x: auto; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  table th {
+    text-align: left;
+    padding: 10px 16px;
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--text-tertiary);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+    background: var(--bg-secondary);
+  }
+  table td {
+    padding: 11px 16px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-secondary);
+    font-size: 13px;
+  }
+  table tr:hover td { background: var(--bg-hover); }
+  table tr:last-child td:first-child { border-radius: 0 0 0 var(--radius); }
+  table tr:last-child td:last-child { border-radius: 0 0 var(--radius) 0; }
+
+  /* Status */
+  .status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .status .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+  }
+  .status .dot.green { background: var(--emerald); box-shadow: 0 0 6px rgba(16,185,129,0.4); }
+  .status .dot.amber { background: var(--amber); box-shadow: 0 0 6px rgba(245,158,11,0.4); }
+  .status .dot.red { background: var(--red); box-shadow: 0 0 6px rgba(239,68,68,0.4); }
+  .status .dot.gray { background: var(--text-tertiary); }
+  .status .dot.blue { background: var(--blue); box-shadow: 0 0 6px rgba(59,130,246,0.4); }
+
+  .status .label.green { color: var(--emerald); }
+  .status .label.amber { color: var(--amber); }
+  .status .label.red { color: var(--red); }
+  .status .label.gray { color: var(--text-tertiary); }
+  .status .label.blue { color: var(--blue); }
+
+  /* Badge */
+  .tag {
+    display: inline-flex;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+  }
+  .tag.green { background: var(--emerald-dim); color: var(--emerald); }
+  .tag.blue { background: var(--blue-dim); color: var(--blue); }
+  .tag.amber { background: var(--amber-dim); color: var(--amber); }
+  .tag.purple { background: var(--purple-dim); color: var(--purple); }
+
+  /* ===== SOURCE CARD ===== */
+  .source-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 14px;
+  }
+  .source-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    cursor: pointer;
+    transition: all var(--transition);
+    box-shadow: var(--shadow-card);
+  }
+  .source-card:hover {
+    border-color: var(--emerald);
+    box-shadow: 0 0 0 1px var(--emerald-dim), var(--shadow-elevated);
+  }
+  .source-card .sc-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .source-card .sc-icon {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .source-card .sc-icon.postgres { background: #1a3a5c; color: #6ba4d9; }
+  .source-card .sc-icon.mysql { background: #1a3a2a; color: #58b37d; }
+  .source-card .sc-icon.bigquery { background: #1a2a3a; color: #6b9fd9; }
+  .source-card .sc-icon.rest { background: var(--purple-dim); color: var(--purple); }
+
+  .source-card .sc-name {
+    font-weight: 600;
+    font-size: 14px;
+  }
+  .source-card .sc-desc {
+    font-size: 12px;
+    color: var(--text-tertiary);
+  }
+  .source-card .sc-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+  }
+  .source-card .sc-info .tables-count {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-tertiary);
+  }
+  .source-card .sc-info .tables-count strong {
+    color: var(--text-primary);
+  }
+
+  /* ===== PIPELINES ===== */
+  .pipeline-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 18px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg-card);
+    margin-bottom: 10px;
+    transition: all var(--transition);
+    cursor: pointer;
+    box-shadow: var(--shadow-card);
+  }
+  .pipeline-item:hover { border-color: var(--border-light); }
+  .pipeline-item .pi-indicator {
+    width: 3px;
+    height: 32px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+  .pipeline-item .pi-indicator.green { background: var(--emerald); }
+  .pipeline-item .pi-indicator.amber { background: var(--amber); }
+  .pipeline-item .pi-indicator.red { background: var(--red); }
+
+  .pipeline-item .pi-info { flex: 1; }
+  .pipeline-item .pi-info .pi-name { font-weight: 600; font-size: 14px; }
+  .pipeline-item .pi-info .pi-meta { font-size: 12px; color: var(--text-tertiary); margin-top: 2px; }
+
+  .pipeline-item .pi-stats {
+    display: flex; gap: 16px; align-items: center;
+  }
+  .pipeline-item .pi-stats .ps-item { text-align: center; }
+  .pipeline-item .pi-stats .ps-item .ps-val {
+    font-size: 14px; font-weight: 700;
+  }
+  .pipeline-item .pi-stats .ps-item .ps-label {
+    font-size: 10px; color: var(--text-tertiary);
+    text-transform: uppercase; letter-spacing: 0.3px;
+  }
+
+  /* ===== SETTINGS ===== */
+  .settings-group {
+    margin-bottom: 28px;
+  }
+  .settings-group h3 {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: var(--text-primary);
+  }
+  .settings-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    margin-bottom: 6px;
+  }
+  .settings-row .sr-label { font-size: 13px; }
+  .settings-row .sr-label .sr-desc {
+    font-size: 11px;
+    color: var(--text-tertiary);
+  }
+  .settings-row .sr-value {
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+
+  /* Toggle */
+  .toggle {
+    width: 36px; height: 20px;
+    background: var(--bg-tertiary);
+    border-radius: 10px;
+    cursor: pointer;
+    position: relative;
+    transition: background var(--transition);
+    border: none;
+    flex-shrink: 0;
+  }
+  .toggle.on { background: var(--emerald); }
+  .toggle::after {
+    content: '';
+    position: absolute;
+    width: 16px; height: 16px;
+    background: #fff;
+    border-radius: 50%;
+    top: 2px; left: 2px;
+    transition: transform var(--transition);
+  }
+  .toggle.on::after { transform: translateX(16px); }
+
+  /* Modal */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(4px);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    width: 520px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: var(--shadow-elevated);
+  }
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 22px;
+    border-bottom: 1px solid var(--border);
+  }
+  .modal-header h2 { font-size: 16px; font-weight: 700; }
+  .modal-close {
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    background: transparent;
+    border: none;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    font-size: 18px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all var(--transition);
+  }
+  .modal-close:hover { background: var(--bg-hover); color: var(--text-primary); }
+  .modal-body { padding: 22px; }
+  .modal-footer {
+    padding: 14px 22px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  .form-group {
+    margin-bottom: 16px;
+  }
+  .form-group label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+  }
+  .form-group input, .form-group select {
+    width: 100%;
+    padding: 9px 12px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: 13px;
+    font-family: inherit;
+    outline: none;
+    transition: border var(--transition);
+  }
+  .form-group input:focus, .form-group select:focus { border-color: var(--emerald); }
+  .form-group input::placeholder { color: var(--text-tertiary); }
+  .form-group .hint {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    margin-top: 4px;
+  }
+
+  .checkbox-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 6px;
+  }
+  .checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all var(--transition);
+  }
+  .checkbox-item:hover { border-color: var(--border-light); }
+  .checkbox-item input { accent-color: var(--emerald); }
+  .checkbox-item.checked {
+    border-color: var(--emerald);
+    background: var(--emerald-dim);
+  }
+
+  /* Detail Pipeline */
+  .detail-meta {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .detail-meta-item {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+  }
+  .detail-meta-item .dmi-label {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  .detail-meta-item .dmi-value {
+    font-size: 14px;
+    font-weight: 600;
+    margin-top: 4px;
+    color: var(--text-primary);
+  }
+
+  .run-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .run-item:last-child { border-bottom: none; }
+  .run-item .ri-time { color: var(--text-tertiary); width: 140px; flex-shrink: 0; font-size: 12px; }
+  .run-item .ri-rows { color: var(--text-secondary); width: 100px; }
+  .run-item .ri-duration { color: var(--text-secondary); width: 60px; }
+  .run-item .ri-action { margin-left: auto; }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+  }
+  .empty-state .empty-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+  }
+  .empty-state h3 {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .empty-state p {
+    font-size: 13px;
+    color: var(--text-tertiary);
+    max-width: 380px;
+    margin: 0 auto 20px;
+  }
+
+  /* Loading shimmer placeholder */
+  .shimmer {
+    background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-hover) 50%, var(--bg-card) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 4px;
+  }
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  .inline-flex { display: inline-flex; align-items: center; gap: 4px; }
+  .gap-2 { gap: 8px; }
+  .mt-4 { margin-top: 16px; }
+  .mb-4 { margin-bottom: 16px; }
+  .text-secondary { color: var(--text-secondary); }
+  .text-tertiary { color: var(--text-tertiary); }
+  .text-emerald { color: var(--emerald); }
+  .text-sm { font-size: 12px; }
+  .text-xs { font-size: 11px; }
+  .font-mono { font-family: 'SF Mono', 'Cascadia Code', monospace; font-size: 12px; }
+  .flex { display: flex; }
+  .items-center { align-items: center; }
+  .justify-between { justify-content: space-between; }
+  .w-full { width: 100%; }
+  .hidden { display: none !important; }
+
+  /* Pipeline graph line */
+  .pipeline-flow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 20px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 12px;
+  }
+  .pipeline-flow .pf-node {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .pipeline-flow .pf-node .pf-icon { font-size: 16px; }
+  .pipeline-flow .pf-arrow {
+    color: var(--text-tertiary);
+    font-size: 18px;
+  }
+  .pipeline-flow .pf-node.target {
+    background: var(--blue-dim);
+    color: var(--blue);
+  }
+  .pipeline-flow .pf-node.source {
+    background: var(--emerald-dim);
+    color: var(--emerald);
+  }
+
+  /* ===== LOGIN PAGE ===== */
+  .login-page {
+    position: fixed;
+    inset: 0;
+    background: var(--bg-primary);
+    display: none;
+    z-index: 200;
+  }
+  .login-page.show { display: flex; }
+  .login-left {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 60px;
+    max-width: 480px;
+  }
+  .login-left .login-logo {
+    font-size: 28px;
+    font-weight: 800;
+    margin-bottom: 8px;
+  }
+  .login-left .login-logo em { font-style: normal; color: var(--emerald); }
+  .login-left .login-tagline {
+    font-size: 14px;
+    color: var(--text-tertiary);
+    margin-bottom: 40px;
+  }
+  .form-group label .optional {
+    font-weight: 400;
+    color: var(--text-tertiary);
+    font-size: 11px;
+  }
+  .login-right {
+    flex: 1;
+    background: var(--bg-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .login-right .graphic {
+    width: 400px;
+    height: 400px;
+    position: relative;
+  }
+  .login-right .graphic .circle {
+    position: absolute;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+  }
+  .login-right .graphic .circle-1 { width: 320px; height: 320px; top: 40px; left: 40px; }
+  .login-right .graphic .circle-2 { width: 240px; height: 240px; top: 80px; left: 80px; border-color: var(--emerald-dim); }
+  .login-right .graphic .circle-3 { width: 160px; height: 160px; top: 120px; left: 120px; }
+  .login-right .graphic .center-icon {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 70px; height: 70px;
+    background: linear-gradient(135deg, #10b981, #059669);
+    border-radius: 20px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px;
+    color: #fff;
+    box-shadow: 0 0 40px rgba(16,185,129,0.3);
+  }
+  .login-right .graphic .flow-line {
+    position: absolute;
+    width: 2px;
+    background: linear-gradient(to bottom, transparent, var(--emerald-dim), transparent);
+    animation: pulseLine 3s ease-in-out infinite;
+  }
+  .login-right .graphic .flow-line-1 { height: 200px; top: 50px; left: 80px; animation-delay: 0s; }
+  .login-right .graphic .flow-line-2 { height: 160px; top: 100px; right: 100px; animation-delay: 1s; }
+  @keyframes pulseLine {
+    0%, 100% { opacity: 0.2; transform: scaleY(0.5); }
+    50% { opacity: 0.6; transform: scaleY(1); }
+  }
+
+  .login-footer {
+    position: fixed;
+    bottom: 20px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-tertiary);
+    z-index: 201;
+  }
+
+  @media (max-width: 900px) {
+    .login-left { max-width: 100%; padding: 40px; }
+    .login-right { display: none; }
+    .stat-grid { grid-template-columns: repeat(2, 1fr); }
+    .grid-2 { grid-template-columns: 1fr; }
+    .detail-meta { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 640px) {
+    .stat-grid { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .content { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== LOGIN PAGE ===== -->
+<div class="login-page show" id="loginPage">
+  <div class="login-left">
+    <div class="login-logo">
+      <span style="display:inline-flex;align-items:center;gap:10px;margin-bottom:20px;">
+        <span style="width:36px;height:36px;background:linear-gradient(135deg,#10b981,#059669);border-radius:10px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;color:#fff;">Ar</span>
+        <span style="font-size:24px;">Ar<em>us</em></span>
+      </span>
+    </div>
+    <p class="login-tagline">Your data pipeline platform — connect, sync, and orchestrate your data sources effortlessly.</p>
+    <form onsubmit="event.preventDefault(); closeLogin();" style="max-width:360px;">
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" placeholder="you@company.com" value="endang@aruspipeline.io">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" placeholder="••••••••" value="password123">
+      </div>
+      <div class="flex items-center justify-between mb-4">
+        <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-secondary);cursor:pointer;">
+          <input type="checkbox" checked style="accent-color:var(--emerald);"> Keep me signed in
+        </label>
+        <a href="#" style="font-size:12px;color:var(--emerald);text-decoration:none;">Forgot password?</a>
+      </div>
+      <button type="submit" class="btn btn-primary w-full" style="justify-content:center;padding:10px;font-size:14px;">Sign in to Arus →</button>
+    </form>
+    <p style="font-size:12px;color:var(--text-tertiary);margin-top:16px;">
+      Don't have an account? <a href="#" style="color:var(--emerald);text-decoration:none;">Request access</a>
+    </p>
+  </div>
+  <div class="login-right">
+    <div class="graphic">
+      <div class="circle circle-1"></div>
+      <div class="circle circle-2"></div>
+      <div class="circle circle-3"></div>
+      <div class="center-icon">⟁</div>
+      <div class="flow-line flow-line-1"></div>
+      <div class="flow-line flow-line-2"></div>
+    </div>
+  </div>
+  <div class="login-footer">© 2026 Arus Pipeline. Built for data engineers.</div>
+</div>
+
+<!-- ===== SIDEBAR ===== -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <span class="logo-icon">Ar</span>
+    <span>Ar<em>us</em></span>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-label">Overview</div>
+    <a class="nav-item active" onclick="switchPage('dashboard', this)" data-page="dashboard">
+      <span class="nav-icon">◷</span> Dashboard
+    </a>
+    <div class="nav-label">Connect</div>
+    <a class="nav-item" onclick="switchPage('sources', this)" data-page="sources">
+      <span class="nav-icon">⎔</span> Sources
+      <span class="badge green">4</span>
+    </a>
+    <a class="nav-item" onclick="switchPage('destinations', this)" data-page="destinations">
+      <span class="nav-icon">▣</span> Destinations
+      <span class="badge">2</span>
+    </a>
+    <div class="nav-label">Orchestrate</div>
+    <a class="nav-item" onclick="switchPage('pipelines', this)" data-page="pipelines">
+      <span class="nav-icon">⇌</span> Pipelines
+      <span class="badge green">8</span>
+    </a>
+    <a class="nav-item" onclick="switchPage('pipeline-detail', this)" data-page="pipeline-detail">
+      <span class="nav-icon">⊞</span> Run History
+    </a>
+    <a class="nav-item" onclick="switchPage('dag', this)" data-page="dag">
+      <span class="nav-icon">⟐</span> DAG View
+      <span class="badge green">4</span>
+    </a>
+    <div class="nav-label">Configure</div>
+    <a class="nav-item" onclick="switchPage('settings', this)" data-page="settings">
+      <span class="nav-icon">⚙</span> Settings
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="avatar">ES</div>
+    <div class="user-info">
+      <div class="name">Endang Suwarna</div>
+      <div class="role">Data Engineer</div>
+    </div>
+  </div>
+</aside>
+
+<!-- ===== MAIN ===== -->
+<div class="main">
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-breadcrumb">
+      <span>Arus</span>
+      <span class="sep">▶</span>
+      <span class="current" id="breadcrumbCurrent">Dashboard</span>
+    </div>
+    <div class="header-search">
+      <span class="icon">⌕</span>
+      <input type="text" placeholder="Search sources, pipelines..." />
+    </div>
+    <div class="header-actions">
+      <button class="btn-icon" title="Notifications">🔔</button>
+      <button class="btn-icon" title="Help">?</button>
+    </div>
+  </header>
+
+  <!-- Content -->
+  <div class="content">
+
+    <!-- ============================== DASHBOARD ============================== -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-header">
+        <div>
+          <h1>Dashboard</h1>
+          <div class="subtitle">Last 24h — all sources syncing to Data Warehouse</div>
+        </div>
+        <div class="header-actions-right">
+          <button class="btn btn-ghost btn-sm">⟳ Refresh</button>
+          <button class="btn btn-primary btn-sm" onclick="openModal('addSource')">+ New Source</button>
+        </div>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-icon green">⬍</div>
+          <div class="stat-label">Active Sources</div>
+          <div class="stat-value">4</div>
+          <div class="stat-change up">↑ 1 this week</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon blue">≡</div>
+          <div class="stat-label">Pipelines Active</div>
+          <div class="stat-value">8</div>
+          <div class="stat-change up">↑ All running</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon amber">⚯</div>
+          <div class="stat-label">Rows Synced (24h)</div>
+          <div class="stat-value">2.4M</div>
+          <div class="stat-change up">↑ 12% from yesterday</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon purple">⊞</div>
+          <div class="stat-label">Failed Runs (24h)</div>
+          <div class="stat-value">0</div>
+          <div class="stat-change up">✓ All successful</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <h3>Sync Performance</h3>
+            <span class="text-tertiary text-sm">Last 7 days</span>
+          </div>
+          <div class="card-body">
+            <div style="display:flex;align-items:flex-end;gap:6px;height:100px;padding-top:10px;">
+              <div style="flex:1;background:var(--emerald-dim);border-radius:4px 4px 0 0;height:48px;position:relative;"><span style="position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--text-tertiary);">1.2M</span></div>
+              <div style="flex:1;background:var(--emerald-dim);border-radius:4px 4px 0 0;height:62px;position:relative;"><span style="position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--text-tertiary);">1.8M</span></div>
+              <div style="flex:1;background:var(--emerald-dim);border-radius:4px 4px 0 0;height:45px;position:relative;"><span style="position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--text-tertiary);">1.1M</span></div>
+              <div style="flex:1;background:var(--emerald);border-radius:4px 4px 0 0;height:85px;position:relative;"><span style="position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--text-tertiary);">2.4M</span></div>
+              <div style="flex:1;background:var(--emerald-dim);border-radius:4px 4px 0 0;height:55px;position:relative;"><span style="position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--text-tertiary);">1.5M</span></div>
+              <div style="flex:1;background:var(--emerald-dim);border-radius:4px 4px 0 0;height:70px;position:relative;"><span style="position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--text-tertiary);">1.9M</span></div>
+              <div style="flex:1;background:var(--emerald-dim);border-radius:4px 4px 0 0;height:40px;position:relative;"><span style="position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--text-tertiary);">0.9M</span></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-tertiary);margin-top:6px;">
+              <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <h3>Recent Runs</h3>
+            <a href="#" style="font-size:12px;color:var(--emerald);text-decoration:none;" onclick="switchPage('pipeline-detail', null); return false;">View all →</a>
+          </div>
+          <div class="card-body pt-0">
+            <div class="run-item" style="padding-left:0;padding-right:0;">
+              <span class="status"><span class="dot green"></span><span class="label green">Success</span></span>
+              <span class="ri-time" style="width:120px;">10 min ago</span>
+              <span class="ri-rows">234K rows</span>
+              <span class="ri-action font-mono text-tertiary">prod-pg → dw</span>
+            </div>
+            <div class="run-item" style="padding-left:0;padding-right:0;">
+              <span class="status"><span class="dot green"></span><span class="label green">Success</span></span>
+              <span class="ri-time" style="width:120px;">22 min ago</span>
+              <span class="ri-rows">89K rows</span>
+              <span class="ri-action font-mono text-tertiary">payment → dw</span>
+            </div>
+            <div class="run-item" style="padding-left:0;padding-right:0;">
+              <span class="status"><span class="dot green"></span><span class="label green">Success</span></span>
+              <span class="ri-time" style="width:120px;">41 min ago</span>
+              <span class="ri-rows">1.2M rows</span>
+              <span class="ri-action font-mono text-tertiary">analytics → dw</span>
+            </div>
+            <div class="run-item" style="padding-left:0;padding-right:0;border-bottom:none;">
+              <span class="status"><span class="dot amber"></span><span class="label amber">Partial</span></span>
+              <span class="ri-time" style="width:120px;">1h ago</span>
+              <span class="ri-rows">12K / 15K rows</span>
+              <span class="ri-action font-mono text-tertiary">notif → dw</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h3>Data Sources Overview</h3>
+          <span class="text-tertiary text-sm">Auto-discovered: 48 tables across 4 sources</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Source</th><th>Type</th><th>Tables</th><th>Status</th><th>Last Sync</th><th>Rows/h</th><th></th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span style="font-weight:600;color:var(--text-primary);">Production PostgreSQL</span></td>
+                <td><span class="tag blue">PostgreSQL</span></td>
+                <td><span class="inline-flex text-emerald font-mono">22</span></td>
+                <td><span class="status"><span class="dot green"></span><span class="label green">Active</span></span></td>
+                <td class="text-sm">2 min ago</td>
+                <td class="font-mono">142K</td>
+                <td><button class="btn btn-ghost btn-xs">View</button></td>
+              </tr>
+              <tr>
+                <td><span style="font-weight:600;color:var(--text-primary);">Payment Service</span></td>
+                <td><span class="tag blue">PostgreSQL</span></td>
+                <td><span class="inline-flex text-emerald font-mono">8</span></td>
+                <td><span class="status"><span class="dot green"></span><span class="label green">Active</span></span></td>
+                <td class="text-sm">1 min ago</td>
+                <td class="font-mono">67K</td>
+                <td><button class="btn btn-ghost btn-xs">View</button></td>
+              </tr>
+              <tr>
+                <td><span style="font-weight:600;color:var(--text-primary);">Analytics ClickHouse</span></td>
+                <td><span class="tag amber">ClickHouse</span></td>
+                <td><span class="inline-flex text-emerald font-mono">12</span></td>
+                <td><span class="status"><span class="dot green"></span><span class="label green">Active</span></span></td>
+                <td class="text-sm">5 min ago</td>
+                <td class="font-mono">430K</td>
+                <td><button class="btn btn-ghost btn-xs">View</button></td>
+              </tr>
+              <tr>
+                <td><span style="font-weight:600;color:var(--text-primary);">Notification Service</span></td>
+                <td><span class="tag blue">PostgreSQL</span></td>
+                <td><span class="inline-flex text-emerald font-mono">6</span></td>
+                <td><span class="status"><span class="dot amber"></span><span class="label amber">Degraded</span></span></td>
+                <td class="text-sm">12 min ago</td>
+                <td class="font-mono">8K</td>
+                <td><button class="btn btn-ghost btn-xs">View</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================== SOURCES ============================== -->
+    <div class="page" id="page-sources">
+      <div class="page-header">
+        <div>
+          <h1>Sources</h1>
+          <div class="subtitle">4 data sources · 48 tables auto-discovered</div>
+        </div>
+        <div class="header-actions-right">
+          <button class="btn btn-secondary btn-sm">⟳ Rescan All</button>
+          <button class="btn btn-primary btn-sm" onclick="openModal('addSource')">+ Add Source</button>
+        </div>
+      </div>
+
+      <div class="source-grid">
+        <div class="source-card" onclick="openModal('sourceDetail')">
+          <div class="sc-top">
+            <div class="sc-icon postgres">Pg</div>
+            <div>
+              <div class="sc-name">Production PostgreSQL</div>
+              <div class="sc-desc">prod-db-primary.internal:5432 · arus_prod</div>
+            </div>
+            <span class="status" style="margin-left:auto;"><span class="dot green"></span></span>
+          </div>
+          <div class="sc-info">
+            <span class="tables-count"><strong>22</strong> tables</span>
+            <span class="text-sm text-tertiary">Sync: 5m</span>
+            <button class="btn btn-ghost btn-xs">Manage</button>
+          </div>
+        </div>
+        <div class="source-card">
+          <div class="sc-top">
+            <div class="sc-icon postgres">Pg</div>
+            <div>
+              <div class="sc-name">Payment Service</div>
+              <div class="sc-desc">payment-db.internal:5432 · arus_payment</div>
+            </div>
+            <span class="status" style="margin-left:auto;"><span class="dot green"></span></span>
+          </div>
+          <div class="sc-info">
+            <span class="tables-count"><strong>8</strong> tables</span>
+            <span class="text-sm text-tertiary">Sync: 1m</span>
+            <button class="btn btn-ghost btn-xs">Manage</button>
+          </div>
+        </div>
+        <div class="source-card">
+          <div class="sc-top">
+            <div class="sc-icon" style="background:#1a2a1a;color:#5ac8a0;">Ch</div>
+            <div>
+              <div class="sc-name">Analytics ClickHouse</div>
+              <div class="sc-desc">clickhouse.internal:9000 · events</div>
+            </div>
+            <span class="status" style="margin-left:auto;"><span class="dot green"></span></span>
+          </div>
+          <div class="sc-info">
+            <span class="tables-count"><strong>12</strong> tables</span>
+            <span class="text-sm text-tertiary">Sync: 15m</span>
+            <button class="btn btn-ghost btn-xs">Manage</button>
+          </div>
+        </div>
+        <div class="source-card">
+          <div class="sc-top">
+            <div class="sc-icon postgres">Pg</div>
+            <div>
+              <div class="sc-name">Notification Service</div>
+              <div class="sc-desc">notif-db.internal:5432 · arus_notif</div>
+            </div>
+            <span class="status" style="margin-left:auto;"><span class="dot amber"></span></span>
+          </div>
+          <div class="sc-info">
+            <span class="tables-count"><strong>6</strong> tables</span>
+            <span class="text-sm text-tertiary">Sync: 5m</span>
+            <button class="btn btn-ghost btn-xs">Manage</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card mt-4">
+        <div class="card-header">
+          <h3>Discovered Tables — Production PostgreSQL</h3>
+          <span class="text-tertiary text-sm">22 tables · last scanned 2 min ago</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th style="width:24px;"><input type="checkbox" style="accent-color:var(--emerald);"></th><th>Table</th><th>Rows</th><th>Sync Mode</th><th>Last Sync</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><input type="checkbox" checked style="accent-color:var(--emerald);"></td><td><span style="font-weight:500;color:var(--text-primary);">users</span></td><td class="font-mono">1,234,567</td><td><span class="tag green">Incremental</span></td><td class="text-sm">2 min ago</td><td><span class="status"><span class="dot green"></span><span class="label green">Synced</span></span></td></tr>
+              <tr><td><input type="checkbox" checked style="accent-color:var(--emerald);"></td><td><span style="font-weight:500;color:var(--text-primary);">transactions</span></td><td class="font-mono">8,945,234</td><td><span class="tag green">Incremental</span></td><td class="text-sm">2 min ago</td><td><span class="status"><span class="dot green"></span><span class="label green">Synced</span></span></td></tr>
+              <tr><td><input type="checkbox" checked style="accent-color:var(--emerald);"></td><td><span style="font-weight:500;color:var(--text-primary);">orders</span></td><td class="font-mono">456,789</td><td><span class="tag green">Incremental</span></td><td class="text-sm">5 min ago</td><td><span class="status"><span class="dot green"></span><span class="label green">Synced</span></span></td></tr>
+              <tr><td><input type="checkbox" checked style="accent-color:var(--emerald);"></td><td><span style="font-weight:500;color:var(--text-primary);">products</span></td><td class="font-mono">12,450</td><td><span class="tag purple">Full Refresh</span></td><td class="text-sm">1h ago</td><td><span class="status"><span class="dot green"></span><span class="label green">Synced</span></span></td></tr>
+              <tr><td><input type="checkbox" style="accent-color:var(--emerald);"></td><td><span style="font-weight:500;color:var(--text-primary);">audit_logs</span></td><td class="font-mono">45,678,901</td><td><span class="tag green">Incremental</span></td><td class="text-sm">—</td><td><span class="status"><span class="dot gray"></span><span class="label gray">Disabled</span></span></td></tr>
+              <tr><td><input type="checkbox" checked style="accent-color:var(--emerald);"></td><td><span style="font-weight:500;color:var(--text-primary);">sessions</span></td><td class="font-mono">234,567</td><td><span class="tag green">Incremental</span></td><td class="text-sm">2 min ago</td><td><span class="status"><span class="dot green"></span><span class="label green">Synced</span></span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================== DESTINATIONS ============================== -->
+    <div class="page" id="page-destinations">
+      <div class="page-header">
+        <div>
+          <h1>Destinations</h1>
+          <div class="subtitle">Where your data lands — data warehouse & lake</div>
+        </div>
+        <div class="header-actions-right">
+          <button class="btn btn-primary btn-sm">+ Add Destination</button>
+        </div>
+      </div>
+      <div class="source-grid">
+        <div class="source-card">
+          <div class="sc-top">
+            <div class="sc-icon" style="background:var(--blue-dim);color:var(--blue);">DW</div>
+            <div>
+              <div class="sc-name">Data Warehouse (PostgreSQL)</div>
+              <div class="sc-desc">dwh.internal:5432 · arus_dwh</div>
+            </div>
+            <span class="status" style="margin-left:auto;"><span class="dot green"></span></span>
+          </div>
+          <div class="sc-info">
+            <span class="tables-count"><strong>48</strong> tables synced</span>
+            <span class="text-sm text-tertiary">4.2 TB</span>
+            <button class="btn btn-ghost btn-xs">Manage</button>
+          </div>
+        </div>
+        <div class="source-card">
+          <div class="sc-top">
+            <div class="sc-icon" style="background:var(--amber-dim);color:var(--amber);">S3</div>
+            <div>
+              <div class="sc-name">Data Lake (S3 / Parquet)</div>
+              <div class="sc-desc">s3://arus-data-lake/raw/</div>
+            </div>
+            <span class="status" style="margin-left:auto;"><span class="dot green"></span></span>
+          </div>
+          <div class="sc-info">
+            <span class="tables-count"><strong>12</strong> tables synced</span>
+            <span class="text-sm text-tertiary">1.8 TB</span>
+            <button class="btn btn-ghost btn-xs">Manage</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================== PIPELINES ============================== -->
+    <div class="page" id="page-pipelines">
+      <div class="page-header">
+        <div>
+          <h1>Pipelines</h1>
+          <div class="subtitle">8 active pipelines · 0 failing · 2.4M rows synced in last 24h</div>
+        </div>
+        <div class="header-actions-right">
+          <button class="btn btn-ghost btn-sm">⟳ Pause All</button>
+          <button class="btn btn-primary btn-sm" onclick="openModal('addPipeline')">+ New Pipeline</button>
+        </div>
+      </div>
+
+      <div class="pipeline-item" onclick="switchPage('pipeline-detail', null)">
+        <div class="pi-indicator green"></div>
+        <div class="pi-info">
+          <div class="pi-name">prod-postgres → Data Warehouse</div>
+          <div class="pi-meta">22 tables · incremental · every 5m</div>
+        </div>
+        <div class="pi-stats">
+          <div class="ps-item"><div class="ps-val text-emerald">1.2M</div><div class="ps-label">Rows/h</div></div>
+          <div class="ps-item"><div class="ps-val">0</div><div class="ps-label">Errors</div></div>
+          <div class="ps-item"><div class="ps-val">4.2s</div><div class="ps-label">Avg</div></div>
+        </div>
+        <span class="status"><span class="dot green"></span><span class="label green">Running</span></span>
+      </div>
+      <div class="pipeline-item" onclick="switchPage('pipeline-detail', null)">
+        <div class="pi-indicator green"></div>
+        <div class="pi-info">
+          <div class="pi-name">payment-service → Data Warehouse</div>
+          <div class="pi-meta">8 tables · incremental · every 1m</div>
+        </div>
+        <div class="pi-stats">
+          <div class="ps-item"><div class="ps-val text-emerald">67K</div><div class="ps-label">Rows/h</div></div>
+          <div class="ps-item"><div class="ps-val">0</div><div class="ps-label">Errors</div></div>
+          <div class="ps-item"><div class="ps-val">1.1s</div><div class="ps-label">Avg</div></div>
+        </div>
+        <span class="status"><span class="dot green"></span><span class="label green">Running</span></span>
+      </div>
+      <div class="pipeline-item" onclick="switchPage('pipeline-detail', null)">
+        <div class="pi-indicator green"></div>
+        <div class="pi-info">
+          <div class="pi-name">analytics-clickhouse → Data Lake</div>
+          <div class="pi-meta">12 tables · full refresh · every 1h</div>
+        </div>
+        <div class="pi-stats">
+          <div class="ps-item"><div class="ps-val text-emerald">430K</div><div class="ps-label">Rows/h</div></div>
+          <div class="ps-item"><div class="ps-val">0</div><div class="ps-label">Errors</div></div>
+          <div class="ps-item"><div class="ps-val">23.4s</div><div class="ps-label">Avg</div></div>
+        </div>
+        <span class="status"><span class="dot green"></span><span class="label green">Running</span></span>
+      </div>
+      <div class="pipeline-item" onclick="switchPage('pipeline-detail', null)">
+        <div class="pi-indicator amber"></div>
+        <div class="pi-info">
+          <div class="pi-name">notif-service → Data Warehouse</div>
+          <div class="pi-meta">6 tables · incremental · every 5m</div>
+        </div>
+        <div class="pi-stats">
+          <div class="ps-item"><div class="ps-val text-amber">8K</div><div class="ps-label">Rows/h</div></div>
+          <div class="ps-item"><div class="ps-val">2</div><div class="ps-label">Warnings</div></div>
+          <div class="ps-item"><div class="ps-val">6.7s</div><div class="ps-label">Avg</div></div>
+        </div>
+        <span class="status"><span class="dot amber"></span><span class="label amber">Degraded</span></span>
+      </div>
+    </div>
+
+    <!-- ============================== PIPELINE DETAIL ============================== -->
+    <div class="page" id="page-pipeline-detail">
+      <div class="page-header">
+        <div>
+          <div class="flex items-center gap-2" style="margin-bottom:4px;">
+            <button class="btn btn-ghost btn-xs" onclick="switchPage('pipelines', null)">← Back to Pipelines</button>
+          </div>
+          <h1>prod-postgres → Data Warehouse</h1>
+          <div class="subtitle">22 tables · incremental sync from Production PostgreSQL to PostgreSQL Data Warehouse</div>
+        </div>
+        <div class="header-actions-right">
+          <button class="btn btn-secondary btn-sm">⟳ Sync Now</button>
+          <button class="btn btn-ghost btn-sm">⏸ Pause</button>
+        </div>
+      </div>
+
+      <div class="pipeline-flow">
+        <div class="pf-node source">
+          <span class="pf-icon">Pg</span>
+          Production PostgreSQL
+        </div>
+        <span class="pf-arrow">→</span>
+        <div class="pf-node" style="background:var(--emerald-dim);color:var(--emerald);">
+          <span class="pf-icon">⚡</span>
+          CDC Pipeline (22 tables)
+        </div>
+        <span class="pf-arrow">→</span>
+        <div class="pf-node target">
+          <span class="pf-icon">▣</span>
+          Data Warehouse
+        </div>
+      </div>
+
+      <div class="detail-meta">
+        <div class="detail-meta-item">
+          <div class="dmi-label">Status</div>
+          <div class="dmi-value"><span class="status"><span class="dot green"></span><span class="label green" style="font-size:14px;">Running</span></span></div>
+        </div>
+        <div class="detail-meta-item">
+          <div class="dmi-label">Schedule</div>
+          <div class="dmi-value">Every 5 minutes</div>
+        </div>
+        <div class="detail-meta-item">
+          <div class="dmi-label">Total Rows</div>
+          <div class="dmi-value">56,789,012</div>
+        </div>
+        <div class="detail-meta-item">
+          <div class="dmi-label">Last Sync</div>
+          <div class="dmi-value">2 minutes ago</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h3>Run History</h3>
+          <div class="flex items-center gap-2">
+            <span class="text-tertiary text-sm">Last 24 hours</span>
+            <select style="background:var(--bg-input);border:1px solid var(--border);border-radius:4px;padding:4px 8px;font-size:12px;color:var(--text-primary);font-family:inherit;">
+              <option>All tables</option>
+              <option>users</option>
+              <option>transactions</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Time</th><th>Table</th><th>Status</th><th>Rows Synced</th><th>Duration</th><th>Lag</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="text-sm">12:34:22</td><td>transactions</td><td><span class="status"><span class="dot green"></span><span class="label green">Success</span></span></td><td class="font-mono">12,345</td><td class="font-mono text-sm">2.3s</td><td class="text-sm">0.4s</td></tr>
+              <tr><td class="text-sm">12:34:20</td><td>users</td><td><span class="status"><span class="dot green"></span><span class="label green">Success</span></span></td><td class="font-mono">1,234</td><td class="font-mono text-sm">1.1s</td><td class="text-sm">0.2s</td></tr>
+              <tr><td class="text-sm">12:34:18</td><td>orders</td><td><span class="status"><span class="dot green"></span><span class="label green">Success</span></span></td><td class="font-mono">456</td><td class="font-mono text-sm">0.8s</td><td class="text-sm">0.3s</td></tr>
+              <tr><td class="text-sm">12:34:15</td><td>products</td><td><span class="status"><span class="dot green"></span><span class="label green">Success</span></span></td><td class="font-mono">12</td><td class="font-mono text-sm">0.4s</td><td class="text-sm">0.1s</td></tr>
+              <tr><td class="text-sm">12:34:10</td><td>sessions</td><td><span class="status"><span class="dot green"></span><span class="label green">Success</span></span></td><td class="font-mono">2,345</td><td class="font-mono text-sm">1.5s</td><td class="text-sm">0.3s</td></tr>
+              <tr><td class="text-sm">12:29:22</td><td>transactions</td><td><span class="status"><span class="dot green"></span></span></td><td class="font-mono">11,890</td><td class="font-mono text-sm">2.1s</td><td class="text-sm">0.3s</td></tr>
+              <tr><td class="text-sm">12:29:20</td><td>users</td><td><span class="status"><span class="dot green"></span></span></td><td class="font-mono">1,100</td><td class="font-mono text-sm">1.0s</td><td class="text-sm">0.2s</td></tr>
+              <tr><td class="text-sm">12:24:22</td><td>transactions</td><td><span class="status"><span class="dot red"></span><span class="label red">Failed</span></span></td><td class="font-mono">—</td><td class="font-mono text-sm">12.5s</td><td class="text-sm">—</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================== DAG VIEW ============================== -->
+    <div class="page" id="page-dag">
+      <div class="page-header">
+        <div>
+          <h1>DAG View</h1>
+          <div class="subtitle">Pipeline asset graph — 4 pipelines · 48 assets · all running</div>
+        </div>
+        <div class="header-actions-right">
+          <button class="btn btn-secondary btn-sm">⟳ Auto-layout</button>
+          <select style="background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 12px;font-size:12px;color:var(--text-primary);font-family:inherit;">
+            <option>All Pipelines</option>
+            <option>prod-postgres → DWH</option>
+            <option>payment → DWH</option>
+          </select>
+          <span class="btn btn-ghost btn-sm" onclick="document.getElementById('dag-legend').classList.toggle('hidden')">📖 Legend</span>
+        </div>
+      </div>
+
+      <!-- Legend -->
+      <div id="dag-legend" style="display:flex;gap:16px;padding:10px 16px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:16px;font-size:12px;">
+        <span class="inline-flex items-center gap-1"><span style="width:10px;height:10px;border-radius:50%;background:var(--emerald);box-shadow:0 0 6px rgba(16,185,129,0.4);"></span> Success</span>
+        <span class="inline-flex items-center gap-1"><span style="width:10px;height:10px;border-radius:50%;background:var(--blue);box-shadow:0 0 6px rgba(59,130,246,0.4);"></span> Running</span>
+        <span class="inline-flex items-center gap-1"><span style="width:10px;height:10px;border-radius:50%;background:var(--amber);box-shadow:0 0 6px rgba(245,158,11,0.4);"></span> Stale</span>
+        <span class="inline-flex items-center gap-1"><span style="width:10px;height:10px;border-radius:50%;background:var(--red);box-shadow:0 0 6px rgba(239,68,68,0.4);"></span> Failed</span>
+        <span class="inline-flex items-center gap-1"><span style="width:10px;height:10px;border-radius:50%;background:var(--text-tertiary);"></span> Not Started</span>
+        <span style="margin-left:auto;color:var(--text-tertiary);">Click a node to see run history · drag to pan</span>
+      </div>
+
+      <!-- DAG Canvas -->
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow-card);">
+        <!-- Toolbar -->
+        <div style="display:flex;align-items:center;gap:8px;padding:10px 16px;border-bottom:1px solid var(--border);font-size:12px;">
+          <span style="font-weight:600;color:var(--text-primary);">Pipeline: prod-postgres → Data Warehouse</span>
+          <span class="status" style="margin-left:12px;"><span class="dot green"></span><span class="label green">22/22 assets healthy</span></span>
+          <span style="margin-left:auto;display:flex;gap:6px;">
+            <button class="btn btn-ghost btn-xs">+</button>
+            <button class="btn btn-ghost btn-xs">−</button>
+            <span style="color:var(--text-tertiary);">100%</span>
+            <button class="btn btn-ghost btn-xs">⊞ Fit</button>
+          </span>
+        </div>
+
+        <!-- DAG SVG-like Layout -->
+        <div style="padding:30px 40px;min-height:480px;position:relative;background:radial-gradient(circle at 50% 50%, rgba(16,185,129,0.02) 0%, transparent 70%);">
+          <svg width="100%" height="480" viewBox="0 0 880 440" xmlns="http://www.w3.org/2000/svg" style="display:block;">
+            <!-- Connection lines -->
+            <!-- Source nodes (left column) -->
+            <line x1="100" y1="70" x2="280" y2="70" stroke="#23262e" stroke-width="2" stroke-dasharray="6,3"/>
+            <line x1="100" y1="130" x2="280" y2="130" stroke="#23262e" stroke-width="2" stroke-dasharray="6,3"/>
+            <line x1="100" y1="190" x2="280" y2="190" stroke="#23262e" stroke-width="2" stroke-dasharray="6,3"/>
+            <line x1="100" y1="250" x2="280" y2="250" stroke="#23262e" stroke-width="2" stroke-dasharray="6,3"/>
+            <line x1="100" y1="310" x2="280" y2="310" stroke="#23262e" stroke-width="2" stroke-dasharray="6,3"/>
+            <line x1="100" y1="370" x2="280" y2="370" stroke="#23262e" stroke-width="2" stroke-dasharray="6,3"/>
+
+            <!-- Staging layer (middle) -->
+            <line x1="300" y1="70" x2="500" y2="70" stroke="#23262e" stroke-width="2"/>
+            <line x1="300" y1="130" x2="500" y2="130" stroke="#23262e" stroke-width="2"/>
+            <line x1="300" y1="190" x2="500" y2="190" stroke="#23262e" stroke-width="2"/>
+            <line x1="300" y1="250" x2="500" y2="250" stroke="#23262e" stroke-width="2"/>
+            <line x1="300" y1="310" x2="500" y2="310" stroke="#23262e" stroke-width="2"/>
+            <line x1="300" y1="370" x2="500" y2="370" stroke="#23262e" stroke-width="2"/>
+
+            <!-- Analytics layer (right) -->
+            <line x1="520" y1="70" x2="720" y2="70" stroke="#23262e" stroke-width="2"/>
+            <line x1="520" y1="130" x2="720" y2="130" stroke="#23262e" stroke-width="2"/>
+            <line x1="520" y1="190" x2="720" y2="190" stroke="#23262e" stroke-width="2"/>
+            <line x1="520" y1="250" x2="720" y2="250" stroke="#23262e" stroke-width="2"/>
+            <line x1="520" y1="310" x2="720" y2="310" stroke="#23262e" stroke-width="2"/>
+            <line x1="520" y1="370" x2="720" y2="370" stroke="#23262e" stroke-width="2"/>
+
+            <!-- Layer backgrounds -->
+            <text x="60" y="24" fill="#5c626e" font-size="11" font-family="Inter, sans-serif" font-weight="600">SOURCE LAYER</text>
+            <text x="370" y="24" fill="#5c626e" font-size="11" font-family="Inter, sans-serif" font-weight="600">STAGING LAYER</text>
+            <text x="730" y="24" fill="#5c626e" font-size="11" font-family="Inter, sans-serif" font-weight="600">ANALYTICS LAYER</text>
+
+            <!-- Layer connector lines -->
+            <line x1="280" y1="30" x2="280" y2="400" stroke="var(--border-light)" stroke-width="1" stroke-dasharray="4,4" opacity="0.5"/>
+            <line x1="500" y1="30" x2="500" y2="400" stroke="var(--border-light)" stroke-width="1" stroke-dasharray="4,4" opacity="0.5"/>
+            <line x1="720" y1="30" x2="720" y2="400" stroke="var(--border-light)" stroke-width="1" stroke-dasharray="4,4" opacity="0.5"/>
+
+            <!-- ===== NODES ===== -->
+            <!-- SOURCE NODES (left column, x=100) -->
+            <g>
+              <rect x="60" y="56" width="80" height="28" rx="6" fill="#14171d" stroke="#23262e" stroke-width="1"/>
+              <circle cx="76" cy="70" r="5" fill="#10b981"/>
+              <text x="88" y="74" fill="#e8eaed" font-size="11" font-family="Inter, sans-serif" font-weight="500">users</text>
+            </g>
+            <g>
+              <rect x="60" y="116" width="80" height="28" rx="6" fill="#14171d" stroke="#23262e" stroke-width="1"/>
+              <circle cx="76" cy="130" r="5" fill="#10b981"/>
+              <text x="88" y="134" fill="#e8eaed" font-size="11" font-family="Inter, sans-serif" font-weight="500">transactions</text>
+            </g>
+            <g>
+              <rect x="60" y="176" width="80" height="28" rx="6" fill="#14171d" stroke="#23262e" stroke-width="1"/>
+              <circle cx="76" cy="190" r="5" fill="#10b981"/>
+              <text x="88" y="194" fill="#e8eaed" font-size="11" font-family="Inter, sans-serif" font-weight="500">orders</text>
+            </g>
+            <g>
+              <rect x="60" y="236" width="80" height="28" rx="6" fill="#14171d" stroke="#23262e" stroke-width="1"/>
+              <circle cx="76" cy="250" r="5" fill="#f59e0b"/>
+              <text x="88" y="254" fill="#e8eaed" font-size="11" font-family="Inter, sans-serif" font-weight="500">products</text>
+            </g>
+            <g>
+              <rect x="60" y="296" width="80" height="28" rx="6" fill="#14171d" stroke="#23262e" stroke-width="1"/>
+              <circle cx="76" cy="310" r="5" fill="#10b981"/>
+              <text x="88" y="314" fill="#e8eaed" font-size="11" font-family="Inter, sans-serif" font-weight="500">sessions</text>
+            </g>
+            <g>
+              <rect x="60" y="356" width="80" height="28" rx="6" fill="#14171d" stroke="#23262e" stroke-width="1" stroke-dasharray="3,3"/>
+              <circle cx="76" cy="370" r="5" fill="#5c626e"/>
+              <text x="88" y="374" fill="#5c626e" font-size="11" font-family="Inter, sans-serif" font-weight="500">audit_logs</text>
+            </g>
+
+            <!-- STAGING NODES (middle, x=300) -->
+            <g>
+              <rect x="260" y="56" width="80" height="28" rx="6" fill="#192d2c" stroke="#10b981" stroke-width="1"/>
+              <text x="276" y="74" fill="#6ee7b7" font-size="11" font-family="Inter, sans-serif" font-weight="500">stg_users</text>
+            </g>
+            <g>
+              <rect x="260" y="116" width="80" height="28" rx="6" fill="#192d2c" stroke="#10b981" stroke-width="1"/>
+              <text x="256" y="134" fill="#6ee7b7" font-size="11" font-family="Inter, sans-serif" font-weight="500">stg_transactions</text>
+            </g>
+            <g>
+              <rect x="260" y="176" width="80" height="28" rx="6" fill="#192d2c" stroke="#10b981" stroke-width="1"/>
+              <text x="268" y="194" fill="#6ee7b7" font-size="11" font-family="Inter, sans-serif" font-weight="500">stg_orders</text>
+            </g>
+            <g>
+              <rect x="260" y="236" width="80" height="28" rx="6" fill="#192d2c" stroke="#10b981" stroke-width="1"/>
+              <text x="260" y="254" fill="#6ee7b7" font-size="11" font-family="Inter, sans-serif" font-weight="500">stg_products</text>
+            </g>
+            <g>
+              <rect x="260" y="296" width="80" height="28" rx="6" fill="#192d2c" stroke="#10b981" stroke-width="1"/>
+              <text x="256" y="314" fill="#6ee7b7" font-size="11" font-family="Inter, sans-serif" font-weight="500">stg_sessions</text>
+            </g>
+
+            <!-- ANALYTICS NODES (right, x=520) -->
+            <g>
+              <rect x="520" y="56" width="100" height="28" rx="6" fill="#1a1a2e" stroke="#3b82f6" stroke-width="1"/>
+              <text x="536" y="74" fill="#93c5fd" font-size="11" font-family="Inter, sans-serif" font-weight="500">analytics.users</text>
+            </g>
+            <g>
+              <rect x="520" y="116" width="100" height="28" rx="6" fill="#1a1a2e" stroke="#3b82f6" stroke-width="1"/>
+              <text x="520" y="134" fill="#93c5fd" font-size="11" font-family="Inter, sans-serif" font-weight="500">analytics.transactions</text>
+            </g>
+            <g>
+              <rect x="520" y="176" width="100" height="28" rx="6" fill="#1a1a2e" stroke="#3b82f6" stroke-width="1"/>
+              <text x="540" y="194" fill="#93c5fd" font-size="11" font-family="Inter, sans-serif" font-weight="500">analytics.orders</text>
+            </g>
+            <g>
+              <rect x="520" y="236" width="100" height="28" rx="6" fill="#1a1a2e" stroke="#3b82f6" stroke-width="1"/>
+              <text x="530" y="254" fill="#93c5fd" font-size="11" font-family="Inter, sans-serif" font-weight="500">analytics.products</text>
+            </g>
+            <g>
+              <rect x="520" y="296" width="100" height="28" rx="6" fill="#1a1a2e" stroke="#3b82f6" stroke-width="1"/>
+              <text x="528" y="314" fill="#93c5fd" font-size="11" font-family="Inter, sans-serif" font-weight="500">analytics.sessions</text>
+            </g>
+
+            <!-- Pipeline dependency edges (cross-table) -->
+            <!-- orders depends on users -->
+            <path d="M 140 188 Q 200 150 260 68" fill="none" stroke="#10b981" stroke-width="1.5" stroke-dasharray="4,2" opacity="0.4" marker-end="url(#arrow-green)"/>
+            <!-- transactions depends on users -->
+            <path d="M 140 128 Q 200 95 260 128" fill="none" stroke="#10b981" stroke-width="1.5" stroke-dasharray="4,2" opacity="0.4" marker-end="url(#arrow-green)"/>
+
+            <defs>
+              <marker id="arrow-green" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                <path d="M 0 0 L 6 3 L 0 6 Z" fill="#10b981" opacity="0.4"/>
+              </marker>
+            </defs>
+          </svg>
+
+          <!-- Bottom: Mini pipeline summary cards -->
+          <div style="display:flex;gap:10px;margin-top:8px;padding:0 4px 16px;">
+            <div style="flex:1;padding:10px 14px;background:var(--bg-tertiary);border-radius:var(--radius-sm);border:1px solid var(--border);">
+              <div style="font-size:11px;color:var(--text-tertiary);font-weight:500;">PROD-POSTGRES → DWH</div>
+              <div style="display:flex;gap:16px;margin-top:6px;">
+                <span style="font-size:12px;"><strong style="color:var(--emerald);">22</strong> <span style="color:var(--text-tertiary);">assets</span></span>
+                <span style="font-size:12px;"><strong>1.2M</strong> <span style="color:var(--text-tertiary);">rows/h</span></span>
+                <span class="status"><span class="dot green"></span><span class="label green">Running</span></span>
+              </div>
+            </div>
+            <div style="flex:1;padding:10px 14px;background:var(--bg-tertiary);border-radius:var(--radius-sm);border:1px solid var(--border);">
+              <div style="font-size:11px;color:var(--text-tertiary);font-weight:500;">PAYMENT → DWH</div>
+              <div style="display:flex;gap:16px;margin-top:6px;">
+                <span style="font-size:12px;"><strong style="color:var(--emerald);">8</strong> <span style="color:var(--text-tertiary);">assets</span></span>
+                <span style="font-size:12px;"><strong>67K</strong> <span style="color:var(--text-tertiary);">rows/h</span></span>
+                <span class="status"><span class="dot green"></span><span class="label green">Running</span></span>
+              </div>
+            </div>
+            <div style="flex:1;padding:10px 14px;background:var(--bg-tertiary);border-radius:var(--radius-sm);border:1px solid var(--border);">
+              <div style="font-size:11px;color:var(--text-tertiary);font-weight:500;">CLICKHOUSE → LAKE</div>
+              <div style="display:flex;gap:16px;margin-top:6px;">
+                <span style="font-size:12px;"><strong style="color:var(--emerald);">12</strong> <span style="color:var(--text-tertiary);">assets</span></span>
+                <span style="font-size:12px;"><strong>430K</strong> <span style="color:var(--text-tertiary);">rows/h</span></span>
+                <span class="status"><span class="dot green"></span><span class="label green">Running</span></span>
+              </div>
+            </div>
+            <div style="flex:1;padding:10px 14px;background:var(--bg-tertiary);border-radius:var(--radius-sm);border:1px solid var(--border);">
+              <div style="font-size:11px;color:var(--text-tertiary);font-weight:500;">NOTIF → DWH</div>
+              <div style="display:flex;gap:16px;margin-top:6px;">
+                <span style="font-size:12px;"><strong style="color:var(--amber);">6</strong> <span style="color:var(--text-tertiary);">assets</span></span>
+                <span style="font-size:12px;"><strong>8K</strong> <span style="color:var(--text-tertiary);">rows/h</span></span>
+                <span class="status"><span class="dot amber"></span><span class="label amber">Degraded</span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Asset Detail Panel (collapsible) -->
+      <div class="card mt-4">
+        <div class="card-header">
+          <h3>Asset: analytics.transactions</h3>
+          <div class="flex items-center gap-2">
+            <span class="status"><span class="dot green"></span><span class="label green">Materialized 2 min ago</span></span>
+            <button class="btn btn-ghost btn-xs">View Run →</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="grid-2" style="margin-bottom:0;">
+            <div>
+              <div class="text-sm" style="font-weight:600;color:var(--text-primary);margin-bottom:8px;">Upstream Assets</div>
+              <div class="flex" style="flex-wrap:wrap;gap:6px;">
+                <span class="tag green" style="padding:5px 12px;">source: transactions</span>
+                <span class="tag green" style="padding:5px 12px;">stg_transactions</span>
+              </div>
+            </div>
+            <div>
+              <div class="text-sm" style="font-weight:600;color:var(--text-primary);margin-bottom:8px;">Downstream</div>
+              <div class="flex" style="flex-wrap:wrap;gap:6px;">
+                <span class="tag" style="padding:5px 12px;background:var(--bg-tertiary);color:var(--text-secondary);">(none — terminal asset)</span>
+              </div>
+            </div>
+          </div>
+          <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+            <div class="text-sm" style="font-weight:600;color:var(--text-primary);margin-bottom:6px;">Latest Run</div>
+            <table>
+              <thead>
+                <tr><th>Run ID</th><th>Status</th><th>Rows</th><th>Duration</th><th>Error</th></tr>
+              </thead>
+              <tbody>
+                <tr><td class="font-mono text-sm">run-2026-06-12-12-34-22</td><td><span class="status"><span class="dot green"></span><span class="label green">Success</span></span></td><td class="font-mono">12,345</td><td class="font-mono text-sm">2.3s</td><td class="text-tertiary">—</td></tr>
+                <tr><td class="font-mono text-sm">run-2026-06-12-12-29-20</td><td><span class="status"><span class="dot green"></span></span></td><td class="font-mono">11,890</td><td class="font-mono text-sm">2.1s</td><td class="text-tertiary">—</td></tr>
+                <tr><td class="font-mono text-sm">run-2026-06-12-12-24-18</td><td><span class="status"><span class="dot red"></span><span class="label red">Failed</span></span></td><td class="font-mono">—</td><td class="font-mono text-sm">12.5s</td><td class="text-sm" style="color:var(--red);">connection timeout to source</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================== SETTINGS ============================== -->
+    <div class="page" id="page-settings">
+      <div class="page-header">
+        <div>
+          <h1>Settings</h1>
+          <div class="subtitle">Manage your Arus instance, users, and notifications</div>
+        </div>
+      </div>
+
+      <div class="settings-group">
+        <h3>General</h3>
+        <div class="settings-row">
+          <div class="sr-label">Pipeline Name Prefix <div class="sr-desc">Prefix added to all auto-generated pipeline names</div></div>
+          <div class="sr-value font-mono" style="background:var(--bg-input);padding:4px 10px;border-radius:4px;border:1px solid var(--border);">arus-prod-</div>
+        </div>
+        <div class="settings-row">
+          <div class="sr-label">Default Sync Interval <div class="sr-desc">How often pipelines check for changes</div></div>
+          <div class="sr-value">Every 5 minutes</div>
+        </div>
+        <div class="settings-row">
+          <div class="sr-label">Auto-discover New Tables <div class="sr-desc">Automatically detect and sync new tables in registered sources</div></div>
+          <button class="toggle on" onclick="this.classList.toggle('on')"></button>
+        </div>
+        <div class="settings-row">
+          <div class="sr-label">Schema Drift Detection <div class="sr-desc">Alert when source table schema changes</div></div>
+          <button class="toggle on" onclick="this.classList.toggle('on')"></button>
+        </div>
+      </div>
+
+      <div class="settings-group">
+        <h3>Notifications</h3>
+        <div class="settings-row">
+          <div class="sr-label">Pipeline Failures <div class="sr-desc">Send alert when a pipeline run fails</div></div>
+          <button class="toggle on" onclick="this.classList.toggle('on')"></button>
+        </div>
+        <div class="settings-row">
+          <div class="sr-label">Schema Drift <div class="sr-desc">Notify when source schema changes detected</div></div>
+          <button class="toggle on" onclick="this.classList.toggle('on')"></button>
+        </div>
+        <div class="settings-row">
+          <div class="sr-label">Daily Digest <div class="sr-desc">Daily summary of all pipeline activity</div></div>
+          <button class="toggle" onclick="this.classList.toggle('on')"></button>
+        </div>
+      </div>
+
+      <div class="settings-group">
+        <h3>Users & Access</h3>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Last Active</th><th></th></tr></thead>
+              <tbody>
+                <tr><td><span style="font-weight:500;color:var(--text-primary);">Endang Suwarna</span></td><td class="text-sm">endang@aruspipeline.io</td><td><span class="tag purple">Admin</span></td><td class="text-sm">now</td><td><button class="btn btn-ghost btn-xs">Edit</button></td></tr>
+                <tr><td><span style="font-weight:500;color:var(--text-primary);">Rina Wijaya</span></td><td class="text-sm">rina@aruspipeline.io</td><td><span class="tag blue">Engineer</span></td><td class="text-sm">1h ago</td><td><button class="btn btn-ghost btn-xs">Edit</button></td></tr>
+                <tr><td><span style="font-weight:500;color:var(--text-primary);">Budi Santoso</span></td><td class="text-sm">budi@aruspipeline.io</td><td><span class="tag blue">Engineer</span></td><td class="text-sm">3h ago</td><td><button class="btn btn-ghost btn-xs">Edit</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== MODAL: Add Source ===== -->
+<div class="modal-overlay" id="modal-addSource">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Add Data Source</h2>
+      <button class="modal-close" onclick="closeModal('addSource')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Source Type</label>
+        <select style="width:100%;">
+          <option>PostgreSQL</option>
+          <option>MySQL</option>
+          <option>ClickHouse</option>
+          <option>BigQuery</option>
+          <option>REST API</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Source Name</label>
+        <input type="text" placeholder="e.g. Production PostgreSQL" value="Production — User Service">
+      </div>
+      <div class="form-group">
+        <label>Connection String</label>
+        <input type="text" placeholder="postgresql://user:pass@host:5432/db" value="postgresql://arus:•••@usr-db.internal:5432/arus_users">
+      </div>
+      <div class="form-group">
+        <label>Sync Method</label>
+        <select>
+          <option>Auto-detect (recommended)</option>
+          <option>Incremental by updated_at</option>
+          <option>Full refresh only</option>
+          <option>WAL / CDC (if supported)</option>
+        </select>
+        <div class="hint">Auto-detect scans all tables and selects the best sync mode per table</div>
+      </div>
+      <div class="form-group">
+        <label>Advanced — Table Filters</label>
+        <input type="text" placeholder="Include / exclude patterns (e.g. +users, -audit_*)" value="+*, -audit_*, -temp_*">
+        <div class="hint">Only matching tables will be synced</div>
+      </div>
+      <div class="form-group">
+        <label>Sync Interval</label>
+        <select>
+          <option>Every 1 minute</option>
+          <option selected>Every 5 minutes</option>
+          <option>Every 15 minutes</option>
+          <option>Every 30 minutes</option>
+          <option>Every 1 hour</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('addSource')">Cancel</button>
+      <button class="btn btn-primary" onclick="closeModal('addSource')">Add Source</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: Source Detail ===== -->
+<div class="modal-overlay" id="modal-sourceDetail">
+  <div class="modal" style="width:580px;">
+    <div class="modal-header">
+      <h2>Production PostgreSQL</h2>
+      <button class="modal-close" onclick="closeModal('sourceDetail')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <div class="text-sm text-tertiary">Connection</div>
+          <div class="font-mono text-sm" style="color:var(--text-primary);">prod-db-primary.internal:5432 / arus_prod</div>
+        </div>
+        <span class="status"><span class="dot green"></span><span class="label green">Connected</span></span>
+      </div>
+      <div class="form-group">
+        <label>Discovered Tables</label>
+        <div class="text-sm text-tertiary mb-4">22 tables found · <a href="#" style="color:var(--emerald);">rescan</a></div>
+        <div style="max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius-sm);">
+          <div style="display:flex;flex-wrap:wrap;gap:6px;padding:12px;">
+            <span class="checkbox-item checked"><input type="checkbox" checked> users</span>
+            <span class="checkbox-item checked"><input type="checkbox" checked> transactions</span>
+            <span class="checkbox-item checked"><input type="checkbox" checked> orders</span>
+            <span class="checkbox-item checked"><input type="checkbox" checked> products</span>
+            <span class="checkbox-item"><input type="checkbox"> audit_logs</span>
+            <span class="checkbox-item checked"><input type="checkbox" checked> sessions</span>
+            <span class="checkbox-item checked"><input type="checkbox" checked> invoices</span>
+            <span class="checkbox-item checked"><input type="checkbox" checked> refunds</span>
+            <span class="checkbox-item checked"><input type="checkbox" checked> subscriptions</span>
+            <span class="checkbox-item checked"><input type="checkbox" checked> payments</span>
+            <span class="checkbox-item"><input type="checkbox"> backup_logs</span>
+            <span class="checkbox-item checked"><input type="checkbox" checked> notifications</span>
+          </div>
+        </div>
+        <div class="hint">Uncheck tables you don't want to sync. New tables auto-discovered on next scan.</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('sourceDetail')">Cancel</button>
+      <button class="btn btn-primary" onclick="closeModal('sourceDetail')">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: Add Pipeline ===== -->
+<div class="modal-overlay" id="modal-addPipeline">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>New Pipeline</h2>
+      <button class="modal-close" onclick="closeModal('addPipeline')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Source</label>
+        <select>
+          <option>Production PostgreSQL (22 tables)</option>
+          <option>Payment Service (8 tables)</option>
+          <option>Analytics ClickHouse (12 tables)</option>
+          <option>Notification Service (6 tables)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Destination</label>
+        <select>
+          <option>Data Warehouse (PostgreSQL)</option>
+          <option>Data Lake (S3 / Parquet)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Pipeline Name</label>
+        <input type="text" placeholder="Auto-generated based on source → destination" value="prod-postgres → Data Warehouse">
+      </div>
+      <div class="form-group">
+        <label>Tables to Sync</label>
+        <div class="hint">All enabled tables from the source will be synced. Configure per-table overrides after creation.</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('addPipeline')">Cancel</button>
+      <button class="btn btn-primary" onclick="closeModal('addPipeline')">Create Pipeline</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function switchPage(pageId, el) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('page-' + pageId).classList.add('active');
+    if (el) el.classList.add('active');
+    else {
+      document.querySelector(`.nav-item[data-page="${pageId}"]`)?.classList.add('active');
+    }
+    // Update breadcrumb
+    const names = { dashboard: 'Dashboard', sources: 'Sources', destinations: 'Destinations', pipelines: 'Pipelines', 'pipeline-detail': 'Pipeline Detail', dag: 'DAG View', settings: 'Settings' };
+    document.getElementById('breadcrumbCurrent').textContent = names[pageId] || pageId;
+  }
+  function openModal(name) {
+    document.getElementById('modal-' + name).classList.add('show');
+  }
+  function closeModal(name) {
+    document.getElementById('modal-' + name).classList.remove('show');
+  }
+  function closeLogin() {
+    document.getElementById('loginPage').classList.remove('show');
+  }
+  // Close modals on overlay click
+  document.querySelectorAll('.modal-overlay').forEach(m => {
+    m.addEventListener('click', function(e) {
+      if (e.target === this) this.classList.remove('show');
+    });
+  });
+  // Checkbox styling
+  document.querySelectorAll('.checkbox-item').forEach(el => {
+    el.addEventListener('click', function(e) {
+      if (e.target.tagName !== 'INPUT') {
+        const cb = this.querySelector('input');
+        cb.checked = !cb.checked;
+        this.classList.toggle('checked');
+      }
+    });
+  });
+</script>
+
+</body>
+</html>
