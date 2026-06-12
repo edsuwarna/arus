@@ -14,7 +14,7 @@ function renderSidebar(user) {
 
   const navItems = [
     { section: 'Overview' },
-    { label: 'Dashboard', icon: '◷', page: 'dashboard', badge: null },
+    { label: 'Dashboard', icon: '⊡', page: 'dashboard', badge: null },
     { section: 'Connect' },
     { label: 'Sources', icon: '⎔', page: 'sources', badge: badges.sources },
     { label: 'Destinations', icon: '▣', page: 'destinations', badge: badges.destinations },
@@ -23,14 +23,14 @@ function renderSidebar(user) {
     { label: 'Run History', icon: '⊞', page: 'runs', badge: null },
     { label: 'DAG View', icon: '⟐', page: 'dag', badge: badges.dag },
     { section: 'Monitor' },
-    { label: 'Notifications', icon: '🔔', page: 'notifications', badge: null },
+    { label: 'Notifications', icon: '⊚', page: 'notifications', badge: null },
   ];
 
   // Only admin can see Configure section
   if (isAdmin) {
     navItems.push({ section: 'Configure' });
-    navItems.push({ label: 'Users', icon: '👥', page: 'users', badge: null });
-    navItems.push({ label: 'Settings', icon: '⚙', page: 'settings', badge: null });
+    navItems.push({ label: 'Users', icon: '⊛', page: 'users', badge: null });
+    navItems.push({ label: 'Settings', icon: '⊟', page: 'settings', badge: null });
   }
 
   const currentPage = hash.startsWith('pipeline/') ? 'runs' : hash;
