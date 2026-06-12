@@ -18,6 +18,8 @@ class Source(Base):
     username = Column(String(255), nullable=False)
     password_enc = Column(Text, nullable=False)
     ssl = Column(Boolean, default=False)
+    uri = Column(Text, nullable=True)  # MongoDB connection string
+    auth_source = Column(String(100), nullable=True)  # MongoDB auth database
     sync_method = Column(String(20), default="auto")
     table_include = Column(ARRAY(String), default=[])
     table_exclude = Column(ARRAY(String), default=[])

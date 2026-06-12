@@ -268,7 +268,7 @@ function showAddSourceModal() {
       <div class="modal-body">
         <div class="form-group">
           <label>Source Type</label>
-          <select id="srcType">
+          <select id="srcType" onchange="updateSourceForm()">
             <option value="postgresql">PostgreSQL</option>
             <option value="mysql">MySQL</option>
             <option value="mariadb">MariaDB</option>
@@ -280,12 +280,17 @@ function showAddSourceModal() {
           <label>Source Name</label>
           <input type="text" id="srcName" placeholder="Production — Database Name" required>
         </div>
-        <div class="form-group">
+        <div class="form-group" id="srcHostGroup">
           <label>Host</label>
-          <input type="text" id="srcHost" placeholder="host.internal:5432" value="localhost:5432">
+          <input type="text" id="srcHost" placeholder="db.internal.example.com">
+        </div>
+        <div class="form-group" id="srcMongoUriGroup" style="display:none">
+          <label>MongoDB URI</label>
+          <input type="text" id="srcMongoUri" placeholder="mongodb://user:pass@host:27017/db?authSource=admin">
+          <div class="hint">Full connection string — host, port, auth source all in one.</div>
         </div>
         <div class="form-row">
-          <div class="form-group">
+          <div class="form-group" id="srcDatabaseGroup">
             <label>Database</label>
             <input type="text" id="srcDatabase" placeholder="database_name">
           </div>
@@ -303,6 +308,11 @@ function showAddSourceModal() {
             <label>Password</label>
             <input type="password" id="srcPassword">
           </div>
+        </div>
+        <div class="form-group" id="srcAuthSourceGroup" style="display:none">
+          <label>Authentication Database (authSource)</label>
+          <input type="text" id="srcAuthSource" placeholder="admin" value="admin">
+          <div class="hint">MongoDB authentication database. Usually "admin".</div>
         </div>
         <div class="form-group">
           <label>Sync Method</label>
@@ -327,18 +337,62 @@ function showAddSourceModal() {
   `);
 }
 
+// Dynamic source form: adjust fields + port per type
+window.updateSourceForm = function() {
+  const type = document.getElementById('srcType').value;
+  const portInput = document.getElementById('srcPort');
+  const hostGroup = document.getElementById('srcHostGroup');
+  const mongoUriGroup = document.getElementById('srcMongoUriGroup');
+  const dbGroup = document.getElementById('srcDatabaseGroup');
+  const authGroup = document.getElementById('srcAuthSourceGroup');
+
+  const ports = { postgresql: 5432, mysql: 3306, mariadb: 3306, mongodb: 27017, clickhouse: 8123 };
+  portInput.value = ports[type] || 5432;
+
+  if (type === 'mongodb') {
+    hostGroup.style.display = 'none';
+    mongoUriGroup.style.display = '';
+    dbGroup.style.display = 'none';
+    authGroup.style.display = '';
+  } else {
+    hostGroup.style.display = '';
+    mongoUriGroup.style.display = 'none';
+    dbGroup.style.display = '';
+    authGroup.style.display = 'none';
+  }
+};
+
 async function handleAddSource(event) {
   event.preventDefault();
-  const data = {
-    name: document.getElementById('srcName').value,
-    type: document.getElementById('srcType').value,
-    host: document.getElementById('srcHost').value.split(':')[0] || 'localhost',
-    port: parseInt(document.getElementById('srcPort').value) || 5432,
-    database: document.getElementById('srcDatabase').value,
-    username: document.getElementById('srcUser').value,
-    password: document.getElementById('srcPassword').value,
-    sync_method: document.getElementById('srcSync').value,
-  };
+  const type = document.getElementById('srcType').value;
+  let data;
+
+  if (type === 'mongodb') {
+    const uri = document.getElementById('srcMongoUri').value;
+    data = {
+      name: document.getElementById('srcName').value,
+      type: 'mongodb',
+      uri: uri,
+      host: 'localhost',
+      port: 27017,
+      database: '',
+      username: '',
+      password: '',
+      auth_source: document.getElementById('srcAuthSource').value || 'admin',
+      sync_method: document.getElementById('srcSync').value,
+    };
+  } else {
+    data = {
+      name: document.getElementById('srcName').value,
+      type: type,
+      host: document.getElementById('srcHost').value || 'localhost',
+      port: parseInt(document.getElementById('srcPort').value) || 5432,
+      database: document.getElementById('srcDatabase').value,
+      username: document.getElementById('srcUser').value,
+      password: document.getElementById('srcPassword').value,
+      sync_method: document.getElementById('srcSync').value,
+    };
+  }
 
   try {
     const result = await API.post('/sources', data);

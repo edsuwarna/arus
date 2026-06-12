@@ -21,30 +21,39 @@ class MongoDBSource(BaseSource):
 
     def connect(self, config: dict) -> bool:
         self.config = config
-        self.db_name = config["database"]
+        self.db_name = config.get("database", "")
 
-        host = config.get("host", "localhost")
-        port = config.get("port", 27017)
-        username = config.get("username", "")
-        password = config.get("password", "")
-        ssl = config.get("ssl", False)
-
-        # Build MongoDB URI
-        if username and password:
-            uri = (
-                f"mongodb://{username}:{password}@{host}:{port}/"
-                f"{self.db_name}?authSource={self.db_name}"
+        # If full URI is provided (from MongoDB-specific form), use it directly
+        if config.get("uri"):
+            self.client = MongoClient(
+                config["uri"],
+                serverSelectionTimeoutMS=5000,
             )
         else:
-            uri = f"mongodb://{host}:{port}/{self.db_name}"
+            host = config.get("host", "localhost")
+            port = config.get("port", 27017)
+            username = config.get("username", "")
+            password = config.get("password", "")
+            ssl = config.get("ssl", False)
+            auth_source = config.get("auth_source", "admin")
 
-        if ssl:
-            uri += "&tls=true" if "?" in uri else "?tls=true"
+            # Build MongoDB URI
+            if username and password:
+                uri = (
+                    f"mongodb://{username}:{password}@{host}:{port}/"
+                    f"{self.db_name}?authSource={auth_source}"
+                )
+            else:
+                uri = f"mongodb://{host}:{port}/{self.db_name}"
 
-        self.client = MongoClient(uri, serverSelectionTimeoutMS=5000)
+            if ssl:
+                uri += "&tls=true" if "?" in uri else "?tls=true"
+
+            self.client = MongoClient(uri, serverSelectionTimeoutMS=5000)
+
         # Force check — will raise on failure
         self.client.admin.command("ping")
-        self.db = self.client[self.db_name]
+        self.db = self.client[self.db_name] if self.db_name else None
         return True
 
     def test_connection(self) -> bool:
@@ -55,6 +64,8 @@ class MongoDBSource(BaseSource):
             return False
 
     def discover_tables(self) -> list[TableSchema]:
+        if not self.db:
+            return []
         tables = []
         for collection_name in self.db.list_collection_names():
             try:

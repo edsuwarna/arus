@@ -18,6 +18,8 @@ class SourceService:
             "password": decrypt_password(source.password_enc),
             "database": source.database,
             "ssl": source.ssl,
+            "uri": source.uri,
+            "auth_source": source.auth_source or "admin",
         }
         connector.connect(config)
         return connector

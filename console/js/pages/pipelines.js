@@ -444,7 +444,7 @@ function showAddDestinationModal() {
         <div class="form-row">
           <div class="form-group">
             <label>Type</label>
-            <select id="destType">
+            <select id="destType" onchange="updateDestForm()">
               <option value="postgresql">PostgreSQL</option>
               <option value="mysql">MySQL</option>
               <option value="clickhouse">ClickHouse</option>
@@ -476,6 +476,25 @@ function showAddDestinationModal() {
           </div>
         </div>
         <div class="form-group">
+          <hint-toggle class="form-label clickable" onclick="toggleDestAdvanced()" style="cursor:pointer;user-select:none">
+            <span id="destAdvancedArrow">▸</span> Advanced Options
+          </hint-toggle>
+          <div id="destAdvancedSection" style="display:none;margin-top:8px">
+            <div class="form-row">
+              <div class="form-group">
+                <label id="destRawLabel">Raw Schema</label>
+                <input type="text" id="destRawSchema" placeholder="staging" value="staging">
+                <div class="hint">Where raw JSON data lands.</div>
+              </div>
+              <div class="form-group">
+                <label id="destAnalyticsLabel">Analytics Schema</label>
+                <input type="text" id="destAnalyticsSchema" placeholder="analytics" value="analytics">
+                <div class="hint">Where normalized data lands.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
           <label class="form-checkbox">
             <input type="checkbox" id="destDefault"> Set as default destination
           </label>
@@ -489,6 +508,32 @@ function showAddDestinationModal() {
   `);
 }
 
+// Dynamic destination form: adjust fields + port per type
+window.updateDestForm = function() {
+  const type = document.getElementById('destType').value;
+  const portInput = document.getElementById('destPort');
+  const ports = { postgresql: 5432, mysql: 3306, clickhouse: 8123 };
+  portInput.value = ports[type] || 5432;
+
+  const rawLabel = document.getElementById('destRawLabel');
+  const analyticsLabel = document.getElementById('destAnalyticsLabel');
+  if (type === 'clickhouse') {
+    rawLabel.textContent = 'Raw Database';
+    analyticsLabel.textContent = 'Analytics Database';
+  } else {
+    rawLabel.textContent = 'Raw Schema';
+    analyticsLabel.textContent = 'Analytics Schema';
+  }
+};
+
+window.toggleDestAdvanced = function() {
+  const section = document.getElementById('destAdvancedSection');
+  const arrow = document.getElementById('destAdvancedArrow');
+  const isOpen = section.style.display !== 'none';
+  section.style.display = isOpen ? 'none' : '';
+  arrow.textContent = isOpen ? '▸' : '▾';
+};
+
 async function handleAddDest(event) {
   event.preventDefault();
   const data = {
@@ -499,6 +544,8 @@ async function handleAddDest(event) {
     database: document.getElementById('destDatabase').value,
     username: document.getElementById('destUser').value,
     password: document.getElementById('destPassword').value,
+    raw_schema: document.getElementById('destRawSchema')?.value || 'staging',
+    analytics_schema: document.getElementById('destAnalyticsSchema')?.value || 'analytics',
     is_default: document.getElementById('destDefault')?.checked || false,
   };
   try {

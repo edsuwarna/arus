@@ -6,12 +6,14 @@ from datetime import datetime
 class SourceCreate(BaseModel):
     name: str
     type: str
-    host: str
-    port: int = 3306
-    database: str
-    username: str
-    password: str
+    host: str = "localhost"
+    port: int = 5432
+    database: str = ""
+    username: str = ""
+    password: str = ""
     ssl: bool = False
+    uri: Optional[str] = None  # MongoDB connection string
+    auth_source: Optional[str] = "admin"  # MongoDB auth database
     sync_method: str = "auto"
     table_include: list[str] = []
     table_exclude: list[str] = []
@@ -24,6 +26,8 @@ class SourceUpdate(BaseModel):
     username: Optional[str] = None
     password: Optional[str] = None
     ssl: Optional[bool] = None
+    uri: Optional[str] = None
+    auth_source: Optional[str] = None
     sync_method: Optional[str] = None
     table_include: Optional[list[str]] = None
     table_exclude: Optional[list[str]] = None
@@ -37,6 +41,8 @@ class SourceResponse(BaseModel):
     port: int
     database: str
     status: str
+    uri: Optional[str] = None
+    auth_source: Optional[str] = None
     table_count: int = 0
     enabled_table_count: int = 0
     last_tested: Optional[datetime] = None
