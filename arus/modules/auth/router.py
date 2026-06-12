@@ -38,6 +38,15 @@ async def login(req: LoginRequest, db: Session = Depends(get_db)):
     return {"status": "ok", "data": result}
 
 
+@router.post("/refresh")
+async def refresh(refresh_token: str = Header(None, alias="X-Refresh-Token"), db: Session = Depends(get_db)):
+    if not refresh_token:
+        raise AuthError("X-Refresh-Token header required")
+    service = AuthService(UserRepository(db))
+    result = service.refresh_access_token(refresh_token)
+    return {"status": "ok", "data": result}
+
+
 @router.get("/me")
 async def me(current_user: dict = Depends(get_current_user)):
     return {"status": "ok", "data": current_user}

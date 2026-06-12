@@ -74,8 +74,9 @@ async function handleLogin(event) {
 
   try {
     const result = await API.post('/auth/login', { email, password });
-    if (result.token) {
-      localStorage.setItem('token', result.token);
+    if (result.access_token) {
+      localStorage.setItem('access_token', result.access_token);
+      if (result.refresh_token) localStorage.setItem('refresh_token', result.refresh_token);
       App.user = result.user || { email, name: email.split('@')[0], role: 'admin' };
       location.hash = 'dashboard';
       App.render();

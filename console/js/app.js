@@ -28,12 +28,13 @@ const App = {
   canWrite() { return this.user?.role === 'admin' || this.user?.role === 'editor'; },
 
   async init() {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('access_token');
     if (token) {
       try {
         this.user = await API.get('/auth/me');
       } catch {
-        localStorage.removeItem('token');
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
       }
     }
     this.render();
