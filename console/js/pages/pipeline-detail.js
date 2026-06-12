@@ -38,6 +38,14 @@ async function renderPipelineDetailPage(container, pipelineId) {
             ? `<button class="btn btn-ghost btn-sm" onclick="pauseDetailPipeline('${pipelineId}')">⏸ Pause</button>`
             : `<button class="btn btn-primary btn-sm" onclick="resumeDetailPipeline('${pipelineId}')">▶ Resume</button>`
           }
+          <div class="dropdown" style="position:relative;display:inline-block">
+            <button class="btn btn-ghost btn-sm" onclick="this.nextElementSibling.classList.toggle('show')">⋯</button>
+            <div class="dropdown-menu" style="display:none;position:absolute;right:0;top:100%;z-index:100;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:4px;min-width:160px;box-shadow:0 8px 24px rgba(0,0,0,0.3);margin-top:4px">
+              <button class="dropdown-item" style="display:block;width:100%;padding:8px 12px;font-size:12px;background:none;border:none;color:var(--text-secondary);cursor:pointer;border-radius:4px;text-align:left" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background='none'" onclick="this.closest('.dropdown-menu').classList.remove('show');fullRefreshPipeline('${pipelineId}')">🔄 Full Refresh</button>
+              <button class="dropdown-item" style="display:block;width:100%;padding:8px 12px;font-size:12px;background:none;border:none;color:var(--text-secondary);cursor:pointer;border-radius:4px;text-align:left" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background='none'" onclick="this.closest('.dropdown-menu').classList.remove('show');showBackfillModal('${pipelineId}')">📅 Backfill</button>
+              <button class="dropdown-item" style="display:block;width:100%;padding:8px 12px;font-size:12px;background:none;border:none;color:var(--text-secondary);cursor:pointer;border-radius:4px;text-align:left" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background='none'" onclick="this.closest('.dropdown-menu').classList.remove('show');showDeadLetters('${pipelineId}')">📦 Dead Letters</button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -197,3 +205,122 @@ window.triggerDetailPipeline = triggerDetailPipeline;
 window.pauseDetailPipeline = pauseDetailPipeline;
 window.resumeDetailPipeline = resumeDetailPipeline;
 window.showRunLogs = showRunLogs;
+window.fullRefreshPipeline = fullRefreshPipeline;
+window.showBackfillModal = showBackfillModal;
+window.showDeadLetters = showDeadLetters;
+
+/* ===== Full Refresh ===== */
+async function fullRefreshPipeline(id) {
+  if (!confirm('This will reset all watermarks and re-sync ALL data from source. Are you sure?')) return;
+  try {
+    const result = await API.post(`/pipelines/${id}/full-refresh`);
+    App.toast('Full refresh triggered!', 'success');
+    App.render();
+  } catch (err) {
+    App.toast(err.message, 'error');
+  }
+}
+
+/* ===== Backfill Modal ===== */
+function showBackfillModal(pipelineId) {
+  App.showModal(`
+    <div class="modal-header">
+      <h2>Backfill Pipeline</h2>
+      <button class="modal-close" onclick="App.closeModal()">✕</button>
+    </div>
+    <form onsubmit="return handleBackfill(event, '${pipelineId}')">
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Backfill From Date</label>
+          <input type="date" id="backfillDate" required style="font-weight:500">
+          <div style="font-size:12px;color:var(--text-tertiary);margin-top:4px">
+            All rows from this date onward will be re-synced from the source.
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="App.closeModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Start Backfill</button>
+      </div>
+    </form>
+  `);
+}
+
+async function handleBackfill(event, pipelineId) {
+  event.preventDefault();
+  const fromDate = document.getElementById('backfillDate').value;
+  if (!fromDate) { App.toast('Please select a date', 'error'); return false; }
+
+  const btn = event.target.querySelector('button[type="submit"]');
+  const orig = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Starting...';
+  btn.style.opacity = '0.6';
+
+  try {
+    const result = await API.post(`/pipelines/${pipelineId}/backfill`, { from: fromDate });
+    App.closeModal();
+    App.toast('Backfill triggered!', 'success');
+    App.render();
+  } catch (err) {
+    App.toast(err.message, 'error');
+    btn.disabled = false;
+    btn.textContent = orig;
+    btn.style.opacity = '1';
+  }
+  return false;
+}
+
+/* ===== Dead Letter Viewer ===== */
+async function showDeadLetters(pipelineId) {
+  App.showModal(`
+    <div class="modal-header">
+      <h2>Dead Letters</h2>
+      <button class="modal-close" onclick="App.closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="dead-letter-content" style="text-align:center;padding:20px">
+        <div class="spinner"></div>
+        <p style="color:var(--text-tertiary);font-size:13px;margin-top:12px">Loading dead letter rows...</p>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="App.closeModal()">Close</button>
+    </div>
+  `);
+
+  try {
+    const data = await API.get(`/pipelines/${pipelineId}/dead-letters?limit=50`);
+    const rows = data?.data || [];
+    const content = document.getElementById('dead-letter-content');
+    if (!content) return;
+
+    if (rows.length === 0) {
+      content.innerHTML = '<div style="padding:20px"><div style="font-size:48px;margin-bottom:12px;opacity:0.5">✅</div><h3>No Dead Letters</h3><p style="color:var(--text-tertiary);font-size:13px">All rows processed successfully.</p></div>';
+      return;
+    }
+
+    content.innerHTML = `
+      <div style="font-size:13px;margin-bottom:12px;color:var(--text-tertiary)">
+        ${rows.length} failed rows
+      </div>
+      <div style="max-height:400px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;font-size:12px">
+        ${rows.map(r => `
+          <div style="padding:10px 12px;border-bottom:1px solid var(--border);text-align:left">
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+              <span style="color:var(--text-primary);font-weight:500">${r.table_name || '-'}</span>
+              <span style="color:var(--text-tertiary);font-size:11px">${r.failed_at ? new Date(r.failed_at).toLocaleString() : '-'}</span>
+            </div>
+            <div style="background:var(--bg-primary);padding:8px;border-radius:4px;margin-bottom:4px;overflow-x:auto">
+              <pre style="margin:0;font-size:11px;color:var(--text-secondary);white-space:pre-wrap;word-break:break-all">${JSON.stringify(r.row_data || {}, null, 1).slice(0, 500)}</pre>
+            </div>
+            <div style="color:var(--red);font-size:11px">${r.error_text || '-'}</div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  } catch (err) {
+    const content = document.getElementById('dead-letter-content');
+    if (content) content.innerHTML = `<div style="padding:20px"><div style="font-size:48px;margin-bottom:12px;opacity:0.5">⚠️</div><h3>Error</h3><p style="color:var(--text-tertiary);font-size:13px">${err.message}</p></div>`;
+  }
+}

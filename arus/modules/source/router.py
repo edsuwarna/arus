@@ -8,6 +8,7 @@ from arus.modules.source.schemas import SourceCreate, SourceUpdate, TablesUpdate
 from arus.modules.source.repository import SourceRepository
 from arus.modules.source.service import SourceService
 from arus.modules.auth.router import get_current_user
+from arus.modules.destination.repository import DestinationRepository
 
 router = APIRouter(prefix="/api/sources", tags=["sources"])
 
@@ -133,3 +134,24 @@ async def discover_source(
 ):
     tables = service.discover_tables(source_id)
     return {"status": "ok", "data": {"source_id": source_id, "tables": tables}}
+
+
+@router.put("/{source_id}/tables")
+async def update_source_tables(
+    source_id: str,
+    req: TablesUpdate,
+    db: Session = Depends(get_db),
+    user: dict = Depends(get_current_user),
+):
+    """Update table selection for a source and auto-create/update the pipeline."""
+    from arus.modules.pipeline.service import PipelineService
+    from arus.modules.pipeline.repository import PipelineRepository
+
+    dest_repo = DestinationRepository(db)
+    default_dest = dest_repo.get_default()
+    if not default_dest:
+        raise NotFoundError("No default destination configured. Please add a destination first.")
+
+    pipe_service = PipelineService(PipelineRepository(db), db)
+    result = pipe_service.auto_create_from_source(source_id, str(default_dest.id), req.tables)
+    return {"status": "ok", "data": result}

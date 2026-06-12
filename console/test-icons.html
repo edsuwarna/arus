@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arus Icon Test</title>
+<style>
+  body { background: #0b0d11; color: #e8eaed; font-family: Inter, sans-serif; display: flex; flex-direction: column; align-items: center; padding: 40px; gap: 30px; }
+  h1 { color: #9aa0a8; font-weight: 500; font-size: 18px; margin-bottom: 10px; }
+  .row { display: flex; gap: 40px; flex-wrap: wrap; justify-content: center; }
+  .icon-box { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 80px; }
+  .icon-box span { font-size: 11px; color: #9aa0a8; }
+  .icon-box .preview { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
+  .icon-box .preview svg { width: 36px; height: 36px; }
+</style>
+</head>
+<body>
+  <h1>Database Icons</h1>
+  <div class="row">
+    <div class="icon-box"><div class="preview" id="pg"></div><span>PostgreSQL</span></div>
+    <div class="icon-box"><div class="preview" id="my"></div><span>MySQL</span></div>
+    <div class="icon-box"><div class="preview" id="ma"></div><span>MariaDB</span></div>
+    <div class="icon-box"><div class="preview" id="mo"></div><span>MongoDB</span></div>
+    <div class="icon-box"><div class="preview" id="ch"></div><span>ClickHouse</span></div>
+  </div>
+  <script src="js/api.js?v=4"></script>
+  <script>
+    document.getElementById('pg').innerHTML = getDbIcon('postgresql', 22);
+    document.getElementById('my').innerHTML = getDbIcon('mysql', 22);
+    document.getElementById('ma').innerHTML = getDbIcon('mariadb', 22);
+    document.getElementById('mo').innerHTML = getDbIcon('mongodb', 22);
+    document.getElementById('ch').innerHTML = getDbIcon('clickhouse', 22);
+  </script>
+</body>
+</html>

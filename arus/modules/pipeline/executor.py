@@ -13,6 +13,8 @@ Phase 2 features:
 
 import logging
 import uuid
+import signal
+from concurrent.futures import ThreadPoolExecutor, TimeoutError
 from datetime import datetime, timezone
 from typing import Optional
 
@@ -66,9 +68,65 @@ class PipelineExecutor:
             reraise=True,
         )
 
-    def run(self, pipeline_id: str, tables: list[dict]) -> dict:
+    def run(self, pipeline_id: str, tables: list[dict], timeout_seconds: int = 300) -> dict:
         run_id = str(uuid.uuid4())
         started_at = datetime.now(timezone.utc)
+        results = []
+        error = None
+        pipeline_name = self.source_config.get("safe_name", self.source_config.get("name", "unknown"))
+
+        # Wrap execution in a timeout
+        executor = ThreadPoolExecutor(max_workers=1)
+        future = executor.submit(self._run_inner, pipeline_id, run_id, started_at, tables)
+
+        try:
+            result = future.result(timeout=timeout_seconds)
+            return result
+        except TimeoutError:
+            error = f"Pipeline timed out after {timeout_seconds}s"
+            logger.error(f"Pipeline {pipeline_id}: {error}")
+            # Cancel the future (best-effort)
+            future.cancel()
+            # Send alert
+            if self.alert_mgr.is_enabled():
+                self.alert_mgr.alert_pipeline_failure(
+                    pipeline_id=pipeline_id,
+                    pipeline_name=pipeline_name,
+                    run_id=run_id,
+                    error=error,
+                )
+            return {
+                "run_id": run_id,
+                "status": "failed",
+                "error": error,
+                "results": results,
+                "started_at": started_at.isoformat() if started_at else None,
+                "finished_at": datetime.now(timezone.utc).isoformat(),
+                "duration_ms": timeout_seconds * 1000,
+            }
+        except Exception as e:
+            logger.error(f"Pipeline {pipeline_id} failed: {e}")
+            error = str(e)
+            if self.alert_mgr.is_enabled():
+                self.alert_mgr.alert_pipeline_failure(
+                    pipeline_id=pipeline_id,
+                    pipeline_name=pipeline_name,
+                    run_id=run_id,
+                    error=error or "Unknown error",
+                )
+            return {
+                "run_id": run_id,
+                "status": "failed",
+                "error": error,
+                "results": results,
+                "started_at": started_at.isoformat() if started_at else None,
+                "finished_at": datetime.now(timezone.utc).isoformat(),
+                "duration_ms": int((datetime.now(timezone.utc) - started_at).total_seconds() * 1000),
+            }
+        finally:
+            executor.shutdown(wait=False)
+
+    def _run_inner(self, pipeline_id: str, run_id: str, started_at, tables: list[dict]) -> dict:
         results = []
         error = None
         pipeline_name = self.source_config.get("safe_name", self.source_config.get("name", "unknown"))

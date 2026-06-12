@@ -11,15 +11,20 @@ async function renderSourcesPage(container) {
     window._arusBadges.sources = sources.length;
     if (window.App?.updateBadges) App.updateBadges();
 
-    // Get discovered tables from first source or selected source
+    // Get discovered tables from selected source
     let discoveredSource = null;
     let discoveredTables = [];
-    if (sources.length > 0) {
+    let selectedSourceId = getState('selectedSourceId');
+    if (!selectedSourceId && sources.length > 0) {
+      selectedSourceId = sources[0].id;
+    }
+
+    if (selectedSourceId) {
       try {
-        const disc = await API.get(`/sources/${sources[0].id}/tables`).catch(() => null);
-        if (disc?.data) {
-          discoveredSource = sources[0];
-          discoveredTables = Array.isArray(disc.data) ? disc.data : (disc.data.tables || []);
+        const disc = await API.post(`/sources/${selectedSourceId}/discover`).catch(() => null);
+        if (disc?.tables) {
+          discoveredSource = sources.find(s => s.id === selectedSourceId) || sources[0];
+          discoveredTables = Array.isArray(disc.tables) ? disc.tables : [];
         }
       } catch {}
     }
@@ -61,6 +66,10 @@ async function renderSourcesPage(container) {
               }
             </tbody>
           </table>
+        </div>
+        <div style="display:flex;justify-content:flex-end;padding:12px 16px;border-top:1px solid var(--border);gap:8px">
+          <button class="btn btn-secondary btn-sm" onclick="rescanSource('${discoveredSource.id}')">⟳ Rescan</button>
+          <button class="btn btn-primary btn-sm" onclick="saveTableSelection('${discoveredSource.id}')">💾 Save Table Selection</button>
         </div>
       </div>
       ` : sources.length > 0 ? `
@@ -146,7 +155,54 @@ async function rescanAllSources() {
 
 function selectSource(sourceId) {
   // Reload with selected source tables
+  setState('selectedSourceId', sourceId);
   App.render();
+}
+
+async function rescanSource(sourceId) {
+  try {
+    App.toast('Rescanning source...', 'info');
+    await API.post(`/sources/${sourceId}/discover`);
+    App.toast('Rescan complete!', 'success');
+    App.render();
+  } catch (err) {
+    App.toast(err.message, 'error');
+  }
+}
+
+async function saveTableSelection(sourceId) {
+  // Collect enabled tables from checkboxes
+  const tableRows = document.querySelectorAll('.table-wrap table tbody tr');
+  const tables = [];
+  tableRows.forEach(row => {
+    const checkbox = row.querySelector('input[type="checkbox"]');
+    const nameCell = row.querySelector('td:nth-child(2) span');
+    const syncCell = row.querySelector('td:nth-child(4) .tag');
+    if (nameCell && checkbox) {
+      tables.push({
+        name: nameCell.textContent.trim(),
+        enabled: checkbox.checked,
+        detected_sync: syncCell ? syncCell.textContent.toLowerCase().includes('incremental') ? 'incremental' : 'full_refresh' : 'incremental',
+      });
+    }
+  });
+
+  if (tables.length === 0) {
+    App.toast('No tables to save', 'info');
+    return;
+  }
+
+  try {
+    const btn = document.querySelector('.btn-primary');
+    if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; btn.style.opacity = '0.6'; }
+
+    await API.put(`/sources/${sourceId}/tables`, { tables });
+    App.toast('Table selection saved! Pipeline auto-created/updated.', 'success');
+    App.render();
+  } catch (err) {
+    App.toast(err.message, 'error');
+    if (btn) { btn.disabled = false; btn.textContent = '💾 Save Table Selection'; btn.style.opacity = '1'; }
+  }
 }
 
 function showSourceManage(sourceId) {
@@ -289,10 +345,13 @@ async function handleAddSource(event) {
     App.closeModal();
     App.toast('Source added! Discovering tables...', 'success');
     // Trigger discover
-    if (result?.data?.id) {
-      API.post(`/sources/${result.data.id}/discover`).catch(() => {});
+    if (result?.id) {
+      API.post(`/sources/${result.id}/discover`).catch(() => {});
     }
-    setTimeout(() => App.render(), 500);
+    setTimeout(() => {
+      setState('selectedSourceId', result?.id || '');
+      App.render();
+    }, 500);
   } catch (err) {
     App.toast(err.message, 'error');
   }
@@ -303,6 +362,8 @@ async function handleAddSource(event) {
 window.showAddSourceModal = showAddSourceModal;
 window.handleAddSource = handleAddSource;
 window.rescanAllSources = rescanAllSources;
+window.rescanSource = rescanSource;
+window.saveTableSelection = saveTableSelection;
 window.selectSource = selectSource;
 window.showSourceManage = showSourceManage;
 window.testSource = testSource;

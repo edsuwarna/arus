@@ -104,8 +104,14 @@ class PipelineService:
             raise NotFoundError(f"Pipeline {pipeline_id} not found")
         self.repo.delete(p)
 
-    def trigger_pipeline(self, pipeline_id: str) -> dict:
-        """Manually trigger a pipeline run."""
+    def trigger_pipeline(self, pipeline_id: str, force_full_refresh: bool = False, backfill_from: str = None) -> dict:
+        """Manually trigger a pipeline run.
+        
+        Args:
+            pipeline_id: The pipeline to trigger
+            force_full_refresh: If True, treat all tables as full refresh (ignore watermarks)
+            backfill_from: Optional date string (ISO format) to reset watermark to
+        """
         p = self.repo.get_by_id(pipeline_id)
         if not p:
             raise NotFoundError(f"Pipeline {pipeline_id} not found")
@@ -126,9 +132,21 @@ class PipelineService:
         for t in tables:
             wm = self.repo.get_watermark(str(p.id), t.source_table)
             columns = self._get_source_columns(source, t.source_table)
+
+            # Handle backfill / full refresh: reset watermark
+            if force_full_refresh:
+                if backfill_from:
+                    # Backfill: set watermark to the specified date
+                    self.repo.set_watermark(str(p.id), t.source_table, t.watermark_column, str(backfill_from))
+                    wm = self.repo.get_watermark(str(p.id), t.source_table)
+                else:
+                    # Full refresh: clear watermark so all rows are pulled
+                    self.repo.set_watermark(str(p.id), t.source_table, None, None)
+                    wm = None
+
             table_configs.append({
                 "source_table": t.source_table,
-                "sync_mode": t.sync_mode,
+                "sync_mode": "full_refresh" if force_full_refresh else t.sync_mode,
                 "watermark_column": t.watermark_column,
                 "watermark_value": wm.watermark_value if wm else None,
                 "columns": columns,
@@ -160,7 +178,7 @@ class PipelineService:
 
         # Execute with db_session for Phase 2 features
         executor = PipelineExecutor(source_config, dest_config, db_session=self.db)
-        result = executor.run(str(p.id), table_configs)
+        result = executor.run(str(p.id), table_configs, timeout_seconds=p.timeout_seconds or 300)
 
         return result
 
