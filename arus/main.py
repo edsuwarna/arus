@@ -50,8 +50,6 @@ async def log_requests(request: Request, call_next):
 async def startup():
     configure_logging()
     init_db()
-    # re-apply after alembic's fileConfig() call in env.py
-    configure_logging()
     ensure_settings_table()
     _seed_admin()
     _seed_default_destination()

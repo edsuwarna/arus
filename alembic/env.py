@@ -34,8 +34,10 @@ db_url = (
 )
 config.set_main_option("sqlalchemy.url", db_url)
 
+# Skip alembic's fileConfig — we manage logging ourselves via
+# arus/__init__.py's configure_logging().
 if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
+    pass  # fileConfig(config.config_file_name)
 
 target_metadata = Base.metadata
 
