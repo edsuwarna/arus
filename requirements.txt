@@ -4,6 +4,8 @@ sqlalchemy==2.0.35
 alembic==1.13.0
 psycopg2-binary==2.9.9
 pymysql==1.1.1
+pymongo==4.10.0
+clickhouse-connect==0.8.0
 apscheduler==3.10.4
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4

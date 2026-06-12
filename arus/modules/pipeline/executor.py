@@ -196,7 +196,11 @@ class PipelineExecutor:
                         continue
 
                 # --- Schema Drift Detection (Phase 2) ---
-                drift_cols = self._detect_schema_drift(dest, safe_name, table, columns)
+                try:
+                    drift_cols = self._detect_schema_drift(dest, safe_name, table, columns)
+                except Exception as e:
+                    logger.warning(f"Schema drift detection skipped (unsupported dest type): {e}")
+                    drift_cols = []
                 if drift_cols:
                     if settings.auto_alter_schema:
                         try:
@@ -283,6 +287,20 @@ class PipelineExecutor:
                     if wm_col and wm_col in all_rows[-1]:
                         last_val = all_rows[-1][wm_col]
                         dest.update_watermark(pipeline_id, table, last_val)
+                        # Also persist watermark in central DB so pipeline
+                        # service can read it back on next run regardless of
+                        # destination type (e.g. ClickHouse, MySQL).
+                        if self.db_session:
+                            try:
+                                from arus.modules.pipeline.repository import PipelineRepository
+                                wm_repo = PipelineRepository(self.db_session)
+                                wm_repo.set_watermark(
+                                    pipeline_id, table, wm_col, str(last_val)
+                                )
+                            except Exception as wm_err:
+                                logger.warning(
+                                    f"Central watermark persist failed: {wm_err}"
+                                )
 
                 # --- Data Quality Checks (Phase 2) ---
                 if self.db_session:
