@@ -1,5 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+import time
+import logging
 
 from arus.shared.db.session import init_db, SessionLocal
 from arus.shared.exceptions import ArusError
@@ -19,6 +21,28 @@ from arus.modules.destination.repository import DestinationRepository
 from arus.modules.pipeline.scheduler import start_scheduler
 
 app = FastAPI(title="Arus API", version="0.1.0")
+
+
+# ── Request logging middleware ──────────────────────────────────────────
+logger = logging.getLogger("arus.api")
+
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    start = time.time()
+    response = await call_next(request)
+    duration = time.time() - start
+
+    # Skip health-check noise at INFO
+    if request.url.path == "/api/health" and response.status_code == 200:
+        logger.debug(
+            f"{request.method} {request.url.path} → {response.status_code} ({duration*1000:.0f}ms)"
+        )
+    else:
+        logger.info(
+            f"{request.method} {request.url.path} → {response.status_code} ({duration*1000:.0f}ms)"
+        )
+    return response
 
 
 @app.on_event("startup")
@@ -83,6 +107,17 @@ async def arus_error_handler(request: Request, exc: ArusError):
     return JSONResponse(
         status_code=exc.status_code,
         content={"status": "error", "error": {"code": exc.code, "message": str(exc)}},
+    )
+
+
+@app.exception_handler(Exception)
+async def unhandled_error_handler(request: Request, exc: Exception):
+    logger.exception(
+        f"{request.method} {request.url.path} → 500 Unhandled: {exc}"
+    )
+    return JSONResponse(
+        status_code=500,
+        content={"status": "error", "error": {"code": "INTERNAL_ERROR", "message": "Internal server error"}},
     )
 
 
