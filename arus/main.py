@@ -6,6 +6,7 @@ import logging
 from arus.shared.db.session import init_db, SessionLocal
 from arus.shared.exceptions import ArusError
 from arus.shared.crypto import encrypt_password
+from arus import configure_logging
 from arus.modules.auth.repository import UserRepository
 from arus.modules.auth.service import AuthService
 from arus.modules.auth.router import router as auth_router
@@ -47,6 +48,7 @@ async def log_requests(request: Request, call_next):
 
 @app.on_event("startup")
 async def startup():
+    configure_logging()
     init_db()
     ensure_settings_table()
     _seed_admin()
