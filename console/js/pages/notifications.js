@@ -368,14 +368,17 @@ async function showPipelineNotifConfig(pipelineId, pipelineName) {
     const linkedHtml = linkList.length > 0 ? linkList.map(l => {
       const events = (l.event_types || []).join(', ');
       return `
-        <div class="pipeline-item" style="margin-bottom:8px;padding:10px 14px">
-          <div class="pi-info">
-            <div class="pi-name">${getNotifIcon(l.target_type)} ${l.target_name} <span class="tag ${l.target_type === 'telegram' ? 'blue' : l.target_type === 'discord' ? 'purple' : 'green'}" style="font-size:10px">${l.target_type}</span></div>
-            <div class="pi-meta" style="font-size:11px">Events: <span style="color:var(--emerald)">${events}</span></div>
-          </div>
-          <div style="display:flex;gap:4px">
-            <button class="btn btn-ghost btn-xs" onclick="editPipelineNotifLink('${l.id}', '${pipelineId}', '${pipelineName}')">✏</button>
-            <button class="btn btn-ghost btn-xs" style="color:var(--red)" onclick="deletePipelineNotifLink('${l.id}', '${pipelineId}')">✕</button>
+        <div class="notif-item" style="margin-bottom:8px">
+          <label class="notif-target-label">
+            <span class="notif-target-name">${getNotifIcon(l.target_type)} ${l.target_name}</span>
+            <span class="tag ${l.target_type === 'telegram' ? 'blue' : l.target_type === 'discord' ? 'purple' : 'green'}" style="font-size:10px">${l.target_type}</span>
+            <span style="margin-left:auto;display:flex;gap:4px">
+              <button class="btn btn-ghost btn-xs" onclick="editPipelineNotifLink('${l.id}', '${pipelineId}', '${pipelineName}')">✏</button>
+              <button class="btn btn-ghost btn-xs" style="color:var(--red)" onclick="deletePipelineNotifLink('${l.id}', '${pipelineId}')">✕</button>
+            </span>
+          </label>
+          <div style="font-size:11px;color:var(--text-tertiary);padding:2px 0 0 26px">
+            Events: <span style="color:var(--emerald)">${events}</span>
           </div>
         </div>
       `;
@@ -406,12 +409,12 @@ async function showPipelineNotifConfig(pipelineId, pipelineName) {
           </div>
           <div class="form-group">
             <label>Events</label>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
-              <label class="form-checkbox"><input type="checkbox" name="events" value="failure" checked> ❌ Failure</label>
-              <label class="form-checkbox"><input type="checkbox" name="events" value="success"> ✅ Success</label>
-              <label class="form-checkbox"><input type="checkbox" name="events" value="dead_letter"> 📦 Dead Letter</label>
-              <label class="form-checkbox"><input type="checkbox" name="events" value="schema_drift"> 🔀 Schema Drift</label>
-              <label class="form-checkbox"><input type="checkbox" name="events" value="quality_breach"> 📉 Quality Breach</label>
+            <div class="notif-event-grid">
+              <label class="form-checkbox"><input type="checkbox" name="events" value="failure" checked> ✕ Failure</label>
+              <label class="form-checkbox"><input type="checkbox" name="events" value="success"> ✓ Success</label>
+              <label class="form-checkbox"><input type="checkbox" name="events" value="dead_letter"> ⎔ Dead Letter</label>
+              <label class="form-checkbox"><input type="checkbox" name="events" value="schema_drift"> ⇄ Schema Drift</label>
+              <label class="form-checkbox"><input type="checkbox" name="events" value="quality_breach"> ◈ Quality Breach</label>
             </div>
           </div>
           <div class="modal-actions" style="margin-top:12px;">

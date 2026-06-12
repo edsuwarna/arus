@@ -1400,6 +1400,62 @@ input[type="checkbox"] {
   cursor: pointer;
 }
 
+/* ===== NOTIFICATION EVENT GRID ===== */
+.notif-event-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 16px;
+  margin-top: 6px;
+}
+
+.notif-event-grid .form-checkbox {
+  font-size: 12px;
+  gap: 6px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  transition: background var(--transition);
+  color: var(--text-secondary);
+}
+
+.notif-event-grid .form-checkbox:has(input:checked) {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+/* Last item spans full width when alone on row (e.g. 5 of 5) */
+.notif-event-grid .form-checkbox:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
+
+.notif-item {
+  margin-bottom: 8px;
+  padding: 10px 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.notif-item .notif-target-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 0;
+  cursor: pointer;
+}
+
+.notif-item .notif-target-label .notif-target-name {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+@media (max-width: 480px) {
+  .notif-event-grid { grid-template-columns: 1fr; }
+  .notif-event-grid .form-checkbox:last-child:nth-child(odd) {
+    grid-column: 1;
+  }
+}
+
 /* ===== RESPONSIVE ===== */
 @media (max-width: 1024px) {
   .stat-grid { grid-template-columns: repeat(2, 1fr); }

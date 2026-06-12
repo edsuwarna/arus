@@ -382,22 +382,20 @@ async function showAddPipelineModal() {
                   </div>`;
                 }
                 return nt.map(t => `
-                  <div class="pipeline-item" style="margin-bottom:8px;padding:10px 14px">
-                    <label class="form-checkbox" style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+                  <div class="notif-item">
+                    <label class="notif-target-label">
                       <input type="checkbox" class="cpNotifTarget" value="${t.id}">
-                      <div class="pi-info">
-                        <div class="pi-name">${getNotifIcon(t.type)} ${t.name} <span class="tag ${t.type === 'telegram' ? 'blue' : t.type === 'discord' ? 'purple' : 'green'}" style="font-size:10px">${t.type}</span></div>
-                      </div>
+                      <span class="notif-target-name">${getNotifIcon(t.type)} ${t.name}</span>
+                      <span class="tag ${t.type === 'telegram' ? 'blue' : t.type === 'discord' ? 'purple' : 'green'}" style="font-size:10px">${t.type}</span>
                     </label>
-                    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-left:24px;font-size:12px">
-                      <label class="form-checkbox"><input type="checkbox" class="cpNotifEvt_${t.id}" value="failure" checked> ❌ Failure</label>
-                      <label class="form-checkbox"><input type="checkbox" class="cpNotifEvt_${t.id}" value="success"> ✅ Success</label>
-                      <label class="form-checkbox"><input type="checkbox" class="cpNotifEvt_${t.id}" value="dead_letter"> 📦 Dead Letter</label>
-                      <label class="form-checkbox"><input type="checkbox" class="cpNotifEvt_${t.id}" value="schema_drift"> 🔀 Schema Drift</label>
-                      <label class="form-checkbox"><input type="checkbox" class="cpNotifEvt_${t.id}" value="quality_breach"> 📉 Quality Breach</label>
+                    <div class="notif-event-grid">
+                      <label class="form-checkbox"><input type="checkbox" class="cpNotifEvt_${t.id}" value="failure" checked> ✕ Failure</label>
+                      <label class="form-checkbox"><input type="checkbox" class="cpNotifEvt_${t.id}" value="success"> ✓ Success</label>
+                      <label class="form-checkbox"><input type="checkbox" class="cpNotifEvt_${t.id}" value="dead_letter"> ⎔ Dead Letter</label>
+                      <label class="form-checkbox"><input type="checkbox" class="cpNotifEvt_${t.id}" value="schema_drift"> ⇄ Schema Drift</label>
+                      <label class="form-checkbox"><input type="checkbox" class="cpNotifEvt_${t.id}" value="quality_breach"> ◈ Quality Breach</label>
                     </div>
-                  </div>
-                `).join('');
+                  </div>`).join('');
               })()}
             </div>
           </div>
