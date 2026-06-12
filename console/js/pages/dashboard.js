@@ -15,20 +15,21 @@ async function renderDashboardPage(container) {
     const activePipelines = s.active_pipelines || 0;
     const rowsSynced = s.rows_synced_24h || 0;
     const failedRuns = s.failed_runs_24h || 0;
-    const totalTables = s.total_tables || 0;
-    const totalSources = s.total_sources || activeSources;
+    const totalTables = s.total_tables_synced || 0;
+    const totalSources = s.total_sources || 0;
+    const totalDestinations = s.total_destinations || 0;
 
-    // Also fetch sources for the overview table
+    // Update badges from summary API directly
+    window._arusBadges.sources = totalSources;
+    window._arusBadges.destinations = totalDestinations;
+    window._arusBadges.pipelines = s.total_pipelines || activePipelines;
+    window._arusBadges.dag = s.total_pipelines || activePipelines;
+
+    // Fetch sources for the overview table
     let sourcesList = [];
     try {
       sourcesList = await API.get('/sources');
     } catch(e) {}
-
-    // Update badges
-    window._arusBadges.sources = activeSources;
-    window._arusBadges.destinations = s.total_destinations || 0;
-    window._arusBadges.pipelines = activePipelines;
-    window._arusBadges.dag = activePipelines;
 
     container.innerHTML = `
       <div class="page-header">

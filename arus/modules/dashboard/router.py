@@ -7,6 +7,7 @@ from arus.modules.auth.router import get_current_user
 from arus.modules.run_log.models import Run
 from arus.modules.source.models import Source
 from arus.modules.pipeline.models import Pipeline
+from arus.modules.destination.models import Destination
 
 router = APIRouter(prefix="/api/dashboard", tags=["dashboard"])
 
@@ -17,6 +18,8 @@ async def dashboard_summary(
     user: dict = Depends(get_current_user),
 ):
     active_sources = db.query(Source).filter(Source.status == "connected").count()
+    total_sources = db.query(Source).count()
+    total_destinations = db.query(Destination).count()
     total_pipelines = db.query(Pipeline).count()
     active_pipelines = db.query(Pipeline).filter(Pipeline.status == "active").count()
 
@@ -48,6 +51,8 @@ async def dashboard_summary(
         "status": "ok",
         "data": {
             "active_sources": active_sources,
+            "total_sources": total_sources,
+            "total_destinations": total_destinations,
             "total_pipelines": total_pipelines,
             "active_pipelines": active_pipelines,
             "total_tables_synced": 0,

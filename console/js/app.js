@@ -38,7 +38,23 @@ const App = {
       }
     }
     this.render();
+    this.loadBadges(); // fetch badges independent of current page
     window.addEventListener('hashchange', () => this.render());
+  },
+
+  async loadBadges() {
+    try {
+      const resp = await API.get('/dashboard/summary');
+      const s = resp?.data || resp || {};
+      window._arusBadges.sources = s.total_sources || 0;
+      window._arusBadges.destinations = s.total_destinations || 0;
+      const pipelines = s.total_pipelines || s.active_pipelines || 0;
+      window._arusBadges.pipelines = pipelines;
+      window._arusBadges.dag = pipelines;
+      this.updateBadges();
+    } catch(e) {
+      // silent — badges stay at 0 until user visits Dashboard
+    }
   },
 
   navigate(page) {
@@ -141,15 +157,15 @@ const App = {
     }
 
     switch (hash) {
-      case 'dashboard': renderDashboardPage(content); break;
-      case 'sources': renderSourcesPage(content); break;
-      case 'destinations': renderDestinationsPage(content); break;
-      case 'pipelines': renderPipelinesPage(content); break;
-      case 'runs': renderRunsPage(content); break;
-      case 'dag': renderDagPage(content); break;
-      case 'users': renderUsersPage(content); break;
-      case 'settings': renderSettingsPage(content); break;
-      case 'notifications': renderNotificationsPage(content); break;
+      case 'dashboard': await renderDashboardPage(content); break;
+      case 'sources': await renderSourcesPage(content); break;
+      case 'destinations': await renderDestinationsPage(content); break;
+      case 'pipelines': await renderPipelinesPage(content); break;
+      case 'runs': await renderRunsPage(content); break;
+      case 'dag': await renderDagPage(content); break;
+      case 'users': await renderUsersPage(content); break;
+      case 'settings': await renderSettingsPage(content); break;
+      case 'notifications': await renderNotificationsPage(content); break;
       default:
         content.innerHTML = '<div class="empty-state"><div class="empty-icon">🚧</div><h3>Page not found</h3><p>The page you\'re looking for doesn\'t exist.</p></div>';
     }
