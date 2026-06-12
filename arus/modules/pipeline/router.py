@@ -6,7 +6,7 @@ from arus.shared.exceptions import NotFoundError
 from arus.modules.pipeline.schemas import PipelineCreate, PipelineUpdate
 from arus.modules.pipeline.repository import PipelineRepository
 from arus.modules.pipeline.service import PipelineService
-from arus.modules.auth.router import get_current_user
+from arus.modules.auth.router import get_current_user, require_editor_or_admin
 from arus.modules.source.models import Source
 
 router = APIRouter(prefix="/api/pipelines", tags=["pipelines"])
@@ -19,7 +19,7 @@ def get_pipeline_service(db: Session = Depends(get_db)) -> PipelineService:
 @router.get("")
 async def list_pipelines(
     service: PipelineService = Depends(get_pipeline_service),
-    user: dict = Depends(get_current_user),
+    user: dict = Depends(require_editor_or_admin),
 ):
     pipelines = service.list_pipelines()
     return {"status": "ok", "data": pipelines}
@@ -29,7 +29,7 @@ async def list_pipelines(
 async def create_pipeline(
     req: PipelineCreate,
     service: PipelineService = Depends(get_pipeline_service),
-    user: dict = Depends(get_current_user),
+    user: dict = Depends(require_editor_or_admin),
 ):
     result = service.create_pipeline(req.model_dump())
     return {"status": "ok", "data": result}
@@ -52,7 +52,7 @@ async def update_pipeline(
     pipeline_id: str,
     req: PipelineUpdate,
     service: PipelineService = Depends(get_pipeline_service),
-    user: dict = Depends(get_current_user),
+    user: dict = Depends(require_editor_or_admin),
 ):
     data = {k: v for k, v in req.model_dump(exclude_unset=True).items() if v is not None}
     result = service.update_pipeline(pipeline_id, data)
@@ -63,7 +63,7 @@ async def update_pipeline(
 async def delete_pipeline(
     pipeline_id: str,
     service: PipelineService = Depends(get_pipeline_service),
-    user: dict = Depends(get_current_user),
+    user: dict = Depends(require_editor_or_admin),
 ):
     service.delete_pipeline(pipeline_id)
     return {"status": "ok", "data": {"deleted": True}}
@@ -74,7 +74,7 @@ async def trigger_pipeline(
     pipeline_id: str,
     req: dict = {},
     service: PipelineService = Depends(get_pipeline_service),
-    user: dict = Depends(get_current_user),
+    user: dict = Depends(require_editor_or_admin),
 ):
     force_full = req.get("full_refresh", False) if req else False
     result = service.trigger_pipeline(pipeline_id, force_full_refresh=force_full)
@@ -85,7 +85,7 @@ async def trigger_pipeline(
 async def full_refresh_pipeline(
     pipeline_id: str,
     service: PipelineService = Depends(get_pipeline_service),
-    user: dict = Depends(get_current_user),
+    user: dict = Depends(require_editor_or_admin),
 ):
     """Trigger a full refresh — resets all watermarks and re-syncs all data."""
     result = service.trigger_pipeline(pipeline_id, force_full_refresh=True)
@@ -96,7 +96,7 @@ async def full_refresh_pipeline(
 async def pause_pipeline(
     pipeline_id: str,
     service: PipelineService = Depends(get_pipeline_service),
-    user: dict = Depends(get_current_user),
+    user: dict = Depends(require_editor_or_admin),
 ):
     result = service.update_pipeline(pipeline_id, {"status": "paused"})
     return {"status": "ok", "data": {"pipeline_id": pipeline_id, "status": "paused"}}
@@ -106,7 +106,7 @@ async def pause_pipeline(
 async def resume_pipeline(
     pipeline_id: str,
     service: PipelineService = Depends(get_pipeline_service),
-    user: dict = Depends(get_current_user),
+    user: dict = Depends(require_editor_or_admin),
 ):
     result = service.update_pipeline(pipeline_id, {"status": "active"})
     return {"status": "ok", "data": {"pipeline_id": pipeline_id, "status": "active"}}
@@ -115,7 +115,7 @@ async def resume_pipeline(
 @router.post("/pause-all")
 async def pause_all_pipelines(
     service: PipelineService = Depends(get_pipeline_service),
-    user: dict = Depends(get_current_user),
+    user: dict = Depends(require_editor_or_admin),
 ):
     pipelines = service.list_pipelines()
     results = []
@@ -131,7 +131,7 @@ async def backfill_pipeline(
     pipeline_id: str,
     req: dict = {},
     service: PipelineService = Depends(get_pipeline_service),
-    user: dict = Depends(get_current_user),
+    user: dict = Depends(require_editor_or_admin),
 ):
     """Trigger a backfill from a specific date. Resets watermark then runs.
     POST body: {"from": "2025-01-01"} or empty for full refresh.

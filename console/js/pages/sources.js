@@ -36,8 +36,10 @@ async function renderSourcesPage(container) {
           <div class="subtitle">${sources.length} data sources · ${totalTables} tables auto-discovered</div>
         </div>
         <div class="header-actions-right">
+          ${App.canWrite() ? `
           <button class="btn btn-secondary btn-sm" onclick="rescanAllSources()">⟳ Rescan All</button>
           <button class="btn btn-primary btn-sm" onclick="showAddSourceModal()">+ Add Source</button>
+          ` : ''}
         </div>
       </div>
 
@@ -57,19 +59,21 @@ async function renderSourcesPage(container) {
         <div class="table-wrap">
           <table>
             <thead>
-              <tr><th style="width:24px;"><input type="checkbox" onchange="toggleAllTables(this)" style="accent-color:var(--emerald);"></th><th>Table</th><th>Rows</th><th>Sync Mode</th><th>Last Sync</th><th>Status</th></tr>
+              <tr><th style="width:24px;"><input type="checkbox" onchange="toggleAllTables(this)" style="accent-color:var(--emerald);"></th><th>Table</th><th>Rows</th><th>Sync Mode</th><th>Load Mode</th><th>Last Sync</th><th>Status</th></tr>
             </thead>
             <tbody>
               ${discoveredTables.length > 0
                 ? discoveredTables.map(t => renderDiscoveredRow(t)).join('')
-                : `<tr><td colspan="6" style="text-align:center;color:var(--text-tertiary);padding:20px;">No tables discovered. Run a scan.</td></tr>`
+                : `<tr><td colspan="7" style="text-align:center;color:var(--text-tertiary);padding:20px;">No tables discovered. Run a scan.</td></tr>`
               }
             </tbody>
           </table>
         </div>
         <div style="display:flex;justify-content:flex-end;padding:12px 16px;border-top:1px solid var(--border);gap:8px">
+          ${App.canWrite() ? `
           <button class="btn btn-secondary btn-sm" onclick="rescanSource('${discoveredSource.id}')">⟳ Rescan</button>
           <button class="btn btn-primary btn-sm" onclick="saveTableSelection('${discoveredSource.id}')">💾 Save Table Selection</button>
+          ` : ''}
         </div>
       </div>
       ` : sources.length > 0 ? `
@@ -128,6 +132,7 @@ function renderDiscoveredRow(table) {
   const statusLabel = enabled ? 'Synced' : 'Disabled';
   const syncTag = isIncremental ? 'green' : 'purple';
   const rows = table.row_count_estimate || table.row_count || 0;
+  const loadMode = table.load_mode || 'direct';
 
   return `
     <tr>
@@ -135,6 +140,12 @@ function renderDiscoveredRow(table) {
       <td><span style="font-weight:500;color:var(--text-primary);">${table.name}</span></td>
       <td class="font-mono">${numberFormat(rows)}</td>
       <td><span class="tag ${syncTag}">${syncMode === 'incremental' ? 'Incremental' : 'Full Refresh'}</span></td>
+      <td>
+        <select class="filter-select" style="font-size:11px;padding:3px 6px;min-width:90px;" onchange="setTableLoadMode('${table.name}', this.value)">
+          <option value="direct" ${loadMode === 'direct' ? 'selected' : ''}>Direct</option>
+          <option value="raw" ${loadMode === 'raw' ? 'selected' : ''}>Raw → Normalize</option>
+        </select>
+      </td>
       <td class="text-sm">${formatTime(table.last_synced) || '—'}</td>
       <td><span class="status"><span class="dot ${statusDot}"></span><span class="label ${statusDot}">${statusLabel}</span></span></td>
     </tr>
@@ -178,10 +189,12 @@ async function saveTableSelection(sourceId) {
     const checkbox = row.querySelector('input[type="checkbox"]');
     const nameCell = row.querySelector('td:nth-child(2) span');
     const syncCell = row.querySelector('td:nth-child(4) .tag');
+    const loadModeSelect = row.querySelector('td:nth-child(5) select');
     if (nameCell && checkbox) {
       tables.push({
         name: nameCell.textContent.trim(),
         enabled: checkbox.checked,
+        load_mode: loadModeSelect ? loadModeSelect.value : 'direct',
         detected_sync: syncCell ? syncCell.textContent.toLowerCase().includes('incremental') ? 'incremental' : 'full_refresh' : 'incremental',
       });
     }
@@ -215,8 +228,10 @@ function showSourceManage(sourceId) {
       <p style="color:var(--text-secondary);font-size:13px;margin-bottom:16px;">Source ID: ${sourceId}</p>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <button class="btn btn-secondary" onclick="testSource('${sourceId}')">🔌 Test Connection</button>
+        ${App.canWrite() ? `
         <button class="btn btn-secondary" onclick="editSource('${sourceId}')">✏ Edit</button>
         <button class="btn btn-danger" onclick="deleteSource('${sourceId}')">🗑 Delete</button>
+        ` : ''}
       </div>
     </div>
   `);
@@ -301,6 +316,11 @@ async function editSource(id) {
               <option value="incremental" ${s.sync_method === 'incremental' ? 'selected' : ''}>Incremental</option>
             </select>
           </div>
+          <div class="form-group">
+            <label class="form-label">Schema Filter</label>
+            <input class="form-input" name="schema_include_str" value="${(s.schema_include || []).join(', ')}" placeholder="public, sales, hr (leave empty for all)" />
+            <div class="hint">Comma-separated schema names to sync. Empty = all non-system.</div>
+          </div>
           <div class="modal-actions">
             <button type="button" class="btn btn-secondary" onclick="App.closeModal()">Cancel</button>
             <button type="submit" class="btn btn-primary" id="edit-source-btn">💾 Save Changes</button>
@@ -322,6 +342,10 @@ async function submitEditSource(e, id) {
   for (const [k, v] of form.entries()) {
     if (k === 'password' && !v) continue;
     if (k === 'port') { data[k] = parseInt(v) || 5432; continue; }
+    if (k === 'schema_include_str') {
+      data['schema_include'] = v ? v.split(',').map(s => s.trim()).filter(Boolean) : [];
+      continue;
+    }
     data[k] = v;
   }
   try {
@@ -343,6 +367,13 @@ function toggleAllTables(checkbox) {
 
 function toggleTable(tableName, enabled) {
   // Could send update to API
+}
+
+// Track per-table load_mode selection (stored on DOM via select value)
+window._tableLoadModes = window._tableLoadModes || {};
+
+function setTableLoadMode(tableName, mode) {
+  window._tableLoadModes[tableName] = mode;
 }
 
 function showAddSourceModal() {
@@ -409,6 +440,11 @@ function showAddSourceModal() {
             <option value="full_refresh">Full Refresh</option>
           </select>
           <div class="hint">Auto-detect scans all tables and selects the best sync mode per table.</div>
+        </div>
+        <div class="form-group">
+          <label>Advanced — Schema Filter</label>
+          <input type="text" id="srcSchemas" placeholder="public, sales, hr (leave empty for all)" value="">
+          <div class="hint">Comma-separated schema names to sync. Empty = all non-system schemas.</div>
         </div>
         <div class="form-group">
           <label>Advanced — Table Filters</label>
@@ -478,6 +514,7 @@ async function handleAddSource(event) {
       username: document.getElementById('srcUser').value,
       password: document.getElementById('srcPassword').value,
       sync_method: document.getElementById('srcSync').value,
+      schema_include: (document.getElementById('srcSchemas').value || '').split(',').map(s => s.trim()).filter(Boolean),
     };
   }
 
@@ -513,3 +550,4 @@ window.editSource = editSource;
 window.submitEditSource = submitEditSource;
 window.toggleAllTables = toggleAllTables;
 window.toggleTable = toggleTable;
+window.setTableLoadMode = setTableLoadMode;

@@ -30,9 +30,10 @@ async function renderPipelineDetailPage(container, pipelineId) {
             <button class="btn btn-ghost btn-xs" onclick="location.hash='pipelines'">← Back to Pipelines</button>
           </div>
           <h1>${p.name || 'Pipeline Detail'}</h1>
-          <div class="subtitle">${(p.tables?.length || 0)} tables · ${p.sync_type || 'incremental'} sync from ${srcName} to ${destName}</div>
+          <div class="subtitle">${(p.tables?.length || 0)} tables · ${p.sync_type || 'incremental'} sync from ${srcName} to ${destName} · <span class="tag blue" style="font-size:11px;padding:1px 5px;">→ ${p.target_schema || 'public'}</span> <span class="tag ${(p.load_mode || 'direct') === 'raw' ? 'blue' : 'green'}" style="font-size:11px;padding:1px 5px;">${(p.load_mode || 'direct') === 'raw' ? 'Raw → Normalize' : 'Direct'}</span></div>
         </div>
         <div class="header-actions-right">
+          ${App.canWrite() ? `
           <button class="btn btn-secondary btn-sm" onclick="triggerDetailPipeline('${pipelineId}')">⟳ Sync Now</button>
           ${isRunning
             ? `<button class="btn btn-ghost btn-sm" onclick="pauseDetailPipeline('${pipelineId}')">⏸ Pause</button>`
@@ -44,9 +45,10 @@ async function renderPipelineDetailPage(container, pipelineId) {
               <button class="dropdown-item" style="display:block;width:100%;padding:8px 12px;font-size:12px;background:none;border:none;color:var(--text-secondary);cursor:pointer;border-radius:4px;text-align:left" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background='none'" onclick="this.closest('.dropdown-menu').classList.remove('show');fullRefreshPipeline('${pipelineId}')">🔄 Full Refresh</button>
               <button class="dropdown-item" style="display:block;width:100%;padding:8px 12px;font-size:12px;background:none;border:none;color:var(--text-secondary);cursor:pointer;border-radius:4px;text-align:left" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background='none'" onclick="this.closest('.dropdown-menu').classList.remove('show');showBackfillModal('${pipelineId}')">📅 Backfill</button>
               <button class="dropdown-item" style="display:block;width:100%;padding:8px 12px;font-size:12px;background:none;border:none;color:var(--text-secondary);cursor:pointer;border-radius:4px;text-align:left" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background='none'" onclick="this.closest('.dropdown-menu').classList.remove('show');showDeadLetters('${pipelineId}')">📦 Dead Letters</button>
+              <button class="dropdown-item" style="display:block;width:100%;padding:8px 12px;font-size:12px;background:none;border:none;color:var(--text-secondary);cursor:pointer;border-radius:4px;text-align:left" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background='none'" onclick="this.closest('.dropdown-menu').classList.remove('show');showPipelineNotifConfig('${pipelineId}','${p.name}')">🔔 Notifications</button>
             </div>
           </div>
-        </div>
+          ` : ''}
       </div>
 
       <!-- Flow diagram -->
@@ -96,13 +98,15 @@ async function renderPipelineDetailPage(container, pipelineId) {
         <div class="table-wrap">
           <table>
             <thead>
-              <tr><th>Table</th><th>Sync Mode</th><th>Watermark</th><th>Watermark Value</th><th>Status</th></tr>
+              <tr><th>Table</th><th>Target Schema</th><th>Sync Mode</th><th>Load Mode</th><th>Watermark</th><th>Watermark Value</th><th>Status</th></tr>
             </thead>
             <tbody>
               ${p.tables.map(t => `
               <tr>
                 <td><span style="font-weight:500;color:var(--text-primary);">${t.name}</span></td>
+                <td><span class="tag ${t.target_schema ? 'blue' : 'gray'}">${t.target_schema || '(default)'}</span></td>
                 <td><span class="tag ${t.sync_mode === 'incremental' ? 'green' : 'purple'}">${t.sync_mode || 'incremental'}</span></td>
+                <td><span class="tag ${t.load_mode === 'raw' ? 'blue' : 'green'}">${t.load_mode === 'raw' ? 'Raw → Normalize' : 'Direct'}</span></td>
                 <td class="font-mono text-tertiary" style="font-size:12px;">${t.watermark_column || '-'}</td>
                 <td class="font-mono text-tertiary" style="font-size:12px;">${t.watermark_value || '-'}</td>
                 <td><span class="status"><span class="dot ${t.enabled ? 'green' : 'gray'}"></span><span class="label ${t.enabled ? 'green' : 'gray'}">${t.enabled ? 'Enabled' : 'Disabled'}</span></span></td>

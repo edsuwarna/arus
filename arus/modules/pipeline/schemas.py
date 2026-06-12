@@ -3,12 +3,22 @@ from typing import Optional
 from datetime import datetime
 
 
+class TableConfig(BaseModel):
+    """Per-table configuration for pipeline create/update."""
+    name: str
+    load_mode: str = "direct"  # direct or raw
+    sync_mode: str = "incremental"  # incremental or full_refresh
+    watermark_column: Optional[str] = None
+
+
 class PipelineCreate(BaseModel):
     name: str
     source_id: str
     destination_id: str
     schedule: str = "*/5 * * * *"
-    tables: list[str] = []
+    target_schema: str = "public"
+    load_mode: str = "direct"  # pipeline-level default: direct or raw
+    tables: list[TableConfig] = []
     depends_on: Optional[str] = None
 
 
@@ -16,7 +26,9 @@ class PipelineUpdate(BaseModel):
     name: Optional[str] = None
     schedule: Optional[str] = None
     status: Optional[str] = None
-    tables: Optional[list[str]] = None
+    target_schema: Optional[str] = None
+    load_mode: Optional[str] = None
+    tables: Optional[list[TableConfig]] = None
     depends_on: Optional[str] = None
 
 
@@ -27,6 +39,8 @@ class PipelineResponse(BaseModel):
     source_name: str = ""
     status: str
     schedule: Optional[str] = None
+    target_schema: str = "public"
+    load_mode: str = "direct"
     depends_on: Optional[str] = None
     enabled_table_count: int = 0
     last_run: Optional[dict] = None
@@ -42,6 +56,8 @@ class PipelineDetailResponse(BaseModel):
     destination: dict
     status: str
     schedule: Optional[str] = None
+    target_schema: str = "public"
+    load_mode: str = "direct"
     depends_on: Optional[str] = None
     tables: list[dict] = []
     stats: dict = {}

@@ -39,10 +39,10 @@ class PostgreSQLDestination(BaseDestination):
         """Make a safe identifier for table/schema names."""
         return name.lower().replace("-", "_").replace(".", "_").replace(" ", "_")
 
-    def ensure_schema(self, source_name: str, table: str, columns: list[dict]) -> None:
+    def ensure_schema(self, source_name: str, table: str, columns: list[dict], target_schema: str = None) -> None:
         safe_source = self._safe_name(source_name)
         raw_schema = self.config.get("raw_schema", "staging")
-        target_schema = self.config.get("target_schema", "analytics")
+        target_schema = target_schema or self.config.get("target_schema", "public")
         raw_table = f"{safe_source}_{table}_raw"
 
         with self.conn.cursor() as cur:
@@ -97,8 +97,8 @@ class PostgreSQLDestination(BaseDestination):
         self.conn.commit()
         return len(rows)
 
-    def load_normalized(self, source_name: str, table: str, rows: list[dict]) -> int:
-        target_schema = self.config.get("target_schema", "analytics")
+    def load_normalized(self, source_name: str, table: str, rows: list[dict], target_schema: str = None) -> int:
+        target_schema = target_schema or self.config.get("target_schema", "public")
 
         if not rows:
             return 0

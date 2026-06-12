@@ -14,7 +14,7 @@ function renderLogin() {
           <div id="loginError" class="login-error" style="display:none"></div>
           <div class="form-group">
             <label>Email</label>
-            <input type="email" id="loginEmail" placeholder="you@company.com" value="admin@arus.io" required>
+            <input type="email" id="loginEmail" placeholder="your-name@example.com" required>
           </div>
           <div class="form-group">
             <label>Password</label>

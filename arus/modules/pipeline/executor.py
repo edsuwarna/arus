@@ -27,6 +27,8 @@ from arus.modules.pipeline.dead_letter import DeadLetterManager
 from arus.modules.pipeline.quality import DataQualityChecker
 from arus.modules.pipeline.deps import DependencyResolver
 from arus.modules.alert import AlertManager
+from arus.modules.notification.service import NotificationService
+from arus.modules.notification.repository import NotificationRepository
 from arus.modules.run_log.models import Run, RunTableStat
 from arus.modules.run_log.repository import RunLogRepository
 
@@ -51,6 +53,9 @@ class PipelineExecutor:
         self.dead_letter_mgr = DeadLetterManager(db_session)
         self.quality_checker = DataQualityChecker(db_session)
         self.alert_mgr = AlertManager()
+        self.notif_svc = None
+        if db_session:
+            self.notif_svc = NotificationService(NotificationRepository(db_session))
         self.run_log_repo = None
         if db_session:
             self.run_log_repo = RunLogRepository(db_session)
@@ -95,6 +100,14 @@ class PipelineExecutor:
                     run_id=run_id,
                     error=error,
                 )
+            if self.notif_svc:
+                self.notif_svc.notify_pipeline_event(
+                    pipeline_id=pipeline_id,
+                    event_type="failure",
+                    pipeline_name=pipeline_name,
+                    run_id=run_id,
+                    error=error,
+                )
             return {
                 "run_id": run_id,
                 "status": "failed",
@@ -110,6 +123,14 @@ class PipelineExecutor:
             if self.alert_mgr.is_enabled():
                 self.alert_mgr.alert_pipeline_failure(
                     pipeline_id=pipeline_id,
+                    pipeline_name=pipeline_name,
+                    run_id=run_id,
+                    error=error or "Unknown error",
+                )
+            if self.notif_svc:
+                self.notif_svc.notify_pipeline_event(
+                    pipeline_id=pipeline_id,
+                    event_type="failure",
                     pipeline_name=pipeline_name,
                     run_id=run_id,
                     error=error or "Unknown error",
@@ -182,11 +203,12 @@ class PipelineExecutor:
                 watermark = table_info.get("watermark_value")
                 sync_mode = table_info.get("sync_mode", "incremental")
                 columns = table_info.get("columns", [])
+                per_table_target_schema = table_info.get("target_schema")
 
                 # Ensure schema
                 if columns:
                     try:
-                        dest.ensure_schema(safe_name, table, columns)
+                        dest.ensure_schema(safe_name, table, columns, target_schema=per_table_target_schema)
                     except Exception as e:
                         logger.error(f"Schema creation failed for {table}: {e}")
                         results.append({
@@ -197,14 +219,14 @@ class PipelineExecutor:
 
                 # --- Schema Drift Detection (Phase 2) ---
                 try:
-                    drift_cols = self._detect_schema_drift(dest, safe_name, table, columns)
+                    drift_cols = self._detect_schema_drift(dest, safe_name, table, columns, pipeline_id=pipeline_id, target_schema=per_table_target_schema)
                 except Exception as e:
                     logger.warning(f"Schema drift detection skipped (unsupported dest type): {e}")
                     drift_cols = []
                 if drift_cols:
                     if settings.auto_alter_schema:
                         try:
-                            self._auto_alter_table(dest, safe_name, table, columns, drift_cols)
+                            self._auto_alter_table(dest, safe_name, table, columns, drift_cols, target_schema=per_table_target_schema)
                             logger.info(f"Auto-altered table {table} with columns: {drift_cols}")
                         except Exception as e:
                             logger.error(f"Auto-alter failed for {table}: {e}")
@@ -230,45 +252,66 @@ class PipelineExecutor:
                     })
                     continue
 
-                # --- RETRY: Load raw with exponential backoff (Phase 2) ---
-                try:
-                    loaded_raw = self._load_raw_with_retry(dest, safe_name, table, all_rows, run_id)
-                except LoadError as e:
-                    err_msg = f"Raw load failed for {table}: {e}"
-                    logger.error(err_msg)
-                    # Dead Letter Queue (Phase 2) — save failed rows
-                    self.dead_letter_mgr.write_failed_rows(
-                        source_name=safe_name,
-                        table_name=table,
-                        run_id=run_id,
-                        rows=all_rows,
-                        error_text=err_msg,
-                    )
-                    # Send alert
-                    if self.alert_mgr.is_enabled():
-                        self.alert_mgr.alert_dead_letter(
-                            pipeline_id=pipeline_id,
-                            pipeline_name=pipeline_name,
-                            run_id=run_id,
+                # Check load_mode: direct or raw
+                load_mode = table_info.get("load_mode", "direct") or "direct"
+
+                # --- Load raw (only if load_mode=raw) ---
+                loaded_raw = 0
+                if load_mode == "raw":
+                    try:
+                        loaded_raw = self._load_raw_with_retry(dest, safe_name, table, all_rows, run_id)
+                    except LoadError as e:
+                        err_msg = f"Raw load failed for {table}: {e}"
+                        logger.error(err_msg)
+                        # Dead Letter Queue (Phase 2) — save failed rows
+                        self.dead_letter_mgr.write_failed_rows(
+                            source_name=safe_name,
                             table_name=table,
-                            row_count=len(all_rows),
-                            error=err_msg,
-                        )
-                    if self.alert_mgr.is_enabled():
-                        self.alert_mgr.alert_pipeline_failure(
-                            pipeline_id=pipeline_id,
-                            pipeline_name=pipeline_name,
                             run_id=run_id,
-                            error=err_msg,
+                            rows=all_rows,
+                            error_text=err_msg,
                         )
-                    results.append({
-                        "table": table, "rows": 0, "status": "failed", "error": err_msg,
-                    })
-                    continue
+                        # Send alert
+                        if self.alert_mgr.is_enabled():
+                            self.alert_mgr.alert_dead_letter(
+                                pipeline_id=pipeline_id,
+                                pipeline_name=pipeline_name,
+                                run_id=run_id,
+                                table_name=table,
+                                row_count=len(all_rows),
+                                error=err_msg,
+                            )
+                        if self.alert_mgr.is_enabled():
+                            self.alert_mgr.alert_pipeline_failure(
+                                pipeline_id=pipeline_id,
+                                pipeline_name=pipeline_name,
+                                run_id=run_id,
+                                error=err_msg,
+                            )
+                        if self.notif_svc:
+                            self.notif_svc.notify_pipeline_event(
+                                pipeline_id=pipeline_id,
+                                event_type="dead_letter",
+                                pipeline_name=pipeline_name,
+                                run_id=run_id,
+                                error=err_msg,
+                                extra={"table": table, "row_count": len(all_rows)},
+                            )
+                            self.notif_svc.notify_pipeline_event(
+                                pipeline_id=pipeline_id,
+                                event_type="failure",
+                                pipeline_name=pipeline_name,
+                                run_id=run_id,
+                                error=err_msg,
+                            )
+                        results.append({
+                            "table": table, "rows": 0, "status": "failed", "error": err_msg,
+                        })
+                        continue
 
                 # --- Load normalized ---
                 try:
-                    loaded_norm = dest.load_normalized(safe_name, table, all_rows)
+                    loaded_norm = dest.load_normalized(safe_name, table, all_rows, target_schema=per_table_target_schema)
                 except Exception as e:
                     logger.error(f"Normalized load failed for {table}: {e}")
                     # Dead letter for normalized load failures
@@ -280,6 +323,16 @@ class PipelineExecutor:
                         error_text=f"Normalized load failed: {e}",
                     )
                     loaded_norm = 0
+                    # Notify for normalized load failure
+                    if self.notif_svc:
+                        self.notif_svc.notify_pipeline_event(
+                            pipeline_id=pipeline_id,
+                            event_type="dead_letter",
+                            pipeline_name=pipeline_name,
+                            run_id=run_id,
+                            error=f"Normalized load failed: {e}",
+                            extra={"table": table, "row_count": len(all_rows)},
+                        )
 
                 # --- Update watermark ---
                 if sync_mode == "incremental" and all_rows:
@@ -303,6 +356,7 @@ class PipelineExecutor:
                                 )
 
                 # --- Data Quality Checks (Phase 2) ---
+                quality_breach = None
                 if self.db_session:
                     quality_results = self._run_quality_checks(
                         pipeline_id=pipeline_id,
@@ -312,6 +366,20 @@ class PipelineExecutor:
                         rows_loaded=loaded_raw,
                         rows=all_rows,
                         required_columns=[c["name"] for c in columns if not c.get("nullable", True)],
+                    )
+                    # Check for quality breaches
+                    if quality_results.get("row_count", {}).get("breach"):
+                        quality_breach = f"Row count discrepancy: {quality_results['row_count'].get('details', 'threshold breached')}"
+                    elif quality_results.get("null_check", {}).get("breach"):
+                        quality_breach = f"Null check failed: {quality_results['null_check'].get('details', 'required columns have nulls')}"
+
+                if quality_breach and self.notif_svc:
+                    self.notif_svc.notify_pipeline_event(
+                        pipeline_id=pipeline_id,
+                        event_type="quality_breach",
+                        pipeline_name=pipeline_name,
+                        run_id=run_id,
+                        error=quality_breach,
                     )
 
                 results.append({
@@ -331,6 +399,14 @@ class PipelineExecutor:
                     run_id=run_id,
                     error=error or "Unknown error",
                 )
+            if self.notif_svc:
+                self.notif_svc.notify_pipeline_event(
+                    pipeline_id=pipeline_id,
+                    event_type="failure",
+                    pipeline_name=pipeline_name,
+                    run_id=run_id,
+                    error=error or "Unknown error",
+                )
 
         finished_at = datetime.now(timezone.utc)
 
@@ -345,6 +421,20 @@ class PipelineExecutor:
                 })
             except Exception as e:
                 logger.warning(f"Could not update run_log: {e}")
+
+        # Send success notification if pipeline didn't error
+        if not error and self.notif_svc:
+            total_rows = sum(r.get("rows", 0) for r in results)
+            self.notif_svc.notify_pipeline_event(
+                pipeline_id=pipeline_id,
+                event_type="success",
+                pipeline_name=pipeline_name,
+                run_id=run_id,
+                extra={
+                    "rows_synced": total_rows,
+                    "duration_ms": int((finished_at - started_at).total_seconds() * 1000),
+                },
+            )
 
         return {
             "run_id": run_id,
@@ -397,14 +487,14 @@ class PipelineExecutor:
 
     # ---- Schema Drift Detection (Phase 2) ----
 
-    def _detect_schema_drift(self, dest, source_name: str, table: str, source_columns: list[dict]) -> list[str]:
+    def _detect_schema_drift(self, dest, source_name: str, table: str, source_columns: list[dict], pipeline_id: str = "N/A", target_schema: str = None) -> list[str]:
         """
         Compare source columns against warehouse table columns.
         Returns list of new column names not present in warehouse.
         """
         try:
             safe_source = source_name.lower().replace("-", "_").replace(" ", "_")
-            target_schema = dest.config.get("target_schema", "analytics")
+            target_schema = target_schema or dest.config.get("target_schema", "public")
             schema_table = f"{target_schema}.{table}"
 
             with dest.conn.cursor() as cur:
@@ -429,10 +519,17 @@ class PipelineExecutor:
                 )
                 if self.alert_mgr.is_enabled():
                     self.alert_mgr.alert_schema_drift(
-                        pipeline_id="N/A",
+                        pipeline_id=pipeline_id,
                         pipeline_name=source_name,
                         table_name=table,
                         new_columns=list(new_cols),
+                    )
+                if self.notif_svc:
+                    self.notif_svc.notify_pipeline_event(
+                        pipeline_id=pipeline_id,
+                        event_type="schema_drift",
+                        pipeline_name=source_name,
+                        extra={"table": table, "new_columns": list(new_cols)},
                     )
 
             return list(new_cols)
@@ -440,9 +537,9 @@ class PipelineExecutor:
             logger.warning(f"Schema drift detection failed for {table}: {e}")
             return []
 
-    def _auto_alter_table(self, dest, source_name: str, table: str, source_columns: list[dict], new_cols: list[str]):
+    def _auto_alter_table(self, dest, source_name: str, table: str, source_columns: list[dict], new_cols: list[str], target_schema: str = None):
         """Automatically add new columns to the warehouse table."""
-        target_schema = dest.config.get("target_schema", "analytics")
+        target_schema = target_schema or dest.config.get("target_schema", "public")
         from arus.shared.types import map_type
 
         with dest.conn.cursor() as cur:

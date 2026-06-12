@@ -18,7 +18,9 @@ async function renderDestinationsPage(container) {
           <div class="subtitle">Where your data lands — data warehouse & lake</div>
         </div>
         <div class="header-actions-right">
+          ${App.canWrite() ? `
           <button class="btn btn-primary btn-sm" onclick="showAddDestinationModal()">+ Add Destination</button>
+          ` : ''}
         </div>
       </div>
 
@@ -80,9 +82,11 @@ async function manageDestination(id) {
     <div class="modal-body">
       <p style="color:var(--text-secondary);font-size:13px;margin-bottom:16px;">Destination ID: ${id}</p>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="btn btn-secondary" onclick="editDestination('${id}')">✏ Edit</button>
         <button class="btn btn-secondary" onclick="testDestination('${id}')">🔌 Test Connection</button>
+        ${App.canWrite() ? `
+        <button class="btn btn-secondary" onclick="editDestination('${id}')">✏ Edit</button>
         <button class="btn btn-danger" onclick="deleteDestination('${id}')">🗑 Delete</button>
+        ` : ''}
       </div>
     </div>
   `);
@@ -126,16 +130,12 @@ async function editDestination(id) {
             <label class="form-label">Password <span style="color:var(--text-muted);font-size:11px">(leave blank to keep current)</span></label>
             <input class="form-input" name="password" type="password" value="" placeholder="••••••••" />
           </div>
-          <div class="form-row">
-            <div class="form-group" style="flex:1">
-              <label class="form-label">Raw Schema (staging)</label>
-              <input class="form-input" name="raw_schema" value="${d.raw_schema || 'staging'}" />
+            <div class="form-row">
+              <div class="form-group" style="flex:1">
+                <label class="form-label">Raw Schema (staging)</label>
+                <input class="form-input" name="raw_schema" value="${d.raw_schema || 'staging'}" />
+              </div>
             </div>
-            <div class="form-group" style="flex:1">
-              <label class="form-label">Target Schema (analytics)</label>
-              <input class="form-input" name="target_schema" value="${d.target_schema || 'analytics'}" />
-            </div>
-          </div>
           <div class="modal-actions">
             <button type="button" class="btn btn-secondary" onclick="App.closeModal()">Cancel</button>
             <button type="submit" class="btn btn-primary" id="edit-dest-btn">💾 Save Changes</button>
@@ -192,8 +192,10 @@ async function renderPipelinesPage(container) {
           <div class="subtitle">${activeCount} active pipelines · ${failingCount} failing · ${numberFormat(totalRows)} rows synced in last 24h</div>
         </div>
         <div class="header-actions-right">
+          ${App.canWrite() ? `
           <button class="btn btn-ghost btn-sm" onclick="pauseAllPipelines()">⏸ Pause All</button>
           <button class="btn btn-primary btn-sm" onclick="showAddPipelineModal()">+ New Pipeline</button>
+          ` : ''}
         </div>
       </div>
 
@@ -222,13 +224,15 @@ function renderPipelineItem(p) {
   const tableCount = p.enabled_table_count || p.tables?.length || 0;
   const scheduleLabel = p.schedule_label || p.schedule || 'manual';
   const syncType = p.sync_type || 'incremental';
+  const targetSchema = p.target_schema || 'public';
+  const loadMode = p.load_mode || 'direct';
 
   return `
     <div class="pipeline-item" onclick="location.hash='pipeline/${p.id}'">
       <div class="pi-indicator ${indicatorColor}"></div>
       <div class="pi-info">
         <div class="pi-name">${p.name || 'Unnamed Pipeline'}</div>
-        <div class="pi-meta">${tableCount} tables · ${syncType} · ${scheduleLabel}</div>
+        <div class="pi-meta">${tableCount} tables · ${syncType} · ${scheduleLabel} · <span class="tag blue" style="font-size:10px;padding:1px 4px;">${targetSchema}</span> <span class="tag ${loadMode === 'raw' ? 'blue' : 'green'}" style="font-size:10px;padding:1px 4px;">${loadMode === 'raw' ? 'Raw' : 'Direct'}</span></div>
       </div>
       <div class="pi-stats">
         <div class="ps-item"><div class="ps-val text-emerald">${rowsPerHour}</div><div class="ps-label">Rows/h</div></div>
@@ -265,9 +269,10 @@ async function showAddPipelineModal() {
   `);
 
   try {
-    const [sources, destinations] = await Promise.all([
+    const [sources, destinations, notifTargets] = await Promise.all([
       API.get('/sources').catch(() => []),
       API.get('/destinations').catch(() => []),
+      API.get('/notifications/targets').catch(() => []),
     ]);
 
     const srcList = Array.isArray(sources) ? sources : [];
@@ -347,6 +352,55 @@ async function showAddPipelineModal() {
               Fine-tune table selection after pipeline creation.
             </div>
           </div>
+          <div class="form-group">
+            <label>Target Schema</label>
+            <input type="text" id="pipelineTargetSchema" placeholder="public" value="public">
+            <div class="hint">Schema where data lands in the destination database.</div>
+          </div>
+          <div class="form-group">
+            <label>Default Load Mode</label>
+            <select id="pipelineLoadMode">
+              <option value="direct">Direct (source → target)</option>
+              <option value="raw">Raw → Normalize (preserve raw JSON)</option>
+            </select>
+            <div class="hint">Pipeline-wide default. Per-table overrides can be set later.</div>
+          </div>
+
+          <!-- 🔔 Notifications section -->
+          <div class="form-group" style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer" onclick="toggleCreatePipelineNotif()">
+              <span>🔔 Notifications</span>
+              <span style="font-size:11px;color:var(--text-tertiary)">(optional)</span>
+              <span id="cpNotifChevron" style="margin-left:auto;font-size:10px;transition:transform .2s">▸</span>
+            </label>
+            <div id="cpNotifBody" style="display:none;margin-top:10px">
+              ${(() => {
+                const nt = Array.isArray(notifTargets) ? notifTargets.filter(t => t.is_active) : [];
+                if (nt.length === 0) {
+                  return `<div style="padding:8px 12px;background:var(--amber-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--amber)">
+                    No notification targets configured. Add targets in the Notifications page first.
+                  </div>`;
+                }
+                return nt.map(t => `
+                  <div class="pipeline-item" style="margin-bottom:8px;padding:10px 14px">
+                    <label class="form-checkbox" style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+                      <input type="checkbox" class="cpNotifTarget" value="${t.id}">
+                      <div class="pi-info">
+                        <div class="pi-name">${getNotifIcon(t.type)} ${t.name} <span class="tag ${t.type === 'telegram' ? 'blue' : t.type === 'discord' ? 'purple' : 'green'}" style="font-size:10px">${t.type}</span></div>
+                      </div>
+                    </label>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-left:24px;font-size:12px">
+                      <label class="form-checkbox"><input type="checkbox" class="cpNotifEvt_${t.id}" value="failure" checked> ❌ Failure</label>
+                      <label class="form-checkbox"><input type="checkbox" class="cpNotifEvt_${t.id}" value="success"> ✅ Success</label>
+                      <label class="form-checkbox"><input type="checkbox" class="cpNotifEvt_${t.id}" value="dead_letter"> 📦 Dead Letter</label>
+                      <label class="form-checkbox"><input type="checkbox" class="cpNotifEvt_${t.id}" value="schema_drift"> 🔀 Schema Drift</label>
+                      <label class="form-checkbox"><input type="checkbox" class="cpNotifEvt_${t.id}" value="quality_breach"> 📉 Quality Breach</label>
+                    </div>
+                  </div>
+                `).join('');
+              })()}
+            </div>
+          </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" onclick="App.closeModal()">Cancel</button>
@@ -369,6 +423,16 @@ async function showAddPipelineModal() {
   }
 }
 
+// Toggle notification section in create pipeline modal
+window.toggleCreatePipelineNotif = function() {
+  const body = document.getElementById('cpNotifBody');
+  const chevron = document.getElementById('cpNotifChevron');
+  if (!body || !chevron) return;
+  const open = body.style.display !== 'none';
+  body.style.display = open ? 'none' : 'block';
+  chevron.textContent = open ? '▸' : '▾';
+};
+
 async function handleCreatePipeline(event) {
   event.preventDefault();
   const srcId = document.getElementById('pipelineSource')?.value;
@@ -381,6 +445,8 @@ async function handleCreatePipeline(event) {
     name: document.getElementById('pipelineName')?.value || 'Unnamed Pipeline',
     source_id: srcId,
     destination_id: document.getElementById('pipelineDest')?.value || null,
+    target_schema: document.getElementById('pipelineTargetSchema')?.value || 'public',
+    load_mode: document.getElementById('pipelineLoadMode')?.value || 'direct',
     sync_type: document.getElementById('pipelineSync')?.value || 'incremental',
     schedule: document.getElementById('pipelineSchedule')?.value || '*/5 * * * *',
   };
@@ -393,6 +459,29 @@ async function handleCreatePipeline(event) {
 
   try {
     const result = await API.post('/pipelines', data);
+    const pipelineId = result?.data?.id || result?.id;
+
+    // Create notification links if any targets selected
+    const notifCbs = document.querySelectorAll('.cpNotifTarget:checked');
+    if (pipelineId && notifCbs.length > 0) {
+      const linkPromises = [];
+      notifCbs.forEach(cb => {
+        const tid = cb.value;
+        const evtCbs = document.querySelectorAll(`.cpNotifEvt_${tid}:checked`);
+        const eventTypes = Array.from(evtCbs).map(e => e.value);
+        if (eventTypes.length > 0) {
+          linkPromises.push(
+            API.post('/notifications/links', {
+              pipeline_id: pipelineId,
+              target_id: tid,
+              event_types: eventTypes,
+            }).catch(() => {})
+          );
+        }
+      });
+      await Promise.all(linkPromises);
+    }
+
     App.closeModal();
     App.toast(`Pipeline "${data.name}" created!`, 'success');
     App.render();
@@ -562,20 +651,15 @@ function showAddDestinationModal() {
           <hint-toggle class="form-label clickable" onclick="toggleDestAdvanced()" style="cursor:pointer;user-select:none">
             <span id="destAdvancedArrow">▸</span> Advanced Options
           </hint-toggle>
-          <div id="destAdvancedSection" style="display:none;margin-top:8px">
-            <div class="form-row">
-              <div class="form-group">
-                <label id="destRawLabel">Raw Schema</label>
-                <input type="text" id="destRawSchema" placeholder="staging" value="staging">
-                <div class="hint">Where raw JSON data lands.</div>
-              </div>
-              <div class="form-group">
-                <label id="destAnalyticsLabel">Target Schema</label>
-                <input type="text" id="destTargetSchema" placeholder="analytics" value="analytics">
-                <div class="hint">Where normalized data lands.</div>
+            <div id="destAdvancedSection" style="display:none;margin-top:8px">
+              <div class="form-row">
+                <div class="form-group">
+                  <label id="destRawLabel">Raw Schema</label>
+                  <input type="text" id="destRawSchema" placeholder="staging" value="staging">
+                  <div class="hint">Where raw JSON data lands.</div>
+                </div>
               </div>
             </div>
-          </div>
         </div>
         <div class="form-group">
           <label class="form-checkbox">
@@ -599,13 +683,10 @@ window.updateDestForm = function() {
   portInput.value = ports[type] || 5432;
 
   const rawLabel = document.getElementById('destRawLabel');
-  const analyticsLabel = document.getElementById('destAnalyticsLabel');
   if (type === 'clickhouse') {
     rawLabel.textContent = 'Raw Database';
-    analyticsLabel.textContent = 'Analytics Database';
   } else {
     rawLabel.textContent = 'Raw Schema';
-    analyticsLabel.textContent = 'Target Schema';
   }
 };
 
@@ -628,7 +709,6 @@ async function handleAddDest(event) {
     username: document.getElementById('destUser').value,
     password: document.getElementById('destPassword').value,
     raw_schema: document.getElementById('destRawSchema')?.value || 'staging',
-    target_schema: document.getElementById('destTargetSchema')?.value || 'analytics',
     is_default: document.getElementById('destDefault')?.checked || false,
   };
   try {

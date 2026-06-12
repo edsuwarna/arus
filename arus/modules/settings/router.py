@@ -14,7 +14,7 @@ import uuid
 
 from arus.shared.db.session import Base, get_db, engine as db_engine
 from arus.shared.config import settings as env_settings
-from arus.modules.auth.router import get_current_user
+from arus.modules.auth.router import get_current_user, require_admin
 
 logger = logging.getLogger(__name__)
 
@@ -83,7 +83,7 @@ async def get_settings(
 async def update_settings(
     updates: dict,
     db: Session = Depends(get_db),
-    user: dict = Depends(get_current_user),
+    user: dict = Depends(require_admin),
 ):
     """Update one or more settings. Only accepts keys in DEFAULT_SETTINGS."""
     for key, value in updates.items():

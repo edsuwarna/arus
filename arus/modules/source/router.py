@@ -7,7 +7,7 @@ from arus.shared.exceptions import NotFoundError
 from arus.modules.source.schemas import SourceCreate, SourceUpdate, TablesUpdate
 from arus.modules.source.repository import SourceRepository
 from arus.modules.source.service import SourceService
-from arus.modules.auth.router import get_current_user
+from arus.modules.auth.router import get_current_user, require_editor_or_admin
 from arus.modules.destination.repository import DestinationRepository
 
 router = APIRouter(prefix="/api/sources", tags=["sources"])
@@ -38,6 +38,7 @@ async def list_sources(
                 "status": s.status,
                 "table_count": 0,
                 "enabled_table_count": 0,
+                "schema_include": s.schema_include or [],
                 "last_tested": s.last_tested,
                 "created_at": s.created_at,
             }
@@ -50,7 +51,7 @@ async def list_sources(
 async def create_source(
     req: SourceCreate,
     service: SourceService = Depends(get_source_service),
-    user: dict = Depends(get_current_user),
+    user: dict = Depends(require_editor_or_admin),
 ):
     data = req.model_dump()
     data["password_enc"] = encrypt_password(data.pop("password"))
@@ -83,6 +84,7 @@ async def get_source(
             "sync_method": source.sync_method,
             "table_include": source.table_include,
             "table_exclude": source.table_exclude,
+            "schema_include": source.schema_include or [],
             "status": source.status,
             "last_tested": source.last_tested,
             "created_at": source.created_at,
@@ -95,7 +97,7 @@ async def update_source(
     source_id: str,
     req: SourceUpdate,
     service: SourceService = Depends(get_source_service),
-    user: dict = Depends(get_current_user),
+    user: dict = Depends(require_editor_or_admin),
 ):
     source = service.repo.get_by_id(source_id)
     if not source:
@@ -111,7 +113,7 @@ async def update_source(
 async def delete_source(
     source_id: str,
     service: SourceService = Depends(get_source_service),
-    user: dict = Depends(get_current_user),
+    user: dict = Depends(require_editor_or_admin),
 ):
     source = service.repo.get_by_id(source_id)
     if not source:
@@ -124,7 +126,7 @@ async def delete_source(
 async def test_source(
     source_id: str,
     service: SourceService = Depends(get_source_service),
-    user: dict = Depends(get_current_user),
+    user: dict = Depends(require_editor_or_admin),
 ):
     result = service.test_connection(source_id)
     return {"status": "ok", "data": result}
@@ -134,10 +136,21 @@ async def test_source(
 async def discover_source(
     source_id: str,
     service: SourceService = Depends(get_source_service),
-    user: dict = Depends(get_current_user),
+    user: dict = Depends(require_editor_or_admin),
 ):
     tables = service.discover_tables(source_id)
     return {"status": "ok", "data": {"source_id": source_id, "tables": tables}}
+
+
+@router.post("/{source_id}/schemas")
+async def discover_source_schemas(
+    source_id: str,
+    service: SourceService = Depends(get_source_service),
+    user: dict = Depends(require_editor_or_admin),
+):
+    """Discover available schemas in the source database."""
+    schemas = service.discover_schemas(source_id)
+    return {"status": "ok", "data": {"source_id": source_id, "schemas": schemas}}
 
 
 @router.put("/{source_id}/tables")
@@ -145,7 +158,7 @@ async def update_source_tables(
     source_id: str,
     req: TablesUpdate,
     db: Session = Depends(get_db),
-    user: dict = Depends(get_current_user),
+    user: dict = Depends(require_editor_or_admin),
 ):
     """Update table selection for a source and auto-create/update the pipeline."""
     from arus.modules.pipeline.service import PipelineService

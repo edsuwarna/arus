@@ -83,11 +83,11 @@ class ClickHouseDestination(BaseDestination):
         """ClickHouse-safe backtick quoting."""
         return f"`{name.replace('`', '``')}`"
 
-    def ensure_schema(self, source_name: str, table: str, columns: list[dict]) -> None:
+    def ensure_schema(self, source_name: str, table: str, columns: list[dict], target_schema: str = None) -> None:
         safe_source = self._safe_name(source_name)
         raw_db = self.config.get("raw_database", self.config.get("raw_schema", "staging"))
-        analytics_db = self.config.get("analytics_database",
-                                       self.config.get("target_schema", "analytics"))
+        analytics_db = target_schema or self.config.get("analytics_database",
+                                       self.config.get("target_schema", "public"))
         raw_table = f"{safe_source}_{table}_raw"
         q_raw_db = self._quote(raw_db)
         q_analytics_db = self._quote(analytics_db)
@@ -146,9 +146,9 @@ class ClickHouseDestination(BaseDestination):
         return len(rows)
 
     def load_normalized(self, source_name: str, table: str,
-                        rows: list[dict]) -> int:
-        analytics_db = self.config.get("analytics_database",
-                                       self.config.get("target_schema", "analytics"))
+                        rows: list[dict], target_schema: str = None) -> int:
+        analytics_db = target_schema or self.config.get("analytics_database",
+                                       self.config.get("target_schema", "public"))
         q_analytics_db = self._quote(analytics_db)
         q_table = self._quote(table)
 

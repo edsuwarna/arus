@@ -32,6 +32,8 @@ class PipelineService:
                 "source_name": source.name if source else "",
                 "status": p.status,
                 "schedule": p.schedule,
+                "target_schema": p.target_schema or "public",
+                "load_mode": p.load_mode or "direct",
                 "depends_on": str(p.depends_on) if p.depends_on else None,
                 "enabled_table_count": len(tables),
                 "total_rows_synced": 0,
@@ -55,7 +57,10 @@ class PipelineService:
             wm = self.repo.get_watermark(str(p.id), t.source_table)
             table_details.append({
                 "name": t.source_table,
+                "schema": t.source_schema,
+                "target_schema": t.target_schema,
                 "sync_mode": t.sync_mode,
+                "load_mode": t.load_mode or "direct",
                 "watermark_column": t.watermark_column,
                 "watermark_value": wm.watermark_value if wm else None,
                 "enabled": t.enabled,
@@ -68,6 +73,8 @@ class PipelineService:
             "destination": {"id": str(dest.id), "name": dest.name, "type": dest.type} if dest else {},
             "status": p.status,
             "schedule": p.schedule,
+            "target_schema": p.target_schema or "public",
+            "load_mode": p.load_mode or "direct",
             "tables": table_details,
             "stats": {
                 "total_rows_synced": 0,
@@ -82,7 +89,26 @@ class PipelineService:
         tables = data.pop("tables", None)
         p = self.repo.create(data)
         if tables:
-            table_list = [{"source_table": t, "sync_mode": "incremental", "enabled": True} for t in tables]
+            table_list = []
+            for t in tables:
+                if isinstance(t, dict):
+                    table_list.append({
+                        "source_table": t["name"],
+                        "target_schema": t.get("target_schema"),
+                        "load_mode": t.get("load_mode", "direct"),
+                        "sync_mode": t.get("sync_mode", "incremental"),
+                        "watermark_column": t.get("watermark_column"),
+                        "enabled": True,
+                    })
+                else:
+                    # Backward compat: plain string table name
+                    table_list.append({
+                        "source_table": t,
+                        "target_schema": None,
+                        "load_mode": "direct",
+                        "sync_mode": "incremental",
+                        "enabled": True,
+                    })
             self.repo.set_tables(str(p.id), table_list)
         return {"id": str(p.id)}
 
@@ -94,7 +120,25 @@ class PipelineService:
         tables = data.pop("tables", None)
         self.repo.update(p, data)
         if tables is not None:
-            table_list = [{"source_table": t, "sync_mode": "incremental", "enabled": True} for t in tables]
+            table_list = []
+            for t in tables:
+                if isinstance(t, dict):
+                    table_list.append({
+                        "source_table": t["name"],
+                        "target_schema": t.get("target_schema"),
+                        "load_mode": t.get("load_mode", "direct"),
+                        "sync_mode": t.get("sync_mode", "incremental"),
+                        "watermark_column": t.get("watermark_column"),
+                        "enabled": True,
+                    })
+                else:
+                    table_list.append({
+                        "source_table": t,
+                        "target_schema": None,
+                        "load_mode": "direct",
+                        "sync_mode": "incremental",
+                        "enabled": True,
+                    })
             self.repo.set_tables(pipeline_id, table_list)
         return {"updated": True}
 
@@ -146,6 +190,8 @@ class PipelineService:
 
             table_configs.append({
                 "source_table": t.source_table,
+                "target_schema": t.target_schema,
+                "load_mode": t.load_mode or p.load_mode or "direct",
                 "sync_mode": "full_refresh" if force_full_refresh else t.sync_mode,
                 "watermark_column": t.watermark_column,
                 "watermark_value": wm.watermark_value if wm else None,
@@ -173,7 +219,8 @@ class PipelineService:
             "password": decrypt_password(dest.password_enc),
             "database": dest.database,
             "raw_schema": dest.raw_schema,
-            "target_schema": dest.target_schema,
+            # Pipeline-level target_schema overrides destination default
+            "target_schema": p.target_schema or "public",
         }
 
         # Execute with db_session for Phase 2 features
@@ -196,6 +243,8 @@ class PipelineService:
                 table_list.append({
                     "source_table": t["name"],
                     "source_schema": t.get("schema", "public"),
+                    "target_schema": t.get("target_schema"),
+                    "load_mode": t.get("load_mode", "direct"),
                     "sync_mode": t.get("detected_sync", "incremental"),
                     "watermark_column": t.get("watermark_column"),
                     "enabled": t.get("enabled", True),
@@ -208,6 +257,8 @@ class PipelineService:
             "name": f"{source.name} → Warehouse",
             "source_id": source_id,
             "destination_id": destination_id,
+            "target_schema": "public",
+            "load_mode": "direct",
             "schedule": "*/5 * * * *",
             "status": "active",
         }
@@ -218,6 +269,8 @@ class PipelineService:
                 table_list.append({
                     "source_table": t["name"],
                     "source_schema": t.get("schema", "public"),
+                    "target_schema": t.get("target_schema"),
+                    "load_mode": t.get("load_mode", "direct"),
                     "sync_mode": t.get("detected_sync", "incremental"),
                     "watermark_column": t.get("watermark_column"),
                     "enabled": t.get("enabled", True),

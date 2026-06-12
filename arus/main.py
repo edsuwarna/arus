@@ -14,6 +14,7 @@ from arus.modules.run_log.router import router as run_log_router
 from arus.modules.dashboard.router import router as dashboard_router
 from arus.modules.settings.router import router as settings_router, seed_default_settings, ensure_settings_table
 from arus.modules.dag.router import router as dag_router
+from arus.modules.notification.router import router as notification_router
 from arus.modules.destination.repository import DestinationRepository
 from arus.modules.pipeline.scheduler import start_scheduler
 
@@ -99,3 +100,4 @@ app.include_router(run_log_router)
 app.include_router(dashboard_router)
 app.include_router(settings_router)
 app.include_router(dag_router)
+app.include_router(notification_router)

@@ -20,6 +20,7 @@ class SourceService:
             "ssl": source.ssl,
             "uri": source.uri,
             "auth_source": source.auth_source or "admin",
+            "schema_include": source.schema_include or [],
         }
         connector.connect(config)
         return connector
@@ -65,3 +66,17 @@ class SourceService:
             return result
         except Exception as e:
             raise DiscoveryFailedError(f"Discovery failed: {str(e)}")
+
+    def discover_schemas(self, source_id: str) -> list[str]:
+        """Discover available schemas in the source database."""
+        source = self.repo.get_by_id(source_id)
+        if not source:
+            raise NotFoundError(f"Source {source_id} not found")
+
+        try:
+            connector = self._build_connector(source)
+            if hasattr(connector, "discover_schemas"):
+                return connector.discover_schemas()
+            return []
+        except Exception as e:
+            raise DiscoveryFailedError(f"Schema discovery failed: {str(e)}")

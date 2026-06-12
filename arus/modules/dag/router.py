@@ -1,6 +1,7 @@
 """
 DAG Router — returns pipeline dependency graph data for DAG View.
-Covers the three-layer asset model: Source → Staging (raw) → Analytics.
+Covers the three-layer asset model: Source → Raw (landing) → Target.
+Or two-layer for direct mode: Source → Target.
 """
 
 from fastapi import APIRouter, Depends
@@ -21,7 +22,7 @@ async def get_dag_data(
     db: Session = Depends(get_db),
     user: dict = Depends(get_current_user),
 ):
-    """Return all pipelines with their asset nodes (source → staging → analytics)."""
+    """Return all pipelines with their asset nodes (source → raw → target for raw mode, source → target for direct)."""
     pipelines = db.query(Pipeline).all()
     result = []
 
@@ -43,31 +44,47 @@ async def get_dag_data(
         safe_name = source.name.lower().replace("-", "_").replace(" ", "_") if source else "unknown"
 
         assets = []
+        edges = []
+        has_raw = False  # track if any table uses raw mode
+
         for t in tables:
+            load_mode = getattr(t, "load_mode", None) or p.load_mode or "direct"
+
+            # Source asset always exists
             assets.append({
                 "name": t.source_table,
                 "layer": "source",
                 "status": pipeline_status,
                 "table": t.source_table,
             })
-            assets.append({
-                "name": f"stg_{t.source_table}",
-                "layer": "staging",
-                "status": pipeline_status,
-                "table": t.source_table,
-            })
-            assets.append({
-                "name": f"analytics.{t.source_table}",
-                "layer": "analytics",
-                "status": pipeline_status,
-                "table": t.source_table,
-            })
 
-        # Build dependency edges
-        edges = []
-        for t in tables:
-            edges.append({"from": t.source_table, "to": f"stg_{t.source_table}"})
-            edges.append({"from": f"stg_{t.source_table}", "to": f"analytics.{t.source_table}"})
+            if load_mode == "raw":
+                # Raw mode: source → raw → target
+                has_raw = True
+                raw_name = f"{safe_name}_{t.source_table}_raw"
+                assets.append({
+                    "name": raw_name,
+                    "layer": "raw",
+                    "status": pipeline_status,
+                    "table": t.source_table,
+                })
+                assets.append({
+                    "name": t.source_table,
+                    "layer": "target",
+                    "status": pipeline_status,
+                    "table": t.source_table,
+                })
+                edges.append({"from": t.source_table, "to": raw_name})
+                edges.append({"from": raw_name, "to": t.source_table})
+            else:
+                # Direct mode: source → target
+                assets.append({
+                    "name": t.source_table,
+                    "layer": "target",
+                    "status": pipeline_status,
+                    "table": t.source_table,
+                })
+                edges.append({"from": t.source_table, "to": t.source_table})
 
         result.append({
             "id": str(p.id),
@@ -79,6 +96,7 @@ async def get_dag_data(
             "edges": edges,
             "table_count": len(tables),
             "last_run_status": pipeline_status,
+            "has_raw_mode": has_raw,
         })
 
     return {"status": "ok", "data": result}

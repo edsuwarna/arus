@@ -6,7 +6,7 @@ from arus.shared.crypto import encrypt_password
 from arus.shared.exceptions import NotFoundError
 from arus.modules.destination.schemas import DestinationCreate, DestinationUpdate
 from arus.modules.destination.repository import DestinationRepository
-from arus.modules.auth.router import get_current_user
+from arus.modules.auth.router import get_current_user, require_editor_or_admin
 
 router = APIRouter(prefix="/api/destinations", tags=["destinations"])
 
@@ -45,7 +45,7 @@ async def list_destinations(
 async def create_destination(
     req: DestinationCreate,
     db: Session = Depends(get_db),
-    user: dict = Depends(get_current_user),
+    user: dict = Depends(require_editor_or_admin),
 ):
     repo = DestinationRepository(db)
     data = req.model_dump()
@@ -89,7 +89,7 @@ async def update_destination(
     dest_id: str,
     req: DestinationUpdate,
     db: Session = Depends(get_db),
-    user: dict = Depends(get_current_user),
+    user: dict = Depends(require_editor_or_admin),
 ):
     repo = DestinationRepository(db)
     dest = repo.get_by_id(dest_id)
@@ -106,7 +106,7 @@ async def update_destination(
 async def delete_destination(
     dest_id: str,
     db: Session = Depends(get_db),
-    user: dict = Depends(get_current_user),
+    user: dict = Depends(require_editor_or_admin),
 ):
     repo = DestinationRepository(db)
     dest = repo.get_by_id(dest_id)
@@ -120,7 +120,7 @@ async def delete_destination(
 async def test_destination(
     dest_id: str,
     db: Session = Depends(get_db),
-    user: dict = Depends(get_current_user),
+    user: dict = Depends(require_editor_or_admin),
 ):
     from arus.shared.crypto import decrypt_password
     from arus.modules.connector.registry import get_destination

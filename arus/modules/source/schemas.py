@@ -17,6 +17,7 @@ class SourceCreate(BaseModel):
     sync_method: str = "auto"
     table_include: list[str] = []
     table_exclude: list[str] = []
+    schema_include: list[str] = []
 
 
 class SourceUpdate(BaseModel):
@@ -31,6 +32,7 @@ class SourceUpdate(BaseModel):
     sync_method: Optional[str] = None
     table_include: Optional[list[str]] = None
     table_exclude: Optional[list[str]] = None
+    schema_include: Optional[list[str]] = None
 
 
 class SourceResponse(BaseModel):

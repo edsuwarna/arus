@@ -21,4 +21,23 @@ class UserRepository:
         return user
 
     def list_all(self) -> list[User]:
-        return self.db.query(User).all()
+        return self.db.query(User).order_by(User.created_at.desc()).all()
+
+    def update(self, user_id: str, **kwargs) -> User | None:
+        user = self.get_by_id(user_id)
+        if not user:
+            return None
+        for key, val in kwargs.items():
+            if val is not None and hasattr(user, key):
+                setattr(user, key, val)
+        self.db.commit()
+        self.db.refresh(user)
+        return user
+
+    def delete(self, user_id: str) -> bool:
+        user = self.get_by_id(user_id)
+        if not user:
+            return False
+        self.db.delete(user)
+        self.db.commit()
+        return True

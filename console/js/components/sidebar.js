@@ -4,7 +4,9 @@ function renderSidebar(user) {
   const email = user?.email || '';
   const initials = name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'U';
   const role = user?.role || 'admin';
-  const roleLabel = role === 'admin' ? 'Admin' : 'Viewer';
+  const roleLabels = { admin: 'Admin', editor: 'Editor', viewer: 'Viewer' };
+  const roleLabel = roleLabels[role] || role;
+  const isAdmin = role === 'admin';
   const hash = location.hash.slice(1) || 'dashboard';
 
   // Badge counts (updated by page renders)
@@ -20,9 +22,16 @@ function renderSidebar(user) {
     { label: 'Pipelines', icon: '⇌', page: 'pipelines', badge: badges.pipelines },
     { label: 'Run History', icon: '⊞', page: 'runs', badge: null },
     { label: 'DAG View', icon: '⟐', page: 'dag', badge: badges.dag },
-    { section: 'Configure' },
-    { label: 'Settings', icon: '⚙', page: 'settings', badge: null },
+    { section: 'Monitor' },
+    { label: 'Notifications', icon: '🔔', page: 'notifications', badge: null },
   ];
+
+  // Only admin can see Configure section
+  if (isAdmin) {
+    navItems.push({ section: 'Configure' });
+    navItems.push({ label: 'Users', icon: '👥', page: 'users', badge: null });
+    navItems.push({ label: 'Settings', icon: '⚙', page: 'settings', badge: null });
+  }
 
   const currentPage = hash.startsWith('pipeline/') ? 'runs' : hash;
 

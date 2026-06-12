@@ -13,12 +13,19 @@ const PAGE_TITLES = {
   pipelines: 'Pipelines',
   runs: 'Run History',
   dag: 'DAG View',
+  users: 'Users',
   settings: 'Settings',
+  notifications: 'Notifications',
 };
 
+// Global helper: check current user role
 const App = {
   user: null,
   currentHash: '',
+
+  isAdmin() { return this.user?.role === 'admin'; },
+  isEditor() { return this.user?.role === 'editor'; },
+  canWrite() { return this.user?.role === 'admin' || this.user?.role === 'editor'; },
 
   async init() {
     const token = localStorage.getItem('token');
@@ -124,6 +131,14 @@ const App = {
       return;
     }
 
+    // Role-based route guard
+    if (hash === 'users' || hash === 'settings') {
+      if (!this.isAdmin()) {
+        content.innerHTML = `<div class="empty-state"><div class="empty-icon">🚫</div><h3>Access Denied</h3><p>You don't have permission to access this page.</p></div>`;
+        return;
+      }
+    }
+
     switch (hash) {
       case 'dashboard': renderDashboardPage(content); break;
       case 'sources': renderSourcesPage(content); break;
@@ -131,7 +146,9 @@ const App = {
       case 'pipelines': renderPipelinesPage(content); break;
       case 'runs': renderRunsPage(content); break;
       case 'dag': renderDagPage(content); break;
+      case 'users': renderUsersPage(content); break;
       case 'settings': renderSettingsPage(content); break;
+      case 'notifications': renderNotificationsPage(content); break;
       default:
         content.innerHTML = '<div class="empty-state"><div class="empty-icon">🚧</div><h3>Page not found</h3><p>The page you\'re looking for doesn\'t exist.</p></div>';
     }

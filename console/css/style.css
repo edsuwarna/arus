@@ -594,6 +594,7 @@ table tr:last-child td:last-child { border-radius: 0 0 var(--radius) 0; }
 
 .tag.green { background: var(--emerald-dim); color: var(--emerald); }
 .tag.blue { background: var(--blue-dim); color: var(--blue); }
+.tag.gray { background: var(--bg-hover); color: var(--text-tertiary); }
 .tag.amber { background: var(--amber-dim); color: var(--amber); }
 .tag.purple { background: var(--purple-dim); color: var(--purple); }
 

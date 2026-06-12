@@ -84,10 +84,10 @@ class MySQLDestination(BaseDestination):
         """MySQL-safe backtick quoting."""
         return f"`{name.replace('`', '``')}`"
 
-    def ensure_schema(self, source_name: str, table: str, columns: list[dict]) -> None:
+    def ensure_schema(self, source_name: str, table: str, columns: list[dict], target_schema: str = None) -> None:
         safe_source = self._safe_name(source_name)
         raw_schema = self.config.get("raw_schema", "staging")
-        target_schema = self.config.get("target_schema", "analytics")
+        target_schema = target_schema or self.config.get("target_schema", "public")
         raw_table = f"{safe_source}_{table}_raw"
 
         with self.conn.cursor() as cur:
@@ -155,9 +155,9 @@ class MySQLDestination(BaseDestination):
         return len(rows)
 
     def load_normalized(
-        self, source_name: str, table: str, rows: list[dict]
+        self, source_name: str, table: str, rows: list[dict], target_schema: str = None
     ) -> int:
-        target_schema = self.config.get("target_schema", "analytics")
+        target_schema = target_schema or self.config.get("target_schema", "public")
         q_table = f"{self._quote(target_schema)}.{self._quote(table)}"
 
         if not rows:

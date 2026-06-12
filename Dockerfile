@@ -10,8 +10,10 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY arus/ ./arus/
+RUN find /app -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 COPY alembic.ini .
 COPY alembic/ ./alembic/
+RUN find /app -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 
 EXPOSE 8081
 

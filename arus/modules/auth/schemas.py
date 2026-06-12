@@ -27,3 +27,10 @@ class UserCreate(BaseModel):
     name: str
     password: str
     role: str = "viewer"
+
+
+class UserUpdate(BaseModel):
+    name: Optional[str] = None
+    role: Optional[str] = None
+    is_active: Optional[bool] = None
+    password: Optional[str] = None

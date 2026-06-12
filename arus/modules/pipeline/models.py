@@ -18,6 +18,8 @@ class Pipeline(Base):
     max_retries = Column(Integer, default=3)
     timeout_seconds = Column(Integer, default=300)
     depends_on = Column(UUID, ForeignKey("arus_config.pipelines.id", ondelete="SET NULL"), nullable=True)
+    target_schema = Column(String(255), default="public")
+    load_mode = Column(String(20), default="direct")  # pipeline-level default: direct or raw
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
@@ -30,7 +32,9 @@ class PipelineTable(Base):
     pipeline_id = Column(UUID, ForeignKey("arus_config.pipelines.id", ondelete="CASCADE"), nullable=False)
     source_table = Column(String(255), nullable=False)
     source_schema = Column(String(255), default="public")
+    target_schema = Column(String(255), nullable=True)
     sync_mode = Column(String(20), default="incremental")
+    load_mode = Column(String(20), default="direct")  # direct or raw
     watermark_column = Column(String(255), nullable=True)
     enabled = Column(Boolean, default=True)
 

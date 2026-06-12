@@ -9,3 +9,4 @@ from arus.modules.run_log.models import Run, RunTableStat, RunLog  # noqa: F401
 from arus.modules.source.models import Source  # noqa: F401
 from arus.modules.destination.models import Destination  # noqa: F401
 from arus.modules.settings.router import RuntimeSetting  # noqa: F401
+from arus.modules.notification.models import NotificationTarget, PipelineNotification  # noqa: F401

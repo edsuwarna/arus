@@ -33,17 +33,34 @@ class PostgreSQLSource(BaseSource):
         except Exception:
             return False
 
-    def discover_tables(self) -> list[TableSchema]:
-        tables = []
+    def discover_schemas(self) -> list[str]:
+        """List available schemas in the database."""
         with self.conn.cursor() as cur:
             cur.execute(
                 """
+                SELECT nspname FROM pg_catalog.pg_namespace
+                WHERE nspname NOT IN ('pg_catalog', 'information_schema', 'pg_toast')
+                AND nspname NOT LIKE 'pg_%'
+                ORDER BY nspname
+                """
+            )
+            return [row[0] for row in cur.fetchall()]
+
+    def discover_tables(self) -> list[TableSchema]:
+        tables = []
+        schema_filter = self.config.get("schema_include", [])
+        with self.conn.cursor() as cur:
+            query = """
                 SELECT tablename, schemaname
                 FROM pg_catalog.pg_tables
                 WHERE schemaname NOT IN ('pg_catalog', 'information_schema')
-                ORDER BY schemaname, tablename
-                """
-            )
+            """
+            params = []
+            if schema_filter:
+                query += " AND schemaname = ANY(%s)"
+                params.append(schema_filter)
+            query += " ORDER BY schemaname, tablename"
+            cur.execute(query, params)
             for row in cur.fetchall():
                 columns = self.get_table_columns(row[0], row[1])
                 tables.append(
