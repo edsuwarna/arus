@@ -3,23 +3,9 @@ async function renderRunsPage(container) {
   container.innerHTML = `<div class="loading"><div class="spinner"></div><p>Loading run history...</p></div>`;
 
   try {
-    const resp = await API.get('/pipelines?limit=50');
-    const pipelines = Array.isArray(resp?.data) ? resp.data : [];
-
-    // Collect all runs from all pipelines
-    let allRuns = [];
-    for (const p of pipelines) {
-      try {
-        const runsResp = await API.get(`/pipelines/${p.id}/runs?limit=10`);
-        const runs = runsResp?.data || [];
-        runs.forEach(r => { r.pipeline_name = p.name; r.pipeline_id = p.id; });
-        allRuns = allRuns.concat(runs);
-      } catch {}
-    }
-
-    // Sort by time descending
-    allRuns.sort((a, b) => new Date(b.started_at || 0) - new Date(a.started_at || 0));
-    const topRuns = allRuns.slice(0, 50);
+    const resp = await API.get('/runs');
+    const allRuns = resp?.runs || [];
+    const topRuns = allRuns.sort((a, b) => new Date(b.started_at || 0) - new Date(a.started_at || 0)).slice(0, 50);
 
     container.innerHTML = `
       <div class="page-header">

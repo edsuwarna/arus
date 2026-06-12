@@ -4,23 +4,28 @@ async function renderDashboardPage(container) {
 
   try {
     const [summary, recentRuns] = await Promise.all([
-      API.get('/dashboard/summary').catch(() => ({ data: null })),
-      API.get('/pipelines?limit=5').catch(() => ({ data: [] })),
+      API.get('/dashboard/summary').catch(() => ({})),
+      API.get('/dashboard/recent-runs').catch(() => []),
     ]);
 
-    const s = summary?.data || {};
-    const runs = Array.isArray(recentRuns?.data) ? recentRuns.data : [];
-    const pipelines = Array.isArray(recentRuns?.data) ? recentRuns.data : runs;
+    const s = summary || {};
+    const runs = Array.isArray(recentRuns) ? recentRuns : [];
 
     const activeSources = s.active_sources || 0;
-    const activePipelines = s.active_pipelines || (pipelines.filter(p => p.status === 'active').length);
+    const activePipelines = s.active_pipelines || 0;
     const rowsSynced = s.rows_synced_24h || 0;
     const failedRuns = s.failed_runs_24h || 0;
     const totalTables = s.total_tables || 0;
     const totalSources = s.total_sources || activeSources;
 
+    // Also fetch sources for the overview table
+    let sourcesList = [];
+    try {
+      sourcesList = await API.get('/sources');
+    } catch(e) {}
+
     // Update badges
-    window._arusBadges.sources = totalSources || activeSources;
+    window._arusBadges.sources = activeSources;
     window._arusBadges.destinations = s.total_destinations || 0;
     window._arusBadges.pipelines = activePipelines;
     window._arusBadges.dag = activePipelines;
@@ -102,10 +107,10 @@ async function renderDashboardPage(container) {
         <div class="table-wrap">
           <table>
             <thead>
-              <tr><th>Source</th><th>Type</th><th>Tables</th><th>Status</th><th>Last Sync</th><th>Rows/h</th><th></th></tr>
+              <tr><th>Source</th><th>Type</th><th>Tables</th><th>Status</th><th>Last Sync</th><th></th></tr>
             </thead>
             <tbody>
-              ${renderSourcesTable(s.total_sources_list || [])}
+              ${renderSourcesTable(sourcesList)}
             </tbody>
           </table>
         </div>
@@ -157,10 +162,9 @@ function renderSourcesTable(sources) {
   return sources.map(src => {
     const statusDot = src.status === 'connected' || src.status === 'active' ? 'green' : (src.status === 'degraded' ? 'amber' : 'gray');
     const statusLabel = src.status === 'connected' || src.status === 'active' ? 'Active' : (src.status === 'degraded' ? 'Degraded' : 'Inactive');
-    const typeTag = src.type === 'clickhouse' ? 'amber' : 'blue';
     return `<tr>
       <td><span style="font-weight:600;color:var(--text-primary);">${src.name || 'Unknown'}</span></td>
-      <td><span class="tag ${typeTag}">${(src.type || 'postgresql').toUpperCase()}</span></td>
+      <td><span class="inline-flex items-center" style="gap:4px;font-size:12px;font-weight:500;color:var(--text-secondary)">${getDbIcon(src.type, 14)} ${(src.type || 'postgresql').toUpperCase()}</span></td>
       <td><span class="inline-flex text-emerald font-mono">${src.table_count || src.enabled_table_count || 0}</span></td>
       <td><span class="status"><span class="dot ${statusDot}"></span><span class="label ${statusDot}">${statusLabel}</span></span></td>
       <td class="text-sm">${formatTime(src.last_tested || src.last_synced)}</td>

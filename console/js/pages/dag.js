@@ -9,7 +9,7 @@ async function renderDagPage(container) {
 
     try {
         const dagData = await API.get('/dag');
-        const pipelines = dagData?.data || [];
+        const pipelines = Array.isArray(dagData) ? dagData : [];
 
         container.innerHTML = `
             <div class="page-header">
@@ -264,7 +264,7 @@ async function dagNodeClick(nodeName) {
     // Get runs for this pipeline
     try {
         const runsData = await API.get('/pipelines/' + pipeline.id + '/runs?limit=10');
-        const runs = runsData?.data || [];
+        const runs = Array.isArray(runsData) ? runsData : [];
 
         const layer = assetInfo?.layer || 'source';
         const upstream = (pipeline.edges || []).filter(e => e.to === nodeName).map(e => e.from);

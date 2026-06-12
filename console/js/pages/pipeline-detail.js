@@ -22,10 +22,6 @@ async function renderPipelineDetailPage(container, pipelineId) {
     const totalRows = p.stats?.total_rows_synced || 0;
     const lastSync = runs[0] ? formatTime(runs[0].started_at) : 'Never';
     const scheduleLabel = p.schedule_label || p.schedule || 'manual';
-    const flowSrcIcon = srcType === 'postgresql' ? 'Pg' : srcType === 'mysql' ? 'SQL' : 'DB';
-    const isDestPg = destType === 'postgresql';
-    const destColor = isDestPg ? 'var(--blue)' : 'var(--purple)';
-    const destBg = isDestPg ? 'var(--blue-dim)' : 'var(--purple-dim)';
 
     container.innerHTML = `
       <div class="page-header">
@@ -48,7 +44,7 @@ async function renderPipelineDetailPage(container, pipelineId) {
       <!-- Flow diagram -->
       <div class="pipeline-flow">
         <div class="pf-node source">
-          <span class="pf-icon">${flowSrcIcon}</span>
+          <span class="pf-icon">${getDbIcon(srcType, 18)}</span>
           ${srcName}
         </div>
         <span class="pf-arrow">→</span>
@@ -58,7 +54,7 @@ async function renderPipelineDetailPage(container, pipelineId) {
         </div>
         <span class="pf-arrow">→</span>
         <div class="pf-node target">
-          <span class="pf-icon">▣</span>
+          <span class="pf-icon">${getDbIcon(destType, 18)}</span>
           ${destName}
         </div>
       </div>

@@ -38,7 +38,7 @@ const App = {
     this.closeSidebar();
   },
 
-  render() {
+  async render() {
     this.closeModal();
     this.closeSidebar();
     const hash = location.hash.slice(1) || 'dashboard';
@@ -89,7 +89,7 @@ const App = {
     `;
 
     this.currentHash = hash;
-    this.renderPage(hash);
+    await this.renderPage(hash);
     this.updateBadges();
   },
 
@@ -107,7 +107,7 @@ const App = {
     });
   },
 
-  renderPage(hash) {
+  async renderPage(hash) {
     const content = document.getElementById('content');
     if (!content) return;
 

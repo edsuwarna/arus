@@ -643,18 +643,25 @@ table tr:last-child td:last-child { border-radius: 0 0 var(--radius) 0; }
 }
 
 .source-card .sc-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
   flex-shrink: 0;
 }
 
-.source-card .sc-icon.postgres { background: #1a3a5c; color: #6ba4d9; }
-.source-card .sc-icon.mysql { background: #1a3a2a; color: #58b37d; }
+.source-card .sc-icon svg {
+  width: 36px;
+  height: 36px;
+  display: block;
+}
+
+.source-card .sc-icon.postgres { }
+.source-card .sc-icon.mysql { }
+.source-card .sc-icon.mariadb { }
+.source-card .sc-icon.clickhouse { }
+.source-card .sc-icon.mongodb { }
 
 .source-card .sc-name {
   font-weight: 600;

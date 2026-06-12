@@ -4,7 +4,7 @@ async function renderSourcesPage(container) {
 
   try {
     const sourcesData = await API.get('/sources');
-    const sources = Array.isArray(sourcesData?.data) ? sourcesData.data : (Array.isArray(sourcesData) ? sourcesData : []);
+    const sources = Array.isArray(sourcesData) ? sourcesData : [];
     const totalTables = sources.reduce((sum, s) => sum + (s.table_count || s.enabled_table_count || 0), 0);
 
     // Update badges
@@ -83,14 +83,11 @@ async function renderSourcesPage(container) {
 function renderSourceCard(src) {
   const type = src.type || 'postgresql';
   const iconType = type === 'postgresql' || type === 'pg' ? 'postgres'
-    : type === 'mysql' || type === 'mariadb' ? 'mysql'
+    : type === 'mariadb' ? 'mariadb'
+    : type === 'mysql' ? 'mysql'
+    : type === 'clickhouse' ? 'clickhouse'
+    : type === 'mongodb' ? 'mongodb'
     : 'postgres';
-  const iconLabel = type === 'postgresql' ? 'Pg'
-    : type === 'mysql' ? 'SQL'
-    : type === 'mariadb' ? 'Ma'
-    : type === 'clickhouse' ? 'Ch'
-    : type === 'mongodb' ? 'Mo'
-    : type.slice(0, 2).toUpperCase();
   const statusDot = src.status === 'connected' || src.status === 'active' ? 'green' : (src.status === 'error' ? 'red' : 'amber');
   const tableCount = src.table_count || src.enabled_table_count || 0;
   const syncInterval = src.sync_interval || src.schedule || '5m';
@@ -98,7 +95,7 @@ function renderSourceCard(src) {
   return `
     <div class="source-card" onclick="selectSource('${src.id}')">
       <div class="sc-top">
-        <div class="sc-icon ${iconType}">${iconLabel}</div>
+        <div class="sc-icon ${iconType}">${getDbIcon(type, 22)}</div>
         <div>
           <div class="sc-name">${src.name || 'Unnamed Source'}</div>
           <div class="sc-desc">${src.host || 'localhost'}:${src.port || 5432} · ${src.database || '-'}</div>

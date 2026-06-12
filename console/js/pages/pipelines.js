@@ -6,7 +6,7 @@ async function renderDestinationsPage(container) {
 
   try {
     const resp = await API.get('/destinations');
-    const destinations = Array.isArray(resp?.data) ? resp.data : (Array.isArray(resp) ? resp : []);
+    const destinations = Array.isArray(resp) ? resp : [];
 
     window._arusBadges.destinations = destinations.length;
     if (window.App?.updateBadges) App.updateBadges();
@@ -36,9 +36,11 @@ async function renderDestinationsPage(container) {
 
 function renderDestCard(dest) {
   const type = dest.type || 'postgresql';
-  const iconColor = type === 'postgresql' ? 'var(--blue)' : type === 'clickhouse' ? 'var(--amber)' : 'var(--emerald)';
-  const iconBg = type === 'postgresql' ? 'var(--blue-dim)' : type === 'clickhouse' ? 'var(--amber-dim)' : 'var(--emerald-dim)';
-  const iconLabel = type === 'postgresql' ? 'DW' : type === 'clickhouse' ? 'CH' : type === 'mysql' ? 'SQL' : 'DB';
+  const iconType = type === 'postgresql' ? 'postgres'
+    : type === 'mariadb' ? 'mariadb'
+    : type === 'clickhouse' ? 'clickhouse'
+    : type === 'mysql' ? 'mysql'
+    : 'postgres';
   const statusDot = dest.status === 'connected' || dest.status === 'active' ? 'green' : 'gray';
   const tablesCount = dest.total_tables || dest.table_count || 0;
   const dataSize = dest.disk_usage_mb ? formatSize(dest.disk_usage_mb) : '-';
@@ -46,7 +48,7 @@ function renderDestCard(dest) {
   return `
     <div class="source-card">
       <div class="sc-top">
-        <div class="sc-icon" style="background:${iconBg};color:${iconColor};">${iconLabel}</div>
+        <div class="sc-icon ${iconType}">${getDbIcon(type, 22)}</div>
         <div>
           <div class="sc-name">${dest.name || 'Unnamed'}</div>
           <div class="sc-desc">${dest.host || '-'}:${dest.port || '-'} · ${dest.database || '-'}</div>
@@ -90,8 +92,8 @@ async function renderPipelinesPage(container) {
   container.innerHTML = `<div class="loading"><div class="spinner"></div><p>Loading pipelines...</p></div>`;
 
   try {
-    const resp = await API.get('/pipelines');
-    const pipelines = Array.isArray(resp?.data) ? resp.data : (Array.isArray(resp) ? resp : []);
+    const pipelinesResp = await API.get('/pipelines');
+    const pipelines = Array.isArray(pipelinesResp) ? pipelinesResp : [];
 
     const activeCount = pipelines.filter(p => p.status === 'active').length;
     const failingCount = pipelines.filter(p => p.status === 'error' || p.status === 'failed').length;
@@ -166,20 +168,158 @@ async function pauseAllPipelines() {
   }
 }
 
-function showAddPipelineModal() {
-  App.showModal(`
+async function showAddPipelineModal() {
+  // Show loading first
+  const modal = App.showModal(`
     <div class="modal-header">
-      <h2>New Pipeline</h2>
+      <h2>Create Pipeline</h2>
       <button class="modal-close" onclick="App.closeModal()">✕</button>
     </div>
-    <div class="modal-body">
-      <p style="color:var(--text-tertiary);font-size:13px;">Add a source first, then pipelines are auto-created when you discover tables.</p>
-      <div style="margin-top:16px;display:flex;gap:8px;">
-        <button class="btn btn-secondary" onclick="App.closeModal();location.hash='sources'">Go to Sources</button>
-        <button class="btn btn-primary" onclick="App.closeModal();showAddSourceModal()">+ Add Source</button>
-      </div>
+    <div class="modal-body" style="text-align:center;padding:40px">
+      <div class="spinner"></div>
+      <p style="color:var(--text-tertiary);font-size:13px;margin-top:12px">Loading sources & destinations...</p>
     </div>
   `);
+
+  try {
+    const [sources, destinations] = await Promise.all([
+      API.get('/sources').catch(() => []),
+      API.get('/destinations').catch(() => []),
+    ]);
+
+    const srcList = Array.isArray(sources) ? sources : [];
+    const destList = Array.isArray(destinations) ? destinations : [];
+
+    if (srcList.length === 0) {
+      modal.innerHTML = `
+        <div class="modal-header">
+          <h2>Create Pipeline</h2>
+          <button class="modal-close" onclick="App.closeModal()">✕</button>
+        </div>
+        <div class="modal-body" style="text-align:center;padding:40px">
+          <div style="font-size:48px;margin-bottom:12px;opacity:0.5">🗄️</div>
+          <h3 style="margin-bottom:8px">No Sources Available</h3>
+          <p style="color:var(--text-tertiary);font-size:13px;margin-bottom:20px">Add a source first before creating a pipeline.</p>
+          <button class="btn btn-primary" onclick="App.closeModal();location.hash='sources'">+ Add Source</button>
+        </div>
+      `;
+      return;
+    }
+
+    modal.innerHTML = `
+      <div class="modal-header">
+        <h2>Create Pipeline</h2>
+        <button class="modal-close" onclick="App.closeModal()">✕</button>
+      </div>
+      <form id="createPipelineForm" onsubmit="return handleCreatePipeline(event)">
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Pipeline Name</label>
+            <input type="text" id="pipelineName" placeholder="E-Commerce → Warehouse" required style="font-weight:500">
+          </div>
+          <div class="form-group">
+            <label>Source Database</label>
+            <select id="pipelineSource" required>
+              <option value="">— Select Source —</option>
+              ${srcList.map(s => `<option value="${s.id}">${s.name} (${s.type}) — ${s.database || '-'}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Destination (Warehouse)</label>
+            ${destList.length > 0 ? `
+            <select id="pipelineDest" required>
+              <option value="">— Select Destination —</option>
+              ${destList.map(d => `<option value="${d.id}">${d.name} (${d.type}) — ${d.database || '-'}</option>`).join('')}
+            </select>
+            ` : `
+            <div style="padding:8px 12px;background:var(--amber-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--amber)">
+              No destinations configured. Pipeline will be created without a destination — you can add one later.
+              <input type="hidden" id="pipelineDest" value="">
+            </div>
+            `}
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Sync Mode</label>
+              <select id="pipelineSync">
+                <option value="incremental">Incremental (CDC)</option>
+                <option value="full_refresh">Full Refresh</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Schedule</label>
+              <select id="pipelineSchedule">
+                <option value="*/5 * * * *">Every 5 minutes</option>
+                <option value="*/15 * * * *">Every 15 minutes</option>
+                <option value="0 * * * *">Every hour</option>
+                <option value="0 */6 * * *">Every 6 hours</option>
+                <option value="manual">Manual only</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label>Tables to Sync</label>
+            <div style="font-size:12px;color:var(--text-tertiary);margin-top:2px">
+              All discovered tables from the selected source will be included.
+              Fine-tune table selection after pipeline creation.
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="App.closeModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Create Pipeline</button>
+        </div>
+      </form>
+    `;
+  } catch (err) {
+    modal.innerHTML = `
+      <div class="modal-header">
+        <h2>Create Pipeline</h2>
+        <button class="modal-close" onclick="App.closeModal()">✕</button>
+      </div>
+      <div class="modal-body" style="text-align:center;padding:40px">
+        <div style="font-size:48px;margin-bottom:12px;opacity:0.5">⚠️</div>
+        <h3 style="margin-bottom:8px">Error Loading Data</h3>
+        <p style="color:var(--text-tertiary);font-size:13px">${err.message}</p>
+      </div>
+    `;
+  }
+}
+
+async function handleCreatePipeline(event) {
+  event.preventDefault();
+  const srcId = document.getElementById('pipelineSource')?.value;
+  if (!srcId) {
+    App.toast('Please select a source', 'error');
+    return;
+  }
+
+  const data = {
+    name: document.getElementById('pipelineName')?.value || 'Unnamed Pipeline',
+    source_id: srcId,
+    destination_id: document.getElementById('pipelineDest')?.value || null,
+    sync_type: document.getElementById('pipelineSync')?.value || 'incremental',
+    schedule: document.getElementById('pipelineSchedule')?.value || '*/5 * * * *',
+  };
+
+  const btn = event.target.querySelector('button[type="submit"]');
+  const orig = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Creating...';
+  btn.style.opacity = '0.6';
+
+  try {
+    const result = await API.post('/pipelines', data);
+    App.closeModal();
+    App.toast(`Pipeline "${data.name}" created!`, 'success');
+    App.render();
+  } catch (err) {
+    App.toast(err.message, 'error');
+    btn.disabled = false;
+    btn.textContent = orig;
+    btn.style.opacity = '1';
+  }
+  return false;
 }
 
 /* ===== SETTINGS ===== */
@@ -402,3 +542,4 @@ window.deleteDestination = deleteDestination;
 window.manageDestination = manageDestination;
 window.pauseAllPipelines = pauseAllPipelines;
 window.showAddPipelineModal = showAddPipelineModal;
+window.handleCreatePipeline = handleCreatePipeline;
