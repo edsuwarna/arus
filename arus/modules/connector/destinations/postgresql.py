@@ -42,12 +42,12 @@ class PostgreSQLDestination(BaseDestination):
     def ensure_schema(self, source_name: str, table: str, columns: list[dict]) -> None:
         safe_source = self._safe_name(source_name)
         raw_schema = self.config.get("raw_schema", "staging")
-        analytics_schema = self.config.get("analytics_schema", "analytics")
+        target_schema = self.config.get("target_schema", "analytics")
         raw_table = f"{safe_source}_{table}_raw"
 
         with self.conn.cursor() as cur:
             cur.execute(f'CREATE SCHEMA IF NOT EXISTS "{raw_schema}"')
-            cur.execute(f'CREATE SCHEMA IF NOT EXISTS "{analytics_schema}"')
+            cur.execute(f'CREATE SCHEMA IF NOT EXISTS "{target_schema}"')
 
             # Create raw (JSONB) table
             cur.execute(
@@ -75,7 +75,7 @@ class PostgreSQLDestination(BaseDestination):
 
             cur.execute(
                 f"""
-                CREATE TABLE IF NOT EXISTS "{analytics_schema}"."{table}" (
+                CREATE TABLE IF NOT EXISTS "{target_schema}"."{table}" (
                     {', '.join(col_defs)}
                 )
                 """
@@ -98,7 +98,7 @@ class PostgreSQLDestination(BaseDestination):
         return len(rows)
 
     def load_normalized(self, source_name: str, table: str, rows: list[dict]) -> int:
-        analytics_schema = self.config.get("analytics_schema", "analytics")
+        target_schema = self.config.get("target_schema", "analytics")
 
         if not rows:
             return 0
@@ -111,7 +111,7 @@ class PostgreSQLDestination(BaseDestination):
         with self.conn.cursor() as cur:
             psycopg2.extras.execute_values(
                 cur,
-                f'INSERT INTO "{analytics_schema}"."{table}" ({col_names}) VALUES %s ON CONFLICT DO NOTHING',
+                f'INSERT INTO "{target_schema}"."{table}" ({col_names}) VALUES %s ON CONFLICT DO NOTHING',
                 values,
             )
         self.conn.commit()

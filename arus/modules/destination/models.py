@@ -19,7 +19,7 @@ class Destination(Base):
     password_enc = Column(Text, nullable=True)
     ssl = Column(Boolean, default=False)
     raw_schema = Column(String(255), default="staging")
-    analytics_schema = Column(String(255), default="analytics")
+    target_schema = Column(String(255), default="analytics")
     is_default = Column(Boolean, default=False)
     status = Column(String(20), default="registered")
     created_at = Column(DateTime(timezone=True), server_default=func.now())

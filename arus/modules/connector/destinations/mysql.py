@@ -87,7 +87,7 @@ class MySQLDestination(BaseDestination):
     def ensure_schema(self, source_name: str, table: str, columns: list[dict]) -> None:
         safe_source = self._safe_name(source_name)
         raw_schema = self.config.get("raw_schema", "staging")
-        analytics_schema = self.config.get("analytics_schema", "analytics")
+        target_schema = self.config.get("target_schema", "analytics")
         raw_table = f"{safe_source}_{table}_raw"
 
         with self.conn.cursor() as cur:
@@ -97,7 +97,7 @@ class MySQLDestination(BaseDestination):
                 f" CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
             )
             cur.execute(
-                f"CREATE DATABASE IF NOT EXISTS {self._quote(analytics_schema)}"
+                f"CREATE DATABASE IF NOT EXISTS {self._quote(target_schema)}"
                 f" CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
             )
 
@@ -129,7 +129,7 @@ class MySQLDestination(BaseDestination):
 
             cur.execute(
                 f"""
-                CREATE TABLE IF NOT EXISTS {self._quote(analytics_schema)}.{self._quote(table)} (
+                CREATE TABLE IF NOT EXISTS {self._quote(target_schema)}.{self._quote(table)} (
                     {', '.join(col_defs)}
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
                 """
@@ -157,8 +157,8 @@ class MySQLDestination(BaseDestination):
     def load_normalized(
         self, source_name: str, table: str, rows: list[dict]
     ) -> int:
-        analytics_schema = self.config.get("analytics_schema", "analytics")
-        q_table = f"{self._quote(analytics_schema)}.{self._quote(table)}"
+        target_schema = self.config.get("target_schema", "analytics")
+        q_table = f"{self._quote(target_schema)}.{self._quote(table)}"
 
         if not rows:
             return 0

@@ -60,7 +60,7 @@ def _seed_default_destination():
                 "username": "arus",
                 "password_enc": encrypt_password("arus_secret"),
                 "raw_schema": "staging",
-                "analytics_schema": "analytics",
+                "target_schema": "analytics",
                 "is_default": True,
                 "status": "connected",
             })

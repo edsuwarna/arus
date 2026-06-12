@@ -404,8 +404,8 @@ class PipelineExecutor:
         """
         try:
             safe_source = source_name.lower().replace("-", "_").replace(" ", "_")
-            analytics_schema = dest.config.get("analytics_schema", "analytics")
-            schema_table = f"{analytics_schema}.{table}"
+            target_schema = dest.config.get("target_schema", "analytics")
+            schema_table = f"{target_schema}.{table}"
 
             with dest.conn.cursor() as cur:
                 cur.execute(
@@ -414,7 +414,7 @@ class PipelineExecutor:
                     FROM information_schema.columns
                     WHERE table_schema = %s AND table_name = %s
                     """,
-                    (analytics_schema, table),
+                    (target_schema, table),
                 )
                 existing_cols = {row[0].lower() for row in cur.fetchall()}
 
@@ -442,7 +442,7 @@ class PipelineExecutor:
 
     def _auto_alter_table(self, dest, source_name: str, table: str, source_columns: list[dict], new_cols: list[str]):
         """Automatically add new columns to the warehouse table."""
-        analytics_schema = dest.config.get("analytics_schema", "analytics")
+        target_schema = dest.config.get("target_schema", "analytics")
         from arus.shared.types import map_type
 
         with dest.conn.cursor() as cur:
@@ -450,7 +450,7 @@ class PipelineExecutor:
                 if col["name"].lower() in new_cols:
                     pg_type = map_type(col["type"])
                     cur.execute(
-                        f'ALTER TABLE "{analytics_schema}"."{table}" '
+                        f'ALTER TABLE "{target_schema}"."{table}" '
                         f'ADD COLUMN "{col["name"]}" {pg_type}'
                     )
                     logger.info(f"  → Added column: {col['name']} ({pg_type})")

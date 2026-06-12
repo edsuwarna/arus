@@ -173,7 +173,7 @@ class PipelineService:
             "password": decrypt_password(dest.password_enc),
             "database": dest.database,
             "raw_schema": dest.raw_schema,
-            "analytics_schema": dest.analytics_schema,
+            "target_schema": dest.target_schema,
         }
 
         # Execute with db_session for Phase 2 features

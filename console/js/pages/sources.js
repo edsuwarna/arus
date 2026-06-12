@@ -243,9 +243,96 @@ async function deleteSource(id) {
   }
 }
 
-function editSource(id) {
+async function editSource(id) {
   App.closeModal();
-  App.toast('Edit source feature coming soon', 'info');
+  try {
+    const res = await API.get(`/sources/${id}`);
+    const s = res?.data || {};
+    const isMongo = s.type === 'mongodb';
+    App.showModal(`
+      <div class="modal-header">
+        <h2>Edit Source — ${s.name || ''}</h2>
+        <button class="modal-close" onclick="App.closeModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="edit-source-form" onsubmit="submitEditSource(event, '${id}')">
+          <div class="form-group">
+            <label class="form-label">Name</label>
+            <input class="form-input" name="name" value="${s.name || ''}" required />
+          </div>
+          ${isMongo ? `
+          <div class="form-group">
+            <label class="form-label">Connection URI</label>
+            <input class="form-input" name="uri" value="${s.uri || ''}" placeholder="mongodb://user:pass@host:27017/db" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Auth Source</label>
+            <input class="form-input" name="auth_source" value="${s.auth_source || 'admin'}" />
+          </div>
+          ` : `
+          <div class="form-row">
+            <div class="form-group" style="flex:2">
+              <label class="form-label">Host</label>
+              <input class="form-input" name="host" value="${s.host || 'localhost'}" />
+            </div>
+            <div class="form-group" style="flex:1">
+              <label class="form-label">Port</label>
+              <input class="form-input" name="port" type="number" value="${s.port || 5432}" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Database</label>
+            <input class="form-input" name="database" value="${s.database || ''}" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Username</label>
+            <input class="form-input" name="username" value="${s.username || ''}" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Password <span style="color:var(--text-muted);font-size:11px">(leave blank to keep current)</span></label>
+            <input class="form-input" name="password" type="password" value="" placeholder="••••••••" />
+          </div>
+          `}
+          <div class="form-group">
+            <label class="form-label">Sync Method</label>
+            <select class="form-select" name="sync_method">
+              <option value="auto" ${s.sync_method === 'auto' ? 'selected' : ''}>Auto-detect</option>
+              <option value="full" ${s.sync_method === 'full' ? 'selected' : ''}>Full Refresh</option>
+              <option value="incremental" ${s.sync_method === 'incremental' ? 'selected' : ''}>Incremental</option>
+            </select>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" onclick="App.closeModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="edit-source-btn">💾 Save Changes</button>
+          </div>
+        </form>
+      </div>
+    `);
+  } catch (err) {
+    App.toast('Failed to load source: ' + err.message, 'error');
+  }
+}
+
+async function submitEditSource(e, id) {
+  e.preventDefault();
+  const btn = document.getElementById('edit-source-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Saving...'; }
+  const form = new FormData(e.target);
+  const data = {};
+  for (const [k, v] of form.entries()) {
+    if (k === 'password' && !v) continue;
+    if (k === 'port') { data[k] = parseInt(v) || 5432; continue; }
+    data[k] = v;
+  }
+  try {
+    await API.put(`/sources/${id}`, data);
+    App.toast('✅ Source updated!', 'success');
+    App.closeModal();
+    App.render();
+  } catch (err) {
+    App.toast('Update failed: ' + err.message, 'error');
+    if (btn) { btn.disabled = false; btn.textContent = '💾 Save Changes'; }
+  }
 }
 
 function toggleAllTables(checkbox) {
@@ -423,5 +510,6 @@ window.showSourceManage = showSourceManage;
 window.testSource = testSource;
 window.deleteSource = deleteSource;
 window.editSource = editSource;
+window.submitEditSource = submitEditSource;
 window.toggleAllTables = toggleAllTables;
 window.toggleTable = toggleTable;

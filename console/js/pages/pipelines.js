@@ -80,11 +80,94 @@ async function manageDestination(id) {
     <div class="modal-body">
       <p style="color:var(--text-secondary);font-size:13px;margin-bottom:16px;">Destination ID: ${id}</p>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-secondary" onclick="editDestination('${id}')">✏ Edit</button>
         <button class="btn btn-secondary" onclick="testDestination('${id}')">🔌 Test Connection</button>
         <button class="btn btn-danger" onclick="deleteDestination('${id}')">🗑 Delete</button>
       </div>
     </div>
   `);
+}
+
+async function editDestination(id) {
+  App.closeModal();
+  try {
+    const res = await API.get(`/destinations/${id}`);
+    const d = res?.data || {};
+    App.showModal(`
+      <div class="modal-header">
+        <h2>Edit Destination — ${d.name || ''}</h2>
+        <button class="modal-close" onclick="App.closeModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="edit-dest-form" onsubmit="submitEditDestination(event, '${id}')">
+          <div class="form-group">
+            <label class="form-label">Name</label>
+            <input class="form-input" name="name" value="${d.name || ''}" required />
+          </div>
+          <div class="form-row">
+            <div class="form-group" style="flex:2">
+              <label class="form-label">Host</label>
+              <input class="form-input" name="host" value="${d.host || 'localhost'}" />
+            </div>
+            <div class="form-group" style="flex:1">
+              <label class="form-label">Port</label>
+              <input class="form-input" name="port" type="number" value="${d.port || 5432}" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Database</label>
+            <input class="form-input" name="database" value="${d.database || ''}" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Username</label>
+            <input class="form-input" name="username" value="${d.username || ''}" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Password <span style="color:var(--text-muted);font-size:11px">(leave blank to keep current)</span></label>
+            <input class="form-input" name="password" type="password" value="" placeholder="••••••••" />
+          </div>
+          <div class="form-row">
+            <div class="form-group" style="flex:1">
+              <label class="form-label">Raw Schema (staging)</label>
+              <input class="form-input" name="raw_schema" value="${d.raw_schema || 'staging'}" />
+            </div>
+            <div class="form-group" style="flex:1">
+              <label class="form-label">Target Schema (analytics)</label>
+              <input class="form-input" name="target_schema" value="${d.target_schema || 'analytics'}" />
+            </div>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" onclick="App.closeModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="edit-dest-btn">💾 Save Changes</button>
+          </div>
+        </form>
+      </div>
+    `);
+  } catch (err) {
+    App.toast('Failed to load destination: ' + err.message, 'error');
+  }
+}
+
+async function submitEditDestination(e, id) {
+  e.preventDefault();
+  const btn = document.getElementById('edit-dest-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Saving...'; }
+  const form = new FormData(e.target);
+  const data = {};
+  for (const [k, v] of form.entries()) {
+    if (k === 'password' && !v) continue;
+    if (k === 'port') { data[k] = parseInt(v) || 5432; continue; }
+    data[k] = v;
+  }
+  try {
+    await API.put(`/destinations/${id}`, data);
+    App.toast('✅ Destination updated!', 'success');
+    App.closeModal();
+    App.render();
+  } catch (err) {
+    App.toast('Update failed: ' + err.message, 'error');
+    if (btn) { btn.disabled = false; btn.textContent = '💾 Save Changes'; }
+  }
 }
 
 /* ===== PIPELINES ===== */
@@ -487,8 +570,8 @@ function showAddDestinationModal() {
                 <div class="hint">Where raw JSON data lands.</div>
               </div>
               <div class="form-group">
-                <label id="destAnalyticsLabel">Analytics Schema</label>
-                <input type="text" id="destAnalyticsSchema" placeholder="analytics" value="analytics">
+                <label id="destAnalyticsLabel">Target Schema</label>
+                <input type="text" id="destTargetSchema" placeholder="analytics" value="analytics">
                 <div class="hint">Where normalized data lands.</div>
               </div>
             </div>
@@ -522,7 +605,7 @@ window.updateDestForm = function() {
     analyticsLabel.textContent = 'Analytics Database';
   } else {
     rawLabel.textContent = 'Raw Schema';
-    analyticsLabel.textContent = 'Analytics Schema';
+    analyticsLabel.textContent = 'Target Schema';
   }
 };
 
@@ -545,7 +628,7 @@ async function handleAddDest(event) {
     username: document.getElementById('destUser').value,
     password: document.getElementById('destPassword').value,
     raw_schema: document.getElementById('destRawSchema')?.value || 'staging',
-    analytics_schema: document.getElementById('destAnalyticsSchema')?.value || 'analytics',
+    target_schema: document.getElementById('destTargetSchema')?.value || 'analytics',
     is_default: document.getElementById('destDefault')?.checked || false,
   };
   try {
@@ -587,6 +670,8 @@ window.handleAddDest = handleAddDest;
 window.testDestination = testDestination;
 window.deleteDestination = deleteDestination;
 window.manageDestination = manageDestination;
+window.editDestination = editDestination;
+window.submitEditDestination = submitEditDestination;
 window.pauseAllPipelines = pauseAllPipelines;
 window.showAddPipelineModal = showAddPipelineModal;
 window.handleCreatePipeline = handleCreatePipeline;

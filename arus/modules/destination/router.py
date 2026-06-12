@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from arus.shared.db.session import get_db
 from arus.shared.crypto import encrypt_password
 from arus.shared.exceptions import NotFoundError
-from arus.modules.destination.schemas import DestinationCreate
+from arus.modules.destination.schemas import DestinationCreate, DestinationUpdate
 from arus.modules.destination.repository import DestinationRepository
 from arus.modules.auth.router import get_current_user
 
@@ -30,7 +30,7 @@ async def list_destinations(
                 "database": d.database,
                 "status": d.status,
                 "raw_schema": d.raw_schema,
-                "analytics_schema": d.analytics_schema,
+                "target_schema": d.target_schema,
                 "is_default": d.is_default,
                 "total_tables": 0,
                 "total_rows": 0,
@@ -76,12 +76,30 @@ async def get_destination(
             "database": dest.database,
             "username": dest.username,
             "raw_schema": dest.raw_schema,
-            "analytics_schema": dest.analytics_schema,
+            "target_schema": dest.target_schema,
             "is_default": dest.is_default,
             "status": dest.status,
             "created_at": dest.created_at,
         },
     }
+
+
+@router.put("/{dest_id}")
+async def update_destination(
+    dest_id: str,
+    req: DestinationUpdate,
+    db: Session = Depends(get_db),
+    user: dict = Depends(get_current_user),
+):
+    repo = DestinationRepository(db)
+    dest = repo.get_by_id(dest_id)
+    if not dest:
+        raise NotFoundError(f"Destination {dest_id} not found")
+    data = {k: v for k, v in req.model_dump(exclude_unset=True).items() if v is not None}
+    if "password" in data:
+        data["password_enc"] = encrypt_password(data.pop("password"))
+    repo.update(dest, data)
+    return {"status": "ok", "data": {"updated": True}}
 
 
 @router.delete("/{dest_id}")

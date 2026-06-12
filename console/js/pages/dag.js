@@ -56,8 +56,9 @@ async function renderDagPage(container) {
                     </div>
                 </div>
                 <div class="dag-canvas-wrapper" id="dag-canvas-wrapper"
+                     style="overflow:auto;max-height:70vh;"
                      onmousedown="dagStartPan(event)" onmousemove="dagDoPan(event)" onmouseup="dagEndPan()" onmouseleave="dagEndPan()">
-                    <svg id="dag-svg" width="100%" height="500" style="cursor:grab"></svg>
+                    <svg id="dag-svg" width="100%" height="500" style="cursor:grab;display:block"></svg>
                 </div>
             </div>
             ` : `
@@ -105,7 +106,13 @@ function renderDagGraph(pipelines) {
         });
     });
 
-    const W = 900, H = 450;
+    const maxNodesPerLayer = Math.max(
+        (layers.source || []).length,
+        (layers.staging || []).length,
+        (layers.analytics || []).length,
+        3
+    );
+    const W = 900, H = Math.max(450, maxNodesPerLayer * 56 + 100);
     const layerX = { source: 120, staging: 380, analytics: 650 };
     const NODE_W = 130, NODE_H = 36;
     const layerGap = 60;

@@ -87,7 +87,7 @@ class ClickHouseDestination(BaseDestination):
         safe_source = self._safe_name(source_name)
         raw_db = self.config.get("raw_database", self.config.get("raw_schema", "staging"))
         analytics_db = self.config.get("analytics_database",
-                                       self.config.get("analytics_schema", "analytics"))
+                                       self.config.get("target_schema", "analytics"))
         raw_table = f"{safe_source}_{table}_raw"
         q_raw_db = self._quote(raw_db)
         q_analytics_db = self._quote(analytics_db)
@@ -148,7 +148,7 @@ class ClickHouseDestination(BaseDestination):
     def load_normalized(self, source_name: str, table: str,
                         rows: list[dict]) -> int:
         analytics_db = self.config.get("analytics_database",
-                                       self.config.get("analytics_schema", "analytics"))
+                                       self.config.get("target_schema", "analytics"))
         q_analytics_db = self._quote(analytics_db)
         q_table = self._quote(table)
 

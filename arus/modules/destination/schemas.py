@@ -12,8 +12,20 @@ class DestinationCreate(BaseModel):
     username: str = "arus"
     password: str = "arus_secret"
     raw_schema: str = "staging"
-    analytics_schema: str = "analytics"
+    target_schema: str = "analytics"
     is_default: bool = False
+
+
+class DestinationUpdate(BaseModel):
+    name: Optional[str] = None
+    host: Optional[str] = None
+    port: Optional[int] = None
+    database: Optional[str] = None
+    username: Optional[str] = None
+    password: Optional[str] = None
+    raw_schema: Optional[str] = None
+    target_schema: Optional[str] = None
+    is_default: Optional[bool] = None
 
 
 class DestinationResponse(BaseModel):
@@ -25,6 +37,6 @@ class DestinationResponse(BaseModel):
     database: str
     status: str
     raw_schema: str
-    analytics_schema: str
+    target_schema: str
     is_default: bool
     created_at: Optional[datetime] = None
