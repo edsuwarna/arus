@@ -9,7 +9,10 @@ class LoginRequest(BaseModel):
 
 
 class LoginResponse(BaseModel):
-    token: str
+    access_token: str
+    refresh_token: str
+    expires_in: int = 900
+    refresh_expires_in: int = 604800
     user: dict
     expires_at: datetime
 
