@@ -5,6 +5,7 @@ from arus.modules.connector.sources.postgresql import PostgreSQLSource
 from arus.modules.connector.sources.mongo import MongoDBSource
 from arus.modules.connector.destinations.postgresql import PostgreSQLDestination
 from arus.modules.connector.destinations.clickhouse import ClickHouseDestination
+from arus.modules.connector.destinations.mysql import MySQLDestination
 
 _source_registry: dict[str, type[BaseSource]] = {}
 _dest_registry: dict[str, type[BaseDestination]] = {}
@@ -45,3 +46,5 @@ register_source("postgresql", PostgreSQLSource)
 register_source("mongodb", MongoDBSource)
 register_destination("postgresql", PostgreSQLDestination)
 register_destination("clickhouse", ClickHouseDestination)
+register_destination("mysql", MySQLDestination)
+register_destination("mariadb", MySQLDestination)  # MySQL-compatible
