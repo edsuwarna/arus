@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from arus.shared.db.session import get_db
@@ -19,33 +19,40 @@ def get_source_service(db: Session = Depends(get_db)) -> SourceService:
 
 @router.get("")
 async def list_sources(
+    limit: int = Query(50, le=200),
+    offset: int = Query(0, ge=0),
     service: SourceService = Depends(get_source_service),
     user: dict = Depends(get_current_user),
 ):
-    sources = service.repo.list_all()
+    sources = service.repo.list_all(limit=limit, offset=offset)
+    total = service.repo.count_all()
     return {
         "status": "ok",
-        "data": [
-            {
-                "id": str(s.id),
-                "name": s.name,
-                "type": s.type,
-                "host": s.host,
-                "port": s.port,
-                "database": s.database,
-                "uri": s.uri,
-                "auth_source": s.auth_source,
-                "status": s.status,
-                "table_count": 0,
-                "enabled_table_count": 0,
-                "schema_include": s.schema_include or [],
-                "last_tested": s.last_tested,
-                "created_at": s.created_at,
-            }
-            for s in sources
-        ],
+        "data": {
+            "sources": [
+                {
+                    "id": str(s.id),
+                    "name": s.name,
+                    "type": s.type,
+                    "host": s.host,
+                    "port": s.port,
+                    "database": s.database,
+                    "uri": s.uri,
+                    "auth_source": s.auth_source,
+                    "status": s.status,
+                    "table_count": 0,
+                    "enabled_table_count": 0,
+                    "schema_include": s.schema_include or [],
+                    "last_tested": s.last_tested,
+                    "created_at": s.created_at,
+                }
+                for s in sources
+            ],
+            "total": total,
+            "limit": limit,
+            "offset": offset,
+        },
     }
-
 
 @router.post("")
 async def create_source(

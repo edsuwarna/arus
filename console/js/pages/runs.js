@@ -38,7 +38,10 @@ async function renderRunsPage(container) {
                 <td style="color:var(--text-secondary)">${formatDuration(r.duration_ms)}</td>
                 <td class="font-mono">${numberFormat(r.rows_synced || 0)}</td>
                 <td style="color:var(--text-tertiary);font-size:12px">${r.trigger_type || '-'}</td>
-                <td><button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();showRunLogs('${r.id}')">Logs</button></td>
+                <td><button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();showRunLogs('${r.id}')">Logs</button>
+                  ${r.status === 'running' || r.status === 'pending' ? `<button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();cancelRun('${r.id}')" style="color:var(--red)">Cancel</button>` : ''}
+                  ${r.status === 'failed' ? `<button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();retryRun('${r.id}')" style="color:var(--emerald)">Retry</button>` : ''}
+                </td>
               </tr>
               `).join('')}
             </tbody>

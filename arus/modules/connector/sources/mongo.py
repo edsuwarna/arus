@@ -134,13 +134,64 @@ class MongoDBSource(BaseSource):
 
     def detect_sync_mode(self, table: str, columns: list[dict]) -> SyncMode:
         ts_cols = {"updated_at", "modified_at", "last_modified", "updated"}
+        wm_col = None
+        del_col = None
+
         for col in columns:
             if col["name"].lower() in ts_cols:
-                return SyncMode(mode="incremental", watermark_column=col["name"])
+                wm_col = col["name"]
+                break
+        if not wm_col:
+            for col in columns:
+                if col["name"].lower() == "created_at":
+                    wm_col = col["name"]
+                    break
+
         for col in columns:
-            if col["name"].lower() == "created_at":
-                return SyncMode(mode="incremental", watermark_column=col["name"])
-        return SyncMode(mode="full_refresh", watermark_column=None)
+            if col["name"].lower() == "deleted_at":
+                del_col = col["name"]
+                break
+
+        if wm_col:
+            return SyncMode(mode="incremental", watermark_column=wm_col, deleted_at_column=del_col)
+        return SyncMode(mode="full_refresh", watermark_column=None, deleted_at_column=None)
+
+    def extract_soft_deletes(self, table: str, watermark: Any,
+                              deleted_at_column: str, watermark_column: str,
+                              batch_size: int = 10000) -> list[dict]:
+        if not watermark:
+            return []
+        collection = self.db[table]
+        try:
+            wm_dt = datetime.fromisoformat(watermark.replace("Z", "+00:00"))
+            query = {
+                deleted_at_column: {"$ne": None, "$gt": wm_dt},
+                "$or": [
+                    {watermark_column: None},
+                    {watermark_column: {"$lte": wm_dt}},
+                ],
+            }
+            cursor = collection.find(query).limit(batch_size)
+        except (ValueError, TypeError):
+            query = {
+                deleted_at_column: {"$ne": None, "$gt": watermark},
+                "$or": [
+                    {watermark_column: None},
+                    {watermark_column: {"$lte": watermark}},
+                ],
+            }
+            cursor = collection.find(query).limit(batch_size)
+
+        rows = []
+        for doc in cursor:
+            doc["_id"] = str(doc["_id"])
+            for key, val in doc.items():
+                if isinstance(val, datetime):
+                    doc[key] = val.isoformat()
+                elif isinstance(val, ObjectId):
+                    doc[key] = str(val)
+            rows.append(doc)
+        return rows
 
     def extract(self, table: str, watermark: Any = None,
                 batch_size: int = 10000) -> Iterator[list[dict]]:

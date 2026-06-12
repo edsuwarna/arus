@@ -20,8 +20,14 @@ class UserRepository:
         self.db.refresh(user)
         return user
 
-    def list_all(self) -> list[User]:
-        return self.db.query(User).order_by(User.created_at.desc()).all()
+    def list_all(self, limit: int = 0, offset: int = 0) -> list[User]:
+        q = self.db.query(User).order_by(User.created_at.desc())
+        if limit > 0:
+            q = q.offset(offset).limit(limit)
+        return q.all()
+
+    def count_all(self) -> int:
+        return self.db.query(User).count()
 
     def update(self, user_id: str, **kwargs) -> User | None:
         user = self.get_by_id(user_id)

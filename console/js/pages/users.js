@@ -3,7 +3,8 @@ async function renderUsersPage(container) {
   container.innerHTML = `<div class="loading"><div class="spinner"></div><p>Loading users...</p></div>`;
 
   try {
-    const users = await API.get('/auth/users');
+    const resp = await API.get('/auth/users');
+    const users = resp?.users || [];
     const adminCount = users.filter(u => u.role === 'admin').length;
     const editorCount = users.filter(u => u.role === 'editor').length;
     const activeCount = users.filter(u => u.is_active).length;
@@ -67,9 +68,9 @@ function renderUserRow(u) {
       <td class="text-sm text-tertiary">${u.last_login ? timeAgo(u.last_login) : 'Never'}</td>
       <td>
         <div style="display:flex;gap:6px;">
-          <button class="btn btn-ghost btn-xs" onclick="showEditUserModal('${u.id}','${u.name.replace(/'/g, "\\'")}','${u.email}','${u.role}','${u.is_active}')" title="Edit user">✏️</button>
+          <button class="btn btn-ghost btn-xs" onclick="showEditUserModal('${u.id}','${u.name.replace(/'/g, "\\'")}','${u.email}','${u.role}','${u.is_active}')" title="Edit user">✏</button>
           ${u.role !== 'admin' || u.email !== App.user?.email ? `
-          <button class="btn btn-ghost btn-xs" onclick="deleteUser('${u.id}')" title="Delete user" style="color:var(--red);">🗑️</button>
+          <button class="btn btn-ghost btn-xs" onclick="deleteUser('${u.id}')" title="Delete user" style="color:var(--red);">✕</button>
           ` : '<span style="font-size:11px;color:var(--text-tertiary);">You</span>'}
         </div>
       </td>
@@ -149,12 +150,11 @@ function showEditUserModal(id, name, email, role, isActive) {
       <div class="modal-body">
         <div class="form-group">
           <label class="form-label">Name</label>
-          <input class="form-input" id="editUserName" value="${name}" required />
+          <input class="form-input" id="editUserName" value="${name || ''}" required />
         </div>
         <div class="form-group">
           <label class="form-label">Email</label>
-          <input class="form-input" id="editUserEmail" value="${email}" style="background:var(--bg-input);color:var(--text-tertiary);" readonly />
-          <div class="hint">Email cannot be changed.</div>
+          <input class="form-input" id="editUserEmail" type="email" value="${email || ''}" required />
         </div>
         <div class="form-group">
           <label class="form-label">Role</label>
@@ -165,20 +165,19 @@ function showEditUserModal(id, name, email, role, isActive) {
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label">Status</label>
-          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:8px 0;">
+          <label class="form-checkbox" style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:8px 0;">
             <input type="checkbox" id="editUserActive" ${activeBool ? 'checked' : ''} style="accent-color:var(--emerald);width:18px;height:18px;">
             <span style="font-size:13px;color:var(--text-secondary);">Account active</span>
           </label>
         </div>
         <div class="form-group">
-          <label class="form-label">Change Password <span style="color:var(--text-tertiary);font-weight:400;font-size:11px;">(leave empty to keep current)</span></label>
-          <input class="form-input" id="editUserPassword" type="password" placeholder="••••••••" autocomplete="new-password" />
+          <label class="form-label">New Password <span style="color:var(--text-tertiary);font-weight:400;font-size:11px;">(leave empty to keep current)</span></label>
+          <input class="form-input" id="editUserPassword" type="password" placeholder="••••••••" />
         </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" onclick="App.closeModal()">Cancel</button>
-        <button type="submit" class="btn btn-primary">💾 Save Changes</button>
+        <button type="submit" class="btn btn-primary">💾 Save</button>
       </div>
     </form>
   `);
@@ -187,41 +186,42 @@ function showEditUserModal(id, name, email, role, isActive) {
 async function handleEditUser(event, id) {
   event.preventDefault();
   const btn = event.target.querySelector('button[type="submit"]');
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ Saving...'; }
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
+
+  const data = {
+    name: document.getElementById('editUserName').value,
+    email: document.getElementById('editUserEmail').value,
+    role: document.getElementById('editUserRole').value,
+    is_active: document.getElementById('editUserActive').checked,
+  };
+  const pw = document.getElementById('editUserPassword').value;
+  if (pw) data.password = pw;
 
   try {
-    const body = {
-      name: document.getElementById('editUserName').value,
-      role: document.getElementById('editUserRole').value,
-      is_active: document.getElementById('editUserActive').checked,
-    };
-    const pwd = document.getElementById('editUserPassword').value;
-    if (pwd) body.password = pwd;
-
-    await API.patch('/auth/users/' + id, body);
+    await API.put(`/auth/users/${id}`, data);
     App.closeModal();
     App.toast('✅ User updated!', 'success');
     App.render();
   } catch (err) {
     App.toast('Failed: ' + err.message, 'error');
-    if (btn) { btn.disabled = false; btn.textContent = '💾 Save Changes'; }
+    if (btn) { btn.disabled = false; btn.textContent = 'Save'; }
   }
   return false;
 }
 
 /* ===== DELETE USER ===== */
 async function deleteUser(id) {
-  if (!confirm('Delete this user? This action cannot be undone.')) return;
+  if (!confirm('Delete this user? This cannot be undone.')) return;
   try {
-    await API.del('/auth/users/' + id);
-    App.toast('✅ User deleted', 'success');
+    await API.del(`/auth/users/${id}`);
+    App.toast('User deleted', 'info');
     App.render();
   } catch (err) {
     App.toast('Failed: ' + err.message, 'error');
   }
 }
 
-/* ===== GLOBAL API ===== */
+// Globals
 window.renderUsersPage = renderUsersPage;
 window.showAddUserModal = showAddUserModal;
 window.handleCreateUser = handleCreateUser;

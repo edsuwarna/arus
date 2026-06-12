@@ -252,6 +252,25 @@ class PipelineExecutor:
                     })
                     continue
 
+                # --- Transform (optional per table) ---
+                transform_config = table_info.get("transform_config")
+                if transform_config:
+                    try:
+                        from arus.modules.transform.engine import apply_transforms
+                        all_rows = apply_transforms(
+                            all_rows,
+                            transform_config,
+                            db_session=self.db_session,
+                            pipeline_id=pipeline_id,
+                        )
+                    except Exception as e:
+                        logger.error(f"Transform failed for {table}: {e}")
+                        results.append({
+                            "table": table, "rows": 0, "status": "failed",
+                            "error": f"Transform failed: {e}",
+                        })
+                        continue
+
                 # Check load_mode: direct or raw
                 load_mode = table_info.get("load_mode", "direct") or "direct"
 
@@ -354,6 +373,34 @@ class PipelineExecutor:
                                 logger.warning(
                                     f"Central watermark persist failed: {wm_err}"
                                 )
+
+                # --- Soft-delete reconciliation ---
+                if sync_mode == "incremental" and watermark:
+                    del_col = None
+                    for col in columns:
+                        if col["name"].lower() == "deleted_at":
+                            del_col = col["name"]
+                            break
+                    if del_col:
+                        wm_col_name = table_info.get("watermark_column", "updated_at")
+                        try:
+                            deleted_rows = src.extract_soft_deletes(
+                                table, watermark, del_col, wm_col_name,
+                            )
+                            if deleted_rows:
+                                pk_cols = [c["name"] for c in columns if c.get("pk")]
+                                if pk_cols:
+                                    del_count = dest.delete_rows(
+                                        safe_name, table, deleted_rows, pk_cols,
+                                        target_schema=per_table_target_schema,
+                                    )
+                                    logger.info(
+                                        f"Soft-delete sync: removed {del_count} rows from {table}"
+                                    )
+                        except NotImplementedError:
+                            pass  # Source/destination doesn't support soft-delete
+                        except Exception as e:
+                            logger.warning(f"Soft-delete sync failed for {table}: {e}")
 
                 # --- Data Quality Checks (Phase 2) ---
                 quality_breach = None

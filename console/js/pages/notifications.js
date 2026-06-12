@@ -3,7 +3,8 @@ async function renderNotificationsPage(container) {
   container.innerHTML = `<div class="loading"><div class="spinner"></div><p>Loading notifications...</p></div>`;
 
   try {
-    const targets = await API.get('/notifications/targets');
+    const resp = await API.get('/notifications/targets');
+    const targets = resp?.data || [];
     const targetList = Array.isArray(targets) ? targets : [];
 
     container.innerHTML = `
@@ -45,7 +46,7 @@ async function renderNotificationsPage(container) {
                     <option value="schema_drift">🔀 Schema Drift</option>
                     <option value="quality_breach">📉 Quality Breach</option>
                   </select>
-                  <button class="btn btn-ghost btn-xs" onclick="testNotifTarget('${t.id}')">📨 Test</button>
+                  <button class="btn btn-ghost btn-xs" onclick="testNotifTarget(event, '${t.id}')">📨 Test</button>
                   <button class="btn btn-ghost btn-xs" onclick="editNotifTarget('${t.id}')">✏</button>
                   ${App.canWrite() ? `<button class="btn btn-ghost btn-xs" style="color:var(--red)" onclick="deleteNotifTarget('${t.id}')">✕</button>` : ''}
                 </td>
@@ -75,11 +76,17 @@ async function renderNotificationsPage(container) {
 
 function getNotifIcon(type) {
   const icons = {
-    telegram: '✈',
-    discord: '◆',
-    slack: '#',
+    telegram: { bg: '#26A5E4', mono: 'TG' },
+    discord: { bg: '#5865F2', mono: 'DC' },
+    slack: { bg: '#4A154B', mono: 'SL' },
   };
-  return icons[type] || '?';
+  const ic = icons[type];
+  if (!ic) return '?';
+  const s = 18;
+  return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none">
+    <rect x="1" y="1" rx="6" width="22" height="22" fill="${ic.bg}"/>
+    <text x="12" y="17" text-anchor="middle" fill="#fff" font-size="10" font-weight="700" font-family="Inter,sans-serif">${ic.mono}</text>
+  </svg>`;
 }
 
 function showAddNotifTargetModal() {
@@ -203,7 +210,7 @@ async function editNotifTarget(id) {
   App.closeModal();
   try {
     const res = await API.get('/notifications/targets');
-    const targets = Array.isArray(res) ? res : [];
+    const targets = Array.isArray(res?.data) ? res.data : [];
     const t = targets.find(x => x.id === id);
     if (!t) { App.toast('Target not found', 'error'); return; }
 
@@ -223,7 +230,7 @@ async function editNotifTarget(id) {
           </div>
           <div class="form-group">
             <label>Type</label>
-            <select id="editNotifType" onchange="document.getElementById('editNotifConfig').style.display = this.value === 'telegram' ? '' : 'none'" required>
+            <select id="editNotifType" onchange="var v=this.value;document.getElementById('editNotifConfig').style.display=v==='telegram'?'':'none';document.getElementById('editNotifWebhook').style.display=v!=='telegram'?'':'none'" required>
               <option value="telegram" ${t.type === 'telegram' ? 'selected' : ''}>Telegram</option>
               <option value="discord" ${t.type === 'discord' ? 'selected' : ''}>Discord</option>
               <option value="slack" ${t.type === 'slack' ? 'selected' : ''}>Slack</option>
@@ -304,7 +311,7 @@ async function handleEditNotifTarget(event, id) {
   return false;
 }
 
-async function testNotifTarget(id) {
+async function testNotifTarget(event, id) {
   const btn = event?.target;
   if (btn) { btn.disabled = true; btn.textContent = '⏳'; }
 
@@ -353,13 +360,13 @@ async function showPipelineNotifConfig(pipelineId, pipelineName) {
   `);
 
   try {
-    const [targets, links] = await Promise.all([
-      API.get('/notifications/targets').catch(() => []),
-      API.get(`/notifications/links/${pipelineId}`).catch(() => []),
+    const [targetsResp, linksResp] = await Promise.all([
+      API.get('/notifications/targets').catch(() => ({data: []})),
+      API.get(`/notifications/links/${pipelineId}`).catch(() => ({data: []})),
     ]);
 
-    const targetList = Array.isArray(targets) ? targets : [];
-    const linkList = Array.isArray(links) ? links : [];
+    const targetList = Array.isArray(targetsResp?.data) ? targetsResp.data : [];
+    const linkList = Array.isArray(linksResp?.data) ? linksResp.data : [];
 
     const modal = document.querySelector('.modal');
     if (!modal) return;

@@ -115,6 +115,7 @@ const App = {
     this.currentHash = hash;
     await this.renderPage(hash);
     this.updateBadges();
+    this.loadBadges();
   },
 
   updateBadges() {
@@ -178,14 +179,17 @@ const App = {
     document.querySelectorAll('.nav-item').forEach(el => {
       el.classList.remove('active');
       const page = el.dataset.page;
-      if (hash === page || (hash.startsWith('pipeline/') && page === 'runs')) {
+      if (hash === page || (hash.startsWith('pipeline/') && page === 'pipelines')) {
         el.classList.add('active');
       }
     });
   },
 
   logout() {
-    localStorage.removeItem('token');
+    // Call backend logout (fire and forget — JWT is stateless)
+    API.post('/auth/logout').catch(() => {});
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
     this.user = null;
     location.hash = 'login';
     this.render();

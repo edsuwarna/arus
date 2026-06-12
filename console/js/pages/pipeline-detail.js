@@ -9,6 +9,7 @@ async function renderPipelineDetailPage(container, pipelineId) {
     ]);
 
     const p = pipelineData || {};
+
     const runs = runsData || [];
 
     const statusColor = p.status === 'active' ? 'success' : p.status === 'paused' ? 'warning' : 'muted';
@@ -158,7 +159,11 @@ async function renderPipelineDetailPage(container, pipelineId) {
                 <td style="color:var(--text-secondary)">${formatDuration(r.duration_ms)}</td>
                 <td style="color:var(--text-tertiary);font-size:12px">${r.trigger_type || '-'}</td>
                 <td style="color:var(--red);font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis">${r.error_message || '-'}</td>
-                <td><button class="btn btn-ghost btn-xs" onclick="showRunLogs('${r.id}')">Logs</button></td>
+                <td>
+                  <button class="btn btn-ghost btn-xs" onclick="showRunLogs('${r.id}')">Logs</button>
+                  ${r.status === 'running' || r.status === 'pending' ? `<button class="btn btn-ghost btn-xs" onclick="cancelRun('${r.id}','${pipelineId}')" style="color:var(--red)">Cancel</button>` : ''}
+                  ${r.status === 'failed' ? `<button class="btn btn-ghost btn-xs" onclick="retryRun('${r.id}','${pipelineId}')" style="color:var(--emerald)">Retry</button>` : ''}
+                </td>
               </tr>
               `).join('')}
             </tbody>
@@ -223,7 +228,7 @@ async function deleteDetailPipeline(id) {
 async function showRunLogs(runId) {
   try {
     const data = await API.get(`/runs/${runId}/logs?limit=200`);
-    const logs = data?.data?.logs || [];
+    const logs = data?.logs || [];
     App.showModal(`
       <div class="modal-header">
         <h2>Run Logs</h2>
@@ -254,6 +259,31 @@ window.triggerDetailPipeline = triggerDetailPipeline;
 window.pauseDetailPipeline = pauseDetailPipeline;
 window.resumeDetailPipeline = resumeDetailPipeline;
 window.showRunLogs = showRunLogs;
+
+async function cancelRun(runId, pipelineId) {
+  if (!confirm('Cancel this run?')) return;
+  try {
+    await API.post(`/runs/${runId}/cancel`);
+    App.toast('Run cancelled', 'success');
+    App.render();
+  } catch (err) {
+    App.toast(err.message, 'error');
+  }
+}
+
+async function retryRun(runId, pipelineId) {
+  if (!confirm('Retry this run?')) return;
+  try {
+    await API.post(`/runs/${runId}/retry`);
+    App.toast('Run retry triggered', 'success');
+    App.render();
+  } catch (err) {
+    App.toast(err.message, 'error');
+  }
+}
+
+window.cancelRun = cancelRun;
+window.retryRun = retryRun;
 window.fullRefreshPipeline = fullRefreshPipeline;
 window.showBackfillModal = showBackfillModal;
 window.showDeadLetters = showDeadLetters;
@@ -446,7 +476,7 @@ async function showTransformConfig(pipelineId, tableName) {
   let scripts = [];
   try {
     const s = await API.get(`/pipelines/${pipelineId}/scripts`);
-    scripts = Array.isArray(s) ? s : [];
+    scripts = s?.scripts || [];
   } catch(e) { /* no scripts yet */ }
 
   const renderModal = () => {

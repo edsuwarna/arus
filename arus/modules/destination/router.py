@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from arus.shared.db.session import get_db
@@ -13,31 +13,39 @@ router = APIRouter(prefix="/api/destinations", tags=["destinations"])
 
 @router.get("")
 async def list_destinations(
+    limit: int = Query(50, le=200),
+    offset: int = Query(0, ge=0),
     db: Session = Depends(get_db),
     user: dict = Depends(get_current_user),
 ):
     repo = DestinationRepository(db)
-    destinations = repo.list_all()
+    destinations = repo.list_all(limit=limit, offset=offset)
+    total = repo.count_all()
     return {
         "status": "ok",
-        "data": [
-            {
-                "id": str(d.id),
-                "name": d.name,
-                "type": d.type,
-                "host": d.host,
-                "port": d.port,
-                "database": d.database,
-                "status": d.status,
-                "raw_schema": d.raw_schema,
-                "target_schema": d.target_schema,
-                "is_default": d.is_default,
-                "total_tables": 0,
-                "total_rows": 0,
-                "created_at": d.created_at,
-            }
-            for d in destinations
-        ],
+        "data": {
+            "destinations": [
+                {
+                    "id": str(d.id),
+                    "name": d.name,
+                    "type": d.type,
+                    "host": d.host,
+                    "port": d.port,
+                    "database": d.database,
+                    "status": d.status,
+                    "raw_schema": d.raw_schema,
+                    "target_schema": d.target_schema,
+                    "is_default": d.is_default,
+                    "total_tables": 0,
+                    "total_rows": 0,
+                    "created_at": d.created_at,
+                }
+                for d in destinations
+            ],
+            "total": total,
+            "limit": limit,
+            "offset": offset,
+        },
     }
 
 

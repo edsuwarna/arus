@@ -23,6 +23,11 @@ class ValidationError(ArusError):
     status_code = 422
 
 
+class ConflictError(ArusError):
+    code = "CONFLICT"
+    status_code = 409
+
+
 class ConnectionFailedError(ArusError):
     code = "CONNECTION_FAILED"
     status_code = 502

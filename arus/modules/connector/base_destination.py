@@ -19,3 +19,13 @@ class BaseDestination(ABC):
 
     @abstractmethod
     def update_watermark(self, pipeline_id: str, table: str, value: Any) -> None: ...
+
+    def delete_rows(self, source_name: str, table: str, rows: list[dict],
+                    pk_columns: list[str], target_schema: str = None) -> int:
+        """Delete rows from target table by primary key.
+
+        Used for soft-delete reconciliation. Default implementation
+        raises NotImplementedError — override in connectors that
+        support soft-delete sync.
+        """
+        raise NotImplementedError("delete_rows not implemented for this destination")

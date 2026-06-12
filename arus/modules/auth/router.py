@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, Header
+import time
+from collections import defaultdict
+from fastapi import APIRouter, Depends, Header, Query, Request
 from sqlalchemy.orm import Session
 
 from arus.shared.db.session import get_db
@@ -6,6 +8,28 @@ from arus.shared.exceptions import AuthError
 from arus.modules.auth.schemas import LoginRequest, UserCreate, UserUpdate
 from arus.modules.auth.service import AuthService
 from arus.modules.auth.repository import UserRepository
+
+# ── Simple in-memory rate limiter ────────────────────────────────────────
+_LOGIN_LIMIT = 10        # max attempts
+_LOGIN_WINDOW = 60       # seconds
+_login_attempts: dict[str, list[float]] = defaultdict(list)
+
+
+def _rate_limit_login(request: Request):
+    """Dependency: rate-limit login by client IP."""
+    ip = request.client.host if request.client else "unknown"
+    now = time.time()
+    window_start = now - _LOGIN_WINDOW
+
+    # Prune old entries
+    _login_attempts[ip] = [t for t in _login_attempts[ip] if t > window_start]
+
+    if len(_login_attempts[ip]) >= _LOGIN_LIMIT:
+        from arus.shared.exceptions import AuthError
+        raise AuthError("Too many login attempts. Try again later.")
+
+    _login_attempts[ip].append(now)
+
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -32,10 +56,16 @@ def require_editor_or_admin(current_user: dict = Depends(get_current_user)):
 
 
 @router.post("/login")
-async def login(req: LoginRequest, db: Session = Depends(get_db)):
+async def login(req: LoginRequest, _: None = Depends(_rate_limit_login), db: Session = Depends(get_db)):
     service = AuthService(UserRepository(db))
     result = service.login(req.email, req.password)
     return {"status": "ok", "data": result}
+
+
+@router.post("/logout")
+async def logout(current_user: dict = Depends(get_current_user)):
+    """Logout — invalidates session on client side. JWT tokens are stateless."""
+    return {"status": "ok", "data": {"message": "Logged out"}}
 
 
 @router.post("/refresh")
@@ -62,23 +92,34 @@ async def create_user(req: UserCreate, db: Session = Depends(get_db), admin: dic
 
 
 @router.get("/users")
-async def list_users(db: Session = Depends(get_db), admin: dict = Depends(require_admin)):
+async def list_users(
+    limit: int = Query(50, le=200),
+    offset: int = Query(0, ge=0),
+    db: Session = Depends(get_db),
+    admin: dict = Depends(require_admin),
+):
     repo = UserRepository(db)
-    users = repo.list_all()
+    users = repo.list_all(limit=limit, offset=offset)
+    total = repo.count_all()
     return {
         "status": "ok",
-        "data": [
-            {
-                "id": str(u.id),
-                "email": u.email,
-                "name": u.name,
-                "role": u.role,
-                "is_active": u.is_active,
-                "last_login": u.last_login.isoformat() if u.last_login else None,
-                "created_at": u.created_at.isoformat() if u.created_at else None,
-            }
-            for u in users
-        ],
+        "data": {
+            "users": [
+                {
+                    "id": str(u.id),
+                    "email": u.email,
+                    "name": u.name,
+                    "role": u.role,
+                    "is_active": u.is_active,
+                    "last_login": u.last_login.isoformat() if u.last_login else None,
+                    "created_at": u.created_at.isoformat() if u.created_at else None,
+                }
+                for u in users
+            ],
+            "total": total,
+            "limit": limit,
+            "offset": offset,
+        },
     }
 
 

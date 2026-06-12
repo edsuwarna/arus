@@ -6,7 +6,7 @@ async function renderDestinationsPage(container) {
 
   try {
     const resp = await API.get('/destinations');
-    const destinations = Array.isArray(resp) ? resp : [];
+    const destinations = resp?.destinations || [];
 
     window._arusBadges.destinations = destinations.length;
     if (window.App?.updateBadges) App.updateBadges();
@@ -176,7 +176,7 @@ async function renderPipelinesPage(container) {
 
   try {
     const pipelinesResp = await API.get('/pipelines');
-    const pipelines = Array.isArray(pipelinesResp) ? pipelinesResp : [];
+    const pipelines = pipelinesResp?.pipelines || [];
 
     const activeCount = pipelines.filter(p => p.status === 'active').length;
     const failingCount = pipelines.filter(p => p.status === 'error' || p.status === 'failed').length;
@@ -194,6 +194,7 @@ async function renderPipelinesPage(container) {
         <div class="header-actions-right">
           ${App.canWrite() ? `
           <button class="btn btn-ghost btn-sm" onclick="pauseAllPipelines()">⏸ Pause All</button>
+          <button class="btn btn-ghost btn-sm" onclick="resumeAllPipelines()">▶ Resume All</button>
           <button class="btn btn-primary btn-sm" onclick="showAddPipelineModal()">+ New Pipeline</button>
           ` : ''}
         </div>
@@ -246,9 +247,37 @@ function renderPipelineItem(p) {
 
 /* ===== PIPELINE ACTIONS ===== */
 async function pauseAllPipelines() {
+  App.showModal(`
+    <div class="modal-header">
+      <h2>⏸ Pause All Pipelines</h2>
+      <button class="modal-close" onclick="App.closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="color:var(--text-secondary);font-size:14px;margin-bottom:16px;">Are you sure you want to pause <strong>all active pipelines</strong>?</p>
+      <p style="color:var(--text-tertiary);font-size:13px;">No data will be synced until you resume them.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="App.closeModal()">Cancel</button>
+      <button class="btn btn-danger" onclick="doPauseAll()">Yes, Pause All</button>
+    </div>
+  `);
+}
+
+async function doPauseAll() {
+  App.closeModal();
   try {
     await API.post('/pipelines/pause-all').catch(() => {});
     App.toast('All pipelines paused', 'success');
+    App.render();
+  } catch (err) {
+    App.toast(err.message, 'error');
+  }
+}
+
+async function resumeAllPipelines() {
+  try {
+    await API.post('/pipelines/resume-all').catch(() => {});
+    App.toast('All pipelines resumed', 'success');
     App.render();
   } catch (err) {
     App.toast(err.message, 'error');
@@ -269,11 +298,12 @@ async function showAddPipelineModal() {
   `);
 
   try {
-    const [sources, destinations, notifTargets] = await Promise.all([
-      API.get('/sources').catch(() => []),
-      API.get('/destinations').catch(() => []),
-      API.get('/notifications/targets').catch(() => []),
-    ]);
+    const srcResp = await API.get('/sources').catch(() => []);
+    const destResp = await API.get('/destinations').catch(() => []);
+    const notifResp = await API.get('/notifications/targets').catch(() => []);
+    const sources = Array.isArray(srcResp?.sources) ? srcResp.sources : (Array.isArray(srcResp) ? srcResp : []);
+    const destinations = Array.isArray(destResp?.destinations) ? destResp.destinations : (Array.isArray(destResp) ? destResp : []);
+    const notifTargets = Array.isArray(notifResp) ? notifResp : [];
 
     const srcList = Array.isArray(sources) ? sources : [];
     const destList = Array.isArray(destinations) ? destinations : [];
@@ -457,7 +487,7 @@ async function handleCreatePipeline(event) {
 
   try {
     const result = await API.post('/pipelines', data);
-    const pipelineId = result?.data?.id || result?.id;
+    const pipelineId = result?.id;
 
     // Create notification links if any targets selected
     const notifCbs = document.querySelectorAll('.cpNotifTarget:checked');
@@ -751,5 +781,7 @@ window.manageDestination = manageDestination;
 window.editDestination = editDestination;
 window.submitEditDestination = submitEditDestination;
 window.pauseAllPipelines = pauseAllPipelines;
+window.doPauseAll = doPauseAll;
+window.resumeAllPipelines = resumeAllPipelines;
 window.showAddPipelineModal = showAddPipelineModal;
 window.handleCreatePipeline = handleCreatePipeline;

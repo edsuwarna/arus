@@ -19,8 +19,9 @@ class PipelineService:
         self.repo = repo
         self.db = db_session
 
-    def list_pipelines(self) -> list[dict]:
-        pipelines = self.repo.list_all()
+    def list_pipelines(self, limit: int = 0, offset: int = 0) -> tuple[list[dict], int]:
+        pipelines = self.repo.list_all(limit=limit, offset=offset)
+        total = self.repo.count_all()
         result = []
         for p in pipelines:
             source = self._get_source(p.source_id)
@@ -41,7 +42,7 @@ class PipelineService:
                 "last_run": None,
                 "created_at": p.created_at,
             })
-        return result
+        return result, total
 
     def get_pipeline(self, pipeline_id: str) -> dict | None:
         p = self.repo.get_by_id(pipeline_id)
@@ -61,6 +62,7 @@ class PipelineService:
                 "target_schema": t.target_schema,
                 "sync_mode": t.sync_mode,
                 "load_mode": t.load_mode or "direct",
+                "transform_config": t.transform_config,
                 "watermark_column": t.watermark_column,
                 "watermark_value": wm.watermark_value if wm else None,
                 "enabled": t.enabled,
@@ -98,6 +100,7 @@ class PipelineService:
                         "load_mode": t.get("load_mode", "direct"),
                         "sync_mode": t.get("sync_mode", "incremental"),
                         "watermark_column": t.get("watermark_column"),
+                        "transform_config": t.get("transform_config"),
                         "enabled": True,
                     })
                 else:
@@ -129,6 +132,7 @@ class PipelineService:
                         "load_mode": t.get("load_mode", "direct"),
                         "sync_mode": t.get("sync_mode", "incremental"),
                         "watermark_column": t.get("watermark_column"),
+                        "transform_config": t.get("transform_config"),
                         "enabled": True,
                     })
                 else:
@@ -196,6 +200,7 @@ class PipelineService:
                 "watermark_column": t.watermark_column,
                 "watermark_value": wm.watermark_value if wm else None,
                 "columns": columns,
+                "transform_config": t.transform_config,
             })
 
         # Build connector configs
@@ -247,6 +252,7 @@ class PipelineService:
                     "load_mode": t.get("load_mode", "direct"),
                     "sync_mode": t.get("detected_sync", "incremental"),
                     "watermark_column": t.get("watermark_column"),
+                    "transform_config": t.get("transform_config"),
                     "enabled": t.get("enabled", True),
                 })
             self.repo.set_tables(str(existing.id), table_list)
@@ -273,6 +279,7 @@ class PipelineService:
                     "load_mode": t.get("load_mode", "direct"),
                     "sync_mode": t.get("detected_sync", "incremental"),
                     "watermark_column": t.get("watermark_column"),
+                    "transform_config": t.get("transform_config"),
                     "enabled": t.get("enabled", True),
                 })
             self.repo.set_tables(result["id"], table_list)

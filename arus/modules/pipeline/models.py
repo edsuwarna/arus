@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, Boolean, DateTime, func, ForeignKey, Text
+from sqlalchemy import Column, String, Integer, Boolean, DateTime, func, ForeignKey, Text, JSON
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
 
@@ -36,7 +36,21 @@ class PipelineTable(Base):
     sync_mode = Column(String(20), default="incremental")
     load_mode = Column(String(20), default="direct")  # direct or raw
     watermark_column = Column(String(255), nullable=True)
+    transform_config = Column(JSON, nullable=True)  # array of transform step objects
     enabled = Column(Boolean, default=True)
+
+
+class TransformScript(Base):
+    __tablename__ = "transform_scripts"
+    __table_args__ = {"schema": "arus_config"}
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    pipeline_id = Column(UUID, ForeignKey("arus_config.pipelines.id", ondelete="CASCADE"), nullable=False)
+    name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    content = Column(Text, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
 
 class Watermark(Base):

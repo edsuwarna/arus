@@ -80,14 +80,37 @@ class MySQLSource(BaseSource):
 
     def detect_sync_mode(self, table: str, columns: list[dict]) -> SyncMode:
         ts_cols = {"updated_at", "modified_at", "last_modified", "updated"}
+        wm_col = None
+        del_col = None
+
         for col in columns:
             if col["name"].lower() in ts_cols:
-                return SyncMode(mode="incremental", watermark_column=col["name"])
-        # Fallback: check for created_at (append-only tables)
+                wm_col = col["name"]
+                break
+        if not wm_col:
+            for col in columns:
+                if col["name"].lower() == "created_at":
+                    wm_col = col["name"]
+                    break
+
         for col in columns:
-            if col["name"].lower() == "created_at":
-                return SyncMode(mode="incremental", watermark_column=col["name"])
-        return SyncMode(mode="full_refresh", watermark_column=None)
+            if col["name"].lower() == "deleted_at":
+                del_col = col["name"]
+                break
+
+        if wm_col:
+            return SyncMode(mode="incremental", watermark_column=wm_col, deleted_at_column=del_col)
+        return SyncMode(mode="full_refresh", watermark_column=None, deleted_at_column=None)
+
+    def extract_soft_deletes(self, table: str, watermark: Any,
+                              deleted_at_column: str, watermark_column: str,
+                              batch_size: int = 10000) -> list[dict]:
+        if not watermark:
+            return []
+        sql = f"SELECT * FROM {table} WHERE {deleted_at_column} IS NOT NULL AND {deleted_at_column} > %s AND ({watermark_column} IS NULL OR {watermark_column} <= %s) LIMIT %s"
+        with self.conn.cursor() as cur:
+            cur.execute(sql, [watermark, watermark, batch_size])
+            return list(cur.fetchall())
 
     def extract(self, table: str, watermark: Any = None, batch_size: int = 10000) -> Iterator[list[dict]]:
         if watermark:

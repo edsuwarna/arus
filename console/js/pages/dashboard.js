@@ -3,13 +3,15 @@ async function renderDashboardPage(container) {
   container.innerHTML = `<div class="loading"><div class="spinner"></div><p>Loading dashboard...</p></div>`;
 
   try {
-    const [summary, recentRuns] = await Promise.all([
+    const [summary, recentRuns, dailyStats] = await Promise.all([
       API.get('/dashboard/summary').catch(() => ({})),
       API.get('/dashboard/recent-runs').catch(() => []),
+      API.get('/runs/stats/daily?days=7').catch(() => ({})),
     ]);
 
-    const s = summary || {};
-    const runs = Array.isArray(recentRuns) ? recentRuns : [];
+    const s = summary?.data || {};
+    const runs = Array.isArray(recentRuns?.data) ? recentRuns.data : [];
+    const chartData = dailyStats?.data || [];
 
     const activeSources = s.active_sources || 0;
     const activePipelines = s.active_pipelines || 0;
@@ -28,7 +30,8 @@ async function renderDashboardPage(container) {
     // Fetch sources for the overview table
     let sourcesList = [];
     try {
-      sourcesList = await API.get('/sources');
+      const resp = await API.get('/sources');
+      sourcesList = resp?.sources || [];
     } catch(e) {}
 
     container.innerHTML = `
@@ -78,10 +81,10 @@ async function renderDashboardPage(container) {
           </div>
           <div class="card-body">
             <div class="bar-chart" style="display:flex;align-items:flex-end;gap:6px;height:100px;padding-top:10px;">
-              ${renderBarChart(rowsSynced)}
+              ${renderBarChart(chartData)}
             </div>
             <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-tertiary);margin-top:6px;">
-              <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+              <span>${chartDayLabel(chartData, 0)}</span><span>${chartDayLabel(chartData, 1)}</span><span>${chartDayLabel(chartData, 2)}</span><span>${chartDayLabel(chartData, 3)}</span><span>${chartDayLabel(chartData, 4)}</span><span>${chartDayLabel(chartData, 5)}</span><span>${chartDayLabel(chartData, 6)}</span>
             </div>
           </div>
         </div>
@@ -125,15 +128,28 @@ async function renderDashboardPage(container) {
   if (window.App?.updateBadges) App.updateBadges();
 }
 
-function renderBarChart(totalRows) {
-  // Generate mock-ish bar heights
-  const days = [0.4, 0.6, 0.35, 0.85, 0.5, 0.65, 0.3];
-  const maxVal = Math.max(1, totalRows);
-  return days.map((h, i) => {
-    const height = Math.max(20, h * 100);
-    const isMax = i === 3; // Thursday = peak
-    const label = numberFormat(Math.round(h * maxVal));
-    return `<div style="flex:1;background:${isMax ? 'var(--emerald)' : 'var(--emerald-dim)'};border-radius:4px 4px 0 0;height:${height}px;position:relative;"><span style="position:absolute;top:-16px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--text-tertiary);white-space:nowrap;">${label}</span></div>`;
+function chartDayLabel(data, idx) {
+  if (!data || !data[idx]) return ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][idx] || '';
+  const d = new Date(data[idx].date);
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  return days[d.getDay()] || '';
+}
+
+function renderBarChart(data) {
+  // Use real daily stats from API
+  if (!data || data.length === 0) {
+    // No data — render empty bars
+    return Array(7).fill(0).map((_, i) => {
+      return `<div style="flex:1;background:var(--emerald-dim);border-radius:4px 4px 0 0;height:8px;position:relative;"><span style="position:absolute;top:-16px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--text-tertiary);white-space:nowrap;">0</span></div>`;
+    }).join('');
+  }
+
+  const maxVal = Math.max(1, ...data.map(d => d.total_rows || 0));
+  return data.map((d, i) => {
+    const val = d.total_rows || 0;
+    const height = Math.max(8, (val / maxVal) * 95);
+    const isMax = i === data.reduce((best, x, idx) => (x.total_rows || 0) > ((data[best]?.total_rows) || 0) ? idx : best, 0);
+    return `<div style="flex:1;background:${isMax ? 'var(--emerald)' : 'var(--emerald-dim)'};border-radius:4px 4px 0 0;height:${height}px;position:relative;"><span style="position:absolute;top:-16px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--text-tertiary);white-space:nowrap;">${numberFormat(val)}</span></div>`;
   }).join('');
 }
 

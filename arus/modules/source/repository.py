@@ -7,8 +7,11 @@ class SourceRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def list_all(self) -> list[Source]:
-        return self.db.query(Source).order_by(Source.created_at.desc()).all()
+    def list_all(self, limit: int = 50, offset: int = 0) -> list[Source]:
+        return self.db.query(Source).order_by(Source.created_at.desc()).offset(offset).limit(limit).all()
+
+    def count_all(self) -> int:
+        return self.db.query(Source).count()
 
     def get_by_id(self, source_id: str) -> Source | None:
         return self.db.query(Source).filter(Source.id == source_id).first()

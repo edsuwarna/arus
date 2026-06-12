@@ -128,29 +128,44 @@ function renderDagGraph(pipelines) {
 
     const maxNodesPerLayer = Math.max(
         (layers.source || []).length,
-        (layers.transform || []).length,
-        (layers.destination || []).length,
+        (layers.raw || []).length,
+        (layers.target || []).length,
         3
     );
-    const W = 900, H = Math.max(450, maxNodesPerLayer * 56 + 100);
-    const layerX = { source: 120, raw: 380, target: 650 };
-    const NODE_W = 130, NODE_H = 36;
-    const layerGap = 60;
+
+    // Dynamic node width based on longest asset name
+    const maxNameLen = Math.max(
+        ...[].concat(...['source', 'raw', 'target'].map(l => (layers[l] || []).map(a => (a.name || '').length))),
+        20
+    );
+    const NODE_W = Math.max(130, maxNameLen * 8 + 40);
+    const NODE_H = 36;
+
+    const H = Math.max(450, maxNodesPerLayer * 56 + 100);
     const topMargin = 40;
 
-    // Calculate Y positions per layer
+    // Dynamic layer X positions — spread fully across canvas width
+    const svgWidth = svg.parentElement?.clientWidth || 900;
+    const layerX = {
+        source: Math.round(svgWidth * 0.12),
+        raw:    Math.round(svgWidth * 0.50),
+        target: Math.round(svgWidth * 0.88),
+    };
+
+    // Calculate Y positions per layer — use composite key to avoid name collisions across layers
     const nodePositions = {};
     ['source', 'raw', 'target'].forEach(layer => {
         const items = layers[layer] || [];
         const totalH = items.length * (NODE_H + 12) - 12;
         const startY = topMargin + (H - topMargin - 40 - totalH) / 2;
         items.forEach((item, i) => {
-            nodePositions[item.name] = {
+            nodePositions[item.name + '@' + item.layer] = {
                 x: layerX[layer] - NODE_W / 2,
                 y: startY + i * (NODE_H + 12),
                 layer: layer,
                 status: item.status || 'not_started',
                 table: item.table || item.name,
+                displayName: item.name,
             };
         });
     });
@@ -181,15 +196,25 @@ function renderDagGraph(pipelines) {
                       font-weight="600" letter-spacing="2" opacity="0.7">${ll.label}</text>`;
     });
 
-    // Layer dividers
-    [250, 520].forEach(x => {
+    // Layer dividers — dynamic between columns
+    const dividerX1 = Math.round((layerX.source + layerX.raw) / 2);
+    const dividerX2 = Math.round((layerX.raw + layerX.target) / 2);
+    [dividerX1, dividerX2].forEach(x => {
         html += `<line x1="${x}" y1="30" x2="${x}" y2="${H - 10}" stroke="#23262e" stroke-width="1" stroke-dasharray="4,4" opacity="0.5"/>`;
     });
 
-    // Edges
+    // Edges — try all layer suffixes for composite key matching
     allEdges.forEach(e => {
-        const from = nodePositions[e.from];
-        const to = nodePositions[e.to];
+        let from = null, to = null;
+        // from gets first match (leftmost layer), to gets last match (rightmost layer)
+        for (const l of DAG_LAYERS) {
+            if (!from && nodePositions[e.from + '@' + l]) {
+                from = nodePositions[e.from + '@' + l];
+            }
+            if (nodePositions[e.to + '@' + l]) {
+                to = nodePositions[e.to + '@' + l];
+            }
+        }
         if (from && to) {
             const x1 = from.x + NODE_W;
             const y1 = from.y + NODE_H / 2;
@@ -201,17 +226,19 @@ function renderDagGraph(pipelines) {
     });
 
     // Nodes
-    Object.entries(nodePositions).forEach(([name, pos]) => {
+    Object.entries(nodePositions).forEach(([key, pos]) => {
         const color = statusColors[pos.status] || '#6b7280';
-        const isSelected = g.selectedNode === name;
-        html += `<g class="dag-node" onclick="dagNodeClick('${name}')" style="cursor:pointer">
+        const isSelected = g.selectedNode === key;
+        const displayName = pos.displayName || key;
+        const maxChars = Math.floor((NODE_W - 40) / 8);
+        html += `<g class="dag-node" onclick="dagNodeClick('${key}')" style="cursor:pointer">
             <rect x="${pos.x}" y="${pos.y}" width="${NODE_W}" height="${NODE_H}" rx="6"
                   fill="${isSelected ? '#1c1f26' : '#14171d'}"
                   stroke="${isSelected ? color : '#4a4e5a'}"
                   stroke-width="${isSelected ? 2 : 1.5}"/>
             <circle cx="${pos.x + 14}" cy="${pos.y + NODE_H / 2}" r="5" fill="${color}"/>
             <text x="${pos.x + 24}" y="${pos.y + NODE_H / 2 + 4}" fill="#e8eaed" font-size="12"
-                  font-family="'Inter',sans-serif" font-weight="500">${name.length > 20 ? name.slice(0, 18) + '...' : name}</text>
+                  font-family="'Inter',sans-serif" font-weight="500">${displayName.length > maxChars ? displayName.slice(0, maxChars - 2) + '...' : displayName}</text>
         </g>`;
     });
 
@@ -266,20 +293,23 @@ function showDagPipeline(pipelineId) {
     renderDagGraph(pipelines.filter(x => x.id === pipelineId));
 }
 
-async function dagNodeClick(nodeName) {
-    dagState.selectedNode = nodeName;
+async function dagNodeClick(nodeKey) {
+    dagState.selectedNode = nodeKey;
     renderDagGraph(dagState.allPipelines || []);
 
     // Show detail panel
     const panel = document.getElementById('dag-detail-panel');
     if (!panel) return;
 
+    // Composite key format: name@layer — extract actual asset name
+    const actualName = nodeKey.includes('@') ? nodeKey.slice(0, nodeKey.lastIndexOf('@')) : nodeKey;
+
     // Find which pipeline this node belongs to
     const pipelines = dagState.allPipelines || [];
     let pipeline;
     let assetInfo;
     for (const p of pipelines) {
-        const a = (p.assets || []).find(x => x.name === nodeName);
+        const a = (p.assets || []).find(x => x.name === actualName);
         if (a) { pipeline = p; assetInfo = a; break; }
     }
 
@@ -294,15 +324,15 @@ async function dagNodeClick(nodeName) {
         const runs = Array.isArray(runsData) ? runsData : [];
 
         const layer = assetInfo?.layer || 'source';
-        const upstream = (pipeline.edges || []).filter(e => e.to === nodeName).map(e => e.from);
-        const downstream = (pipeline.edges || []).filter(e => e.from === nodeName).map(e => e.to);
+        const upstream = (pipeline.edges || []).filter(e => e.to === actualName).map(e => e.from);
+        const downstream = (pipeline.edges || []).filter(e => e.from === actualName).map(e => e.to);
 
         panel.style.display = 'block';
         panel.innerHTML = `
             <div class="card" style="margin-top:16px">
                 <div class="dag-detail-header">
                     <div>
-                        <strong style="font-size:15px">Asset: ${nodeName}</strong>
+                        <strong style="font-size:15px">Asset: ${actualName}</strong>
                         <span class="badge badge-${assetInfo?.status === 'success' ? 'success' : assetInfo?.status === 'failed' ? 'danger' : 'info'}" style="margin-left:8px">
                             <span class="status-dot ${assetInfo?.status || 'inactive'}"></span> ${assetInfo?.status || 'unknown'}
                         </span>
@@ -310,7 +340,7 @@ async function dagNodeClick(nodeName) {
                     <button class="btn btn-secondary btn-sm" onclick="document.getElementById('dag-detail-panel').style.display='none'">✕</button>
                 </div>
                 <div style="display:flex;gap:16px;margin:12px 0">
-                    <div><span style="color:var(--text-muted);font-size:11px">LAYER</span><br><span style="font-size:13px;text-transform:uppercase">${layer === 'source' ? '🔵' : layer === 'transform' ? '🟠' : '🟢'} ${layer}</span></div>
+                    <div><span style="color:var(--text-muted);font-size:11px">LAYER</span><br><span style="font-size:13px;text-transform:uppercase">${layer === 'source' ? '🔵' : layer === 'raw' ? '🟠' : '🟢'} ${layer}</span></div>
                     <div><span style="color:var(--text-muted);font-size:11px">UPSTREAM</span><br><span style="font-size:13px">${upstream.length ? upstream.join(', ') : '(none — root)'}</span></div>
                     <div><span style="color:var(--text-muted);font-size:11px">DOWNSTREAM</span><br><span style="font-size:13px">${downstream.length ? downstream.join(', ') : '(none — terminal)'}</span></div>
                 </div>

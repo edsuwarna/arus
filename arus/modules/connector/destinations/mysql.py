@@ -209,3 +209,25 @@ class MySQLDestination(BaseDestination):
                 (pipeline_id, table, str(value)),
             )
         self.conn.commit()
+
+    def delete_rows(self, source_name: str, table: str, rows: list[dict],
+                    pk_columns: list[str], target_schema: str = None) -> int:
+        target_schema = target_schema or self.config.get("target_schema", "public")
+        q_table = f"{self._quote(target_schema)}.{self._quote(table)}"
+        if not rows or not pk_columns:
+            return 0
+
+        deleted = 0
+        with self.conn.cursor() as cur:
+            for row in rows:
+                pk_values = tuple(row.get(c) for c in pk_columns)
+                if not all(v is not None for v in pk_values):
+                    continue
+                clause = " AND ".join(f"{self._quote(c)} = %s" for c in pk_columns)
+                cur.execute(
+                    f"DELETE FROM {q_table} WHERE {clause}",
+                    pk_values,
+                )
+                deleted += cur.rowcount
+        self.conn.commit()
+        return deleted

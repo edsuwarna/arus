@@ -3,8 +3,8 @@ async function renderSourcesPage(container) {
   container.innerHTML = `<div class="loading"><div class="spinner"></div><p>Loading sources...</p></div>`;
 
   try {
-    const sourcesData = await API.get('/sources');
-    const sources = Array.isArray(sourcesData) ? sourcesData : [];
+    const resp = await API.get('/sources');
+    const sources = resp?.sources || [];
     const totalTables = sources.reduce((sum, s) => sum + (s.table_count || s.enabled_table_count || 0), 0);
 
     // Update badges
@@ -240,7 +240,7 @@ function showSourceManage(sourceId) {
 async function testSource(id) {
   try {
     const result = await API.post(`/sources/${id}/test`);
-    const connected = result?.data?.connected !== false;
+    const connected = result?.connected !== false;
     App.toast(connected ? '✅ Connection successful!' : '❌ Connection failed', connected ? 'success' : 'error');
   } catch (err) {
     App.toast(err.message, 'error');
@@ -366,7 +366,10 @@ function toggleAllTables(checkbox) {
 }
 
 function toggleTable(tableName, enabled) {
-  // Could send update to API
+  // Track toggle state in memory (saved on "Save Table Selection" click)
+  window._tableToggleChanged = true;
+  window._arusTableToggles = window._arusTableToggles || {};
+  window._arusTableToggles[tableName] = enabled;
 }
 
 // Track per-table load_mode selection (stored on DOM via select value)

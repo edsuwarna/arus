@@ -7,8 +7,14 @@ class PipelineRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def list_all(self) -> list[Pipeline]:
-        return self.db.query(Pipeline).order_by(Pipeline.created_at.desc()).all()
+    def list_all(self, limit: int = 0, offset: int = 0) -> list[Pipeline]:
+        q = self.db.query(Pipeline).order_by(Pipeline.created_at.desc())
+        if limit > 0:
+            q = q.offset(offset).limit(limit)
+        return q.all()
+
+    def count_all(self) -> int:
+        return self.db.query(Pipeline).count()
 
     def get_by_id(self, pipeline_id: str) -> Pipeline | None:
         return self.db.query(Pipeline).filter(Pipeline.id == pipeline_id).first()

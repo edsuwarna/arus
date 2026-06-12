@@ -5,7 +5,7 @@ from sqlalchemy import desc, func, text as sa_text
 from arus.shared.db.session import get_db
 from arus.modules.run_log.repository import RunLogRepository
 from arus.modules.run_log.models import Run
-from arus.modules.auth.router import get_current_user
+from arus.modules.auth.router import get_current_user, require_editor_or_admin
 
 router = APIRouter(prefix="/api", tags=["runs"])
 
@@ -171,3 +171,44 @@ async def daily_run_stats(
             for r in rows
         ],
     }
+
+
+@router.post("/runs/{run_id}/cancel")
+async def cancel_run(
+    run_id: str,
+    repo: RunLogRepository = Depends(get_run_log_repo),
+    user: dict = Depends(get_current_user),
+):
+    """Cancel a running/pending/queued run."""
+    try:
+        cancelled = repo.cancel_run(run_id)
+        if not cancelled:
+            from arus.shared.exceptions import NotFoundError
+            raise NotFoundError(f"Run {run_id} not found")
+        return {"status": "ok", "data": {"run_id": run_id, "status": "cancelled"}}
+    except ValueError as e:
+        from arus.shared.exceptions import ConflictError
+        raise ConflictError(str(e))
+
+
+@router.post("/runs/{run_id}/retry")
+async def retry_run(
+    run_id: str,
+    db: Session = Depends(get_db),
+    user: dict = Depends(require_editor_or_admin),
+):
+    """Retry a failed run — re-triggers the pipeline."""
+    from arus.shared.exceptions import NotFoundError, ConflictError
+    from arus.modules.pipeline.repository import PipelineRepository
+    from arus.modules.pipeline.service import PipelineService
+
+    run = db.query(Run).filter(Run.id == run_id).first()
+    if not run:
+        raise NotFoundError(f"Run {run_id} not found")
+    if run.status not in ("failed", "cancelled"):
+        raise ConflictError(f"Cannot retry run with status '{run.status}'")
+
+    pipe_service = PipelineService(PipelineRepository(db), db)
+    result = pipe_service.trigger_pipeline(str(run.pipeline_id))
+
+    return {"status": "ok", "data": result}

@@ -15,6 +15,7 @@ class TableSchema:
 class SyncMode:
     mode: str = "incremental"  # "incremental" or "full_refresh"
     watermark_column: str | None = None
+    deleted_at_column: str | None = None
 
 
 class BaseSource(ABC):
@@ -37,3 +38,17 @@ class BaseSource(ABC):
 
     @abstractmethod
     def extract(self, table: str, watermark: Any = None, batch_size: int = 10000) -> Iterator[list[dict]]: ...
+
+    def extract_soft_deletes(self, table: str, watermark: Any,
+                              deleted_at_column: str, watermark_column: str,
+                              batch_size: int = 10000) -> list[dict]:
+        """Extract soft-deleted rows since last watermark.
+
+        Returns rows where deleted_at IS NOT NULL and deleted_at > watermark,
+        but were NOT already caught by normal incremental extract
+        (watermark_column <= watermark).
+
+        Override in connectors that support soft-delete detection.
+        Default returns empty — no soft-delete tracking.
+        """
+        return []

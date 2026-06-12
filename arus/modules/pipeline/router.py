@@ -18,11 +18,21 @@ def get_pipeline_service(db: Session = Depends(get_db)) -> PipelineService:
 
 @router.get("")
 async def list_pipelines(
+    limit: int = Query(50, le=200),
+    offset: int = Query(0, ge=0),
     service: PipelineService = Depends(get_pipeline_service),
     user: dict = Depends(require_editor_or_admin),
 ):
-    pipelines = service.list_pipelines()
-    return {"status": "ok", "data": pipelines}
+    pipelines, total = service.list_pipelines(limit=limit, offset=offset)
+    return {
+        "status": "ok",
+        "data": {
+            "pipelines": pipelines,
+            "total": total,
+            "limit": limit,
+            "offset": offset,
+        },
+    }
 
 
 @router.post("")
@@ -117,13 +127,27 @@ async def pause_all_pipelines(
     service: PipelineService = Depends(get_pipeline_service),
     user: dict = Depends(require_editor_or_admin),
 ):
-    pipelines = service.list_pipelines()
+    pipelines, _ = service.list_pipelines()
     results = []
     for p in pipelines:
         if p["status"] == "active":
             service.update_pipeline(p["id"], {"status": "paused"})
             results.append({"id": p["id"], "name": p["source_name"], "status": "paused"})
     return {"status": "ok", "data": {"paused_count": len(results), "pipelines": results}}
+
+
+@router.post("/resume-all")
+async def resume_all_pipelines(
+    service: PipelineService = Depends(get_pipeline_service),
+    user: dict = Depends(require_editor_or_admin),
+):
+    pipelines, _ = service.list_pipelines()
+    results = []
+    for p in pipelines:
+        if p["status"] == "paused":
+            service.update_pipeline(p["id"], {"status": "active"})
+            results.append({"id": p["id"], "name": p["source_name"], "status": "active"})
+    return {"status": "ok", "data": {"resumed_count": len(results), "pipelines": results}}
 
 
 @router.post("/{pipeline_id}/backfill")

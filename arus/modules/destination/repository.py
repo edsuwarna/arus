@@ -6,8 +6,11 @@ class DestinationRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def list_all(self) -> list[Destination]:
-        return self.db.query(Destination).order_by(Destination.created_at.desc()).all()
+    def list_all(self, limit: int = 50, offset: int = 0) -> list[Destination]:
+        return self.db.query(Destination).order_by(Destination.created_at.desc()).offset(offset).limit(limit).all()
+
+    def count_all(self) -> int:
+        return self.db.query(Destination).count()
 
     def get_by_id(self, dest_id: str) -> Destination | None:
         return self.db.query(Destination).filter(Destination.id == dest_id).first()

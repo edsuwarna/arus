@@ -9,6 +9,7 @@ class TableConfig(BaseModel):
     load_mode: str = "direct"  # direct or raw
     sync_mode: str = "incremental"  # incremental or full_refresh
     watermark_column: Optional[str] = None
+    transform_config: Optional[list[dict]] = None  # array of transform step objects
 
 
 class PipelineCreate(BaseModel):

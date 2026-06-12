@@ -54,3 +54,13 @@ class RunLogRepository:
             .limit(limit)
             .all()
         )
+
+    def cancel_run(self, run_id: str) -> bool:
+        run = self.db.query(Run).filter(Run.id == run_id).first()
+        if not run:
+            return False
+        if run.status not in ("running", "pending", "queued"):
+            raise ValueError(f"Cannot cancel run with status '{run.status}'")
+        run.status = "cancelled"
+        self.db.commit()
+        return True

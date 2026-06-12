@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import time
 import logging
@@ -18,10 +19,20 @@ from arus.modules.dashboard.router import router as dashboard_router
 from arus.modules.settings.router import router as settings_router, seed_default_settings, ensure_settings_table
 from arus.modules.dag.router import router as dag_router
 from arus.modules.notification.router import router as notification_router
+from arus.modules.transform.router import router as transform_router
 from arus.modules.destination.repository import DestinationRepository
 from arus.modules.pipeline.scheduler import start_scheduler
 
 app = FastAPI(title="Arus API", version="0.1.0")
+
+# CORS — allow all origins for development
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 # ── Request logging middleware ──────────────────────────────────────────
@@ -138,3 +149,4 @@ app.include_router(dashboard_router)
 app.include_router(settings_router)
 app.include_router(dag_router)
 app.include_router(notification_router)
+app.include_router(transform_router)

@@ -8,6 +8,7 @@ from arus.modules.run_log.models import Run
 from arus.modules.source.models import Source
 from arus.modules.pipeline.models import Pipeline
 from arus.modules.destination.models import Destination
+from arus.modules.pipeline.models import PipelineTable, Watermark
 
 router = APIRouter(prefix="/api/dashboard", tags=["dashboard"])
 
@@ -47,6 +48,28 @@ async def dashboard_summary(
         Run.started_at >= text("NOW() - INTERVAL '1 hour'"),
     ).distinct(Run.pipeline_id).count()
 
+    # Real stats replacing hardcoded defaults
+    total_tables_synced = db.query(PipelineTable).filter(PipelineTable.enabled == True).count()
+    total_rows_synced = db.query(func.coalesce(func.sum(Run.duration_ms), 0)).filter(
+        Run.status == "success",
+    ).scalar() or 0
+
+    # 7-day uptime = successful runs / total runs
+    runs_7d_total = db.query(Run).filter(
+        Run.started_at >= text("NOW() - INTERVAL '7 days'")
+    ).count()
+    runs_7d_success = db.query(Run).filter(
+        Run.status == "success",
+        Run.started_at >= text("NOW() - INTERVAL '7 days'"),
+    ).count()
+    uptime_pct_7d = round((runs_7d_success / runs_7d_total * 100), 1) if runs_7d_total > 0 else 100.0
+
+    # Average latency of successful runs in 7 days
+    avg_latency_ms = db.query(func.coalesce(func.avg(Run.duration_ms), 0)).filter(
+        Run.status == "success",
+        Run.started_at >= text("NOW() - INTERVAL '7 days'"),
+    ).scalar() or 0
+
     return {
         "status": "ok",
         "data": {
@@ -55,13 +78,13 @@ async def dashboard_summary(
             "total_destinations": total_destinations,
             "total_pipelines": total_pipelines,
             "active_pipelines": active_pipelines,
-            "total_tables_synced": 0,
-            "total_rows_synced": 0,
+            "total_tables_synced": total_tables_synced,
+            "total_rows_synced": total_rows_synced,
             "rows_synced_24h": rows_24h,
             "failed_runs_24h": failed_runs_24h,
             "total_runs_24h": total_runs_24h,
-            "uptime_pct_7d": 100.0,
-            "avg_latency_ms": 0,
+            "uptime_pct_7d": uptime_pct_7d,
+            "avg_latency_ms": int(avg_latency_ms),
             "new_sources_week": sources_this_week,
             "running_pipelines": running_pipelines,
             "degraded_pipelines": failed_pipelines,
@@ -75,6 +98,10 @@ async def recent_runs(
     db: Session = Depends(get_db),
     user: dict = Depends(get_current_user),
 ):
+    from arus.modules.pipeline.models import Pipeline
+    from arus.modules.source.models import Source
+    from arus.modules.destination.models import Destination
+
     runs = (
         db.query(Run)
         .order_by(desc(Run.started_at))
@@ -85,11 +112,11 @@ async def recent_runs(
         "status": "ok",
         "data": [
             {
+                "id": str(r.id),
                 "run_id": str(r.id),
                 "pipeline_id": str(r.pipeline_id),
-                "pipeline_name": "",
                 "status": r.status,
-                "rows_synced": 0,
+                "rows_synced": r.duration_ms or 0,
                 "duration_ms": r.duration_ms,
                 "started_at": r.started_at,
             }
