@@ -253,25 +253,25 @@ async function pauseAllPipelines() {
       <button class="modal-close" onclick="App.closeModal()">✕</button>
     </div>
     <div class="modal-body">
-      <p style="color:var(--text-secondary);font-size:14px;margin-bottom:16px;">Are you sure you want to pause <strong>all active pipelines</strong>?</p>
-      <p style="color:var(--text-tertiary);font-size:13px;">No data will be synced until you resume them.</p>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="App.closeModal()">Cancel</button>
-      <button class="btn btn-danger" onclick="doPauseAll()">Yes, Pause All</button>
+      <p style="color:var(--text-secondary);font-size:13px;margin-bottom:16px;">
+        This will pause ALL active pipelines. No data will be synced until you resume them.
+      </p>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button class="btn btn-secondary" onclick="App.closeModal()">Cancel</button>
+        <button class="btn btn-warning" id="confirmPauseAll">⏸ Pause All</button>
+      </div>
     </div>
   `);
-}
-
-async function doPauseAll() {
-  App.closeModal();
-  try {
-    await API.post('/pipelines/pause-all').catch(() => {});
-    App.toast('All pipelines paused', 'success');
-    App.render();
-  } catch (err) {
-    App.toast(err.message, 'error');
-  }
+  document.getElementById('confirmPauseAll').addEventListener('click', async () => {
+    App.closeModal();
+    try {
+      const result = await API.post('/pipelines/pause-all');
+      App.toast('Paused ' + (result?.data?.paused_count || 0) + ' pipelines', 'success');
+      App.render();
+    } catch (err) {
+      App.toast(err.message, 'error');
+    }
+  });
 }
 
 async function resumeAllPipelines() {
