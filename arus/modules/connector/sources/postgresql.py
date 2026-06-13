@@ -134,12 +134,23 @@ class PostgreSQLSource(BaseSource):
             cur.execute(sql, [watermark, watermark, batch_size])
             return [dict(r) for r in cur.fetchall()]
 
+    def _has_deleted_at_column(self, table: str, schema: str) -> bool:
+        with self.conn.cursor() as cur:
+            cur.execute(
+                "SELECT 1 FROM information_schema.columns "
+                "WHERE table_schema = %s AND table_name = %s AND column_name = 'deleted_at'",
+                (schema, table),
+            )
+            return cur.fetchone() is not None
+
     def extract(self, table: str, watermark: Any = None, batch_size: int = 10000) -> Iterator[list[dict]]:
         schema = "public"
         if "." in table:
             parts = table.split(".")
             schema = parts[0]
             table = parts[1]
+
+        has_deleted_at = self._has_deleted_at_column(table, schema)
 
         if watermark:
             columns = self.get_table_columns(table, schema)
@@ -151,13 +162,23 @@ class PostgreSQLSource(BaseSource):
                     break
 
             if wm_col:
-                sql = f'SELECT * FROM "{schema}"."{table}" WHERE {wm_col} > %s ORDER BY {wm_col} LIMIT %s'
-                params = [watermark, batch_size]
+                sql = f'SELECT * FROM "{schema}"."{table}" WHERE {wm_col} > %s'
+                params = [watermark]
+                if has_deleted_at:
+                    sql += ' AND "deleted_at" IS NULL'
+                sql += f' ORDER BY {wm_col} LIMIT %s'
+                params.append(batch_size)
             else:
-                sql = f'SELECT * FROM "{schema}"."{table}" LIMIT %s'
+                sql = f'SELECT * FROM "{schema}"."{table}"'
+                if has_deleted_at:
+                    sql += ' WHERE "deleted_at" IS NULL'
+                sql += ' LIMIT %s'
                 params = [batch_size]
         else:
-            sql = f'SELECT * FROM "{schema}"."{table}" LIMIT %s'
+            sql = f'SELECT * FROM "{schema}"."{table}"'
+            if has_deleted_at:
+                sql += ' WHERE "deleted_at" IS NULL'
+            sql += ' LIMIT %s'
             params = [batch_size]
 
         with self.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:

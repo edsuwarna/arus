@@ -112,7 +112,18 @@ class MySQLSource(BaseSource):
             cur.execute(sql, [watermark, watermark, batch_size])
             return list(cur.fetchall())
 
+    def _has_deleted_at_column(self, table: str) -> bool:
+        with self.conn.cursor() as cur:
+            cur.execute(
+                "SELECT 1 FROM information_schema.COLUMNS "
+                "WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s AND COLUMN_NAME = 'deleted_at'",
+                (self.db_name, table),
+            )
+            return cur.fetchone() is not None
+
     def extract(self, table: str, watermark: Any = None, batch_size: int = 10000) -> Iterator[list[dict]]:
+        has_deleted_at = self._has_deleted_at_column(table)
+
         if watermark:
             columns = self.get_table_columns(table)
             # Find the watermark column
@@ -124,13 +135,23 @@ class MySQLSource(BaseSource):
                     break
 
             if wm_col:
-                sql = f"SELECT * FROM {table} WHERE {wm_col} > %s ORDER BY {wm_col} LIMIT %s"
-                params = [watermark, batch_size]
+                sql = f"SELECT * FROM {table} WHERE {wm_col} > %s"
+                params = [watermark]
+                if has_deleted_at:
+                    sql += " AND deleted_at IS NULL"
+                sql += f" ORDER BY {wm_col} LIMIT %s"
+                params.append(batch_size)
             else:
-                sql = f"SELECT * FROM {table} LIMIT %s"
+                sql = f"SELECT * FROM {table}"
+                if has_deleted_at:
+                    sql += " WHERE deleted_at IS NULL"
+                sql += " LIMIT %s"
                 params = [batch_size]
         else:
-            sql = f"SELECT * FROM {table} LIMIT %s"
+            sql = f"SELECT * FROM {table}"
+            if has_deleted_at:
+                sql += " WHERE deleted_at IS NULL"
+            sql += " LIMIT %s"
             params = [batch_size]
 
         with self.conn.cursor() as cur:
