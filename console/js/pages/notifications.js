@@ -497,15 +497,81 @@ async function handleLinkNotif(event, pipelineId) {
 }
 
 async function editPipelineNotifLink(linkId, pipelineId, pipelineName) {
-  // For now, just delete and re-add is the simplest UX
-  if (!confirm('Remove this notification link? You can re-add it.')) return;
+  App.closeModal();
   try {
-    await API.del(`/notifications/links/${linkId}`);
-    App.toast('Link removed', 'info');
-    showPipelineNotifConfig(pipelineId, pipelineName);
+    // Fetch current link data to pre-fill the form
+    const linksResp = await API.get(`/notifications/links/${pipelineId}`);
+    const links = Array.isArray(linksResp?.data) ? linksResp.data : [];
+    const link = links.find(l => l.id === linkId);
+    if (!link) { App.toast('Link not found', 'error'); return; }
+
+    const events = link.event_types || [];
+
+    App.showModal(`
+      <div class="modal-header">
+        <h2>Edit Pipeline Notification</h2>
+        <button class="modal-close" onclick="App.closeModal()">✕</button>
+      </div>
+      <form id="editPipelineNotifForm" onsubmit="return handleEditPipelineNotif(event, '${linkId}', '${pipelineId}', '${pipelineName}')">
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Target</label>
+            <div style="display:flex;align-items:center;gap:8px;padding:8px 0">
+              ${getNotifIcon(link.target_type)} <strong>${link.target_name}</strong>
+              <span class="tag ${link.target_type === 'telegram' ? 'blue' : link.target_type === 'discord' ? 'purple' : 'green'}" style="font-size:10px">${link.target_type}</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Event Types</label>
+            <div class="notif-event-grid">
+              <label class="form-checkbox"><input type="checkbox" name="events" value="failure" ${events.includes('failure') ? 'checked' : ''}> ✕ Failure</label>
+              <label class="form-checkbox"><input type="checkbox" name="events" value="success" ${events.includes('success') ? 'checked' : ''}> ✓ Success</label>
+              <label class="form-checkbox"><input type="checkbox" name="events" value="dead_letter" ${events.includes('dead_letter') ? 'checked' : ''}> ⎔ Dead Letter</label>
+              <label class="form-checkbox"><input type="checkbox" name="events" value="schema_drift" ${events.includes('schema_drift') ? 'checked' : ''}> ⇄ Schema Drift</label>
+              <label class="form-checkbox"><input type="checkbox" name="events" value="quality_breach" ${events.includes('quality_breach') ? 'checked' : ''}> ◈ Quality Breach</label>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="App.closeModal()">Cancel</button>
+          <button type="button" class="btn btn-danger" style="color:var(--red);border-color:var(--red);margin-right:auto" onclick="deletePipelineNotifLink('${linkId}', '${pipelineId}') && false">🗑 Delete</button>
+          <button type="submit" class="btn btn-primary">💾 Save</button>
+        </div>
+      </form>
+    `);
   } catch (err) {
     App.toast(err.message, 'error');
   }
+}
+
+async function handleEditPipelineNotif(event, linkId, pipelineId, pipelineName) {
+  event.preventDefault();
+
+  const checkboxes = document.querySelectorAll('#editPipelineNotifForm input[name="events"]:checked');
+  const eventTypes = Array.from(checkboxes).map(cb => cb.value);
+
+  if (eventTypes.length === 0) {
+    App.toast('Select at least one event type', 'error');
+    return false;
+  }
+
+  const btn = event.target.querySelector('button[type="submit"]');
+  const orig = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Saving...';
+  btn.style.opacity = '0.6';
+
+  try {
+    await API.put(`/notifications/links/${linkId}`, { event_types: eventTypes });
+    App.toast('✅ Link updated!', 'success');
+    showPipelineNotifConfig(pipelineId, pipelineName);
+  } catch (err) {
+    App.toast(err.message, 'error');
+    btn.disabled = false;
+    btn.textContent = orig;
+    btn.style.opacity = '1';
+  }
+  return false;
 }
 
 async function deletePipelineNotifLink(linkId, pipelineId) {
@@ -530,4 +596,5 @@ window.deleteNotifTarget = deleteNotifTarget;
 window.showPipelineNotifConfig = showPipelineNotifConfig;
 window.handleLinkNotif = handleLinkNotif;
 window.editPipelineNotifLink = editPipelineNotifLink;
+window.handleEditPipelineNotif = handleEditPipelineNotif;
 window.deletePipelineNotifLink = deletePipelineNotifLink;
