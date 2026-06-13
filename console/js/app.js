@@ -230,6 +230,17 @@ const App = {
     if (overlay) overlay.remove();
   },
 
+  renderError(container, message, retryFn) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">⚠️</div>
+        <h3>Something went wrong</h3>
+        <p style="color:var(--text-tertiary);font-size:13px;margin-bottom:16px;">${message}</p>
+        ${retryFn ? `<button class="btn btn-primary btn-sm" onclick="App.render()">⟳ Retry</button>` : ''}
+      </div>
+    `;
+  },
+
   showModal(html) {
     App.closeModal();
     const overlay = document.createElement('div');

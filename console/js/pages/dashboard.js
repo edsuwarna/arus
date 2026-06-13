@@ -121,7 +121,7 @@ async function renderDashboardPage(container) {
       </div>
     `;
   } catch (err) {
-    container.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><h3>Error loading dashboard</h3><p>${err.message}</p></div>`;
+    App.renderError(container, err.message, () => App.render());
   }
 
   // Update sidebar badges
