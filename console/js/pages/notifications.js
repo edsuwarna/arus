@@ -335,14 +335,29 @@ async function testNotifTarget(event, id) {
 }
 
 async function deleteNotifTarget(id) {
-  if (!confirm('Delete this notification target? It will be removed from all pipelines.')) return;
-  try {
-    await API.del(`/notifications/targets/${id}`);
-    App.toast('Target deleted', 'info');
-    App.render();
-  } catch (err) {
-    App.toast(err.message, 'error');
-  }
+  App.showModal(`
+    <div class="modal-header">
+      <h2>Confirmation</h2>
+      <button class="modal-close" onclick="App.closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="color:var(--text-secondary);font-size:13px;margin-bottom:16px;">Delete this notification target? It will be removed from all pipelines.</p>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button class="btn btn-secondary" onclick="App.closeModal()">Cancel</button>
+        <button class="btn btn-danger" id="confirmDeleteTarget">Confirm</button>
+      </div>
+    </div>
+  `);
+  document.getElementById('confirmDeleteTarget').addEventListener('click', async () => {
+    App.closeModal();
+    try {
+      await API.del(`/notifications/targets/${id}`);
+      App.toast('Target deleted', 'info');
+      App.render();
+    } catch (err) {
+      App.toast(err.message, 'error');
+    }
+  });
 }
 
 // ===== Pipeline notification link management =====
@@ -575,14 +590,29 @@ async function handleEditPipelineNotif(event, linkId, pipelineId, pipelineName) 
 }
 
 async function deletePipelineNotifLink(linkId, pipelineId) {
-  if (!confirm('Remove this notification link?')) return;
-  try {
-    await API.del(`/notifications/links/${linkId}`);
-    App.toast('Link removed', 'info');
-    App.render();
-  } catch (err) {
-    App.toast(err.message, 'error');
-  }
+  App.showModal(`
+    <div class="modal-header">
+      <h2>Confirmation</h2>
+      <button class="modal-close" onclick="App.closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="color:var(--text-secondary);font-size:13px;margin-bottom:16px;">Remove this notification link?</p>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button class="btn btn-secondary" onclick="App.closeModal()">Cancel</button>
+        <button class="btn btn-danger" id="confirmDeleteLink">Confirm</button>
+      </div>
+    </div>
+  `);
+  document.getElementById('confirmDeleteLink').addEventListener('click', async () => {
+    App.closeModal();
+    try {
+      await API.del(`/notifications/links/${linkId}`);
+      App.toast('Link removed', 'info');
+      App.render();
+    } catch (err) {
+      App.toast(err.message, 'error');
+    }
+  });
 }
 
 // Globals

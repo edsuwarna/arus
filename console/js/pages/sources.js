@@ -248,14 +248,29 @@ async function testSource(id) {
 }
 
 async function deleteSource(id) {
-  if (!confirm('Delete this source and all associated pipelines?')) return;
-  try {
-    await API.del(`/sources/${id}`);
-    App.toast('Source deleted');
-    App.render();
-  } catch (err) {
-    App.toast(err.message, 'error');
-  }
+  App.showModal(`
+    <div class="modal-header">
+      <h2>Confirmation</h2>
+      <button class="modal-close" onclick="App.closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="color:var(--text-secondary);font-size:13px;margin-bottom:16px;">Delete this source and all associated pipelines?</p>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button class="btn btn-secondary" onclick="App.closeModal()">Cancel</button>
+        <button class="btn btn-danger" id="confirmDeleteSource">Confirm</button>
+      </div>
+    </div>
+  `);
+  document.getElementById('confirmDeleteSource').addEventListener('click', async () => {
+    App.closeModal();
+    try {
+      await API.del(`/sources/${id}`);
+      App.toast('Source deleted');
+      App.render();
+    } catch (err) {
+      App.toast(err.message, 'error');
+    }
+  });
 }
 
 async function editSource(id) {

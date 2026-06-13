@@ -261,25 +261,55 @@ window.resumeDetailPipeline = resumeDetailPipeline;
 window.showRunLogs = showRunLogs;
 
 async function cancelRun(runId, pipelineId) {
-  if (!confirm('Cancel this run?')) return;
-  try {
-    await API.post(`/runs/${runId}/cancel`);
-    App.toast('Run cancelled', 'success');
-    App.render();
-  } catch (err) {
-    App.toast(err.message, 'error');
-  }
+  App.showModal(`
+    <div class="modal-header">
+      <h2>Confirmation</h2>
+      <button class="modal-close" onclick="App.closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="color:var(--text-secondary);font-size:13px;margin-bottom:16px;">Cancel this run?</p>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button class="btn btn-secondary" onclick="App.closeModal()">Cancel</button>
+        <button class="btn btn-danger" id="confirmCancelRun">Confirm</button>
+      </div>
+    </div>
+  `);
+  document.getElementById('confirmCancelRun').addEventListener('click', async () => {
+    App.closeModal();
+    try {
+      await API.post(`/runs/${runId}/cancel`);
+      App.toast('Run cancelled', 'success');
+      App.render();
+    } catch (err) {
+      App.toast(err.message, 'error');
+    }
+  });
 }
 
 async function retryRun(runId, pipelineId) {
-  if (!confirm('Retry this run?')) return;
-  try {
-    await API.post(`/runs/${runId}/retry`);
-    App.toast('Run retry triggered', 'success');
-    App.render();
-  } catch (err) {
-    App.toast(err.message, 'error');
-  }
+  App.showModal(`
+    <div class="modal-header">
+      <h2>Confirmation</h2>
+      <button class="modal-close" onclick="App.closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="color:var(--text-secondary);font-size:13px;margin-bottom:16px;">Retry this run?</p>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button class="btn btn-secondary" onclick="App.closeModal()">Cancel</button>
+        <button class="btn btn-danger" id="confirmRetryRun">Confirm</button>
+      </div>
+    </div>
+  `);
+  document.getElementById('confirmRetryRun').addEventListener('click', async () => {
+    App.closeModal();
+    try {
+      await API.post(`/runs/${runId}/retry`);
+      App.toast('Run retry triggered', 'success');
+      App.render();
+    } catch (err) {
+      App.toast(err.message, 'error');
+    }
+  });
 }
 
 window.cancelRun = cancelRun;
@@ -295,14 +325,29 @@ window.handleEditConfigSave = handleEditConfigSave;
 
 /* ===== Full Refresh ===== */
 async function fullRefreshPipeline(id) {
-  if (!confirm('This will reset all watermarks and re-sync ALL data from source. Are you sure?')) return;
-  try {
-    const result = await API.post(`/pipelines/${id}/full-refresh`);
-    App.toast('Full refresh triggered!', 'success');
-    App.render();
-  } catch (err) {
-    App.toast(err.message, 'error');
-  }
+  App.showModal(`
+    <div class="modal-header">
+      <h2>Confirmation</h2>
+      <button class="modal-close" onclick="App.closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="color:var(--text-secondary);font-size:13px;margin-bottom:16px;">This will reset all watermarks and re-sync ALL data from source. Are you sure?</p>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button class="btn btn-secondary" onclick="App.closeModal()">Cancel</button>
+        <button class="btn btn-danger" id="confirmRefresh">Confirm</button>
+      </div>
+    </div>
+  `);
+  document.getElementById('confirmRefresh').addEventListener('click', async () => {
+    App.closeModal();
+    try {
+      await API.post(`/pipelines/${id}/full-refresh`);
+      App.toast('Full refresh triggered!', 'success');
+      App.render();
+    } catch (err) {
+      App.toast(err.message, 'error');
+    }
+  });
 }
 
 /* ===== Backfill Modal ===== */
@@ -740,10 +785,25 @@ async function showTransformConfig(pipelineId, tableName) {
   };
 
   window.clearTransformSteps = () => {
-    if (!confirm('Remove all transform steps for this table?')) return;
-    steps = [];
-    window._tfSteps = steps;
-    renderModal();
+    App.showModal(`
+      <div class="modal-header">
+        <h2>Confirmation</h2>
+        <button class="modal-close" onclick="App.closeModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="color:var(--text-secondary);font-size:13px;margin-bottom:16px;">Remove all transform steps for this table?</p>
+        <div style="display:flex;gap:8px;justify-content:flex-end;">
+          <button class="btn btn-secondary" onclick="App.closeModal()">Cancel</button>
+          <button class="btn btn-danger" id="confirmClearSteps">Confirm</button>
+        </div>
+      </div>
+    `);
+    document.getElementById('confirmClearSteps').addEventListener('click', () => {
+      App.closeModal();
+      steps = [];
+      window._tfSteps = steps;
+      renderModal();
+    });
   };
 }
 
@@ -775,14 +835,29 @@ async function saveTransformConfig() {
 // ===== Script Management =====
 
 async function deleteTransformScript(pipelineId, scriptId) {
-  if (!confirm('Delete this transform script?')) return;
-  try {
-    await API.del(`/pipelines/${pipelineId}/scripts/${scriptId}`);
-    App.toast('Script deleted', 'info');
-    showTransformConfig(pipelineId, window._tfTableName || '');
-  } catch (err) {
-    App.toast(err.message, 'error');
-  }
+  App.showModal(`
+    <div class="modal-header">
+      <h2>Confirmation</h2>
+      <button class="modal-close" onclick="App.closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="color:var(--text-secondary);font-size:13px;margin-bottom:16px;">Delete this transform script?</p>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button class="btn btn-secondary" onclick="App.closeModal()">Cancel</button>
+        <button class="btn btn-danger" id="confirmDeleteScript">Confirm</button>
+      </div>
+    </div>
+  `);
+  document.getElementById('confirmDeleteScript').addEventListener('click', async () => {
+    App.closeModal();
+    try {
+      await API.del(`/pipelines/${pipelineId}/scripts/${scriptId}`);
+      App.toast('Script deleted', 'info');
+      showTransformConfig(pipelineId, window._tfTableName || '');
+    } catch (err) {
+      App.toast(err.message, 'error');
+    }
+  });
 }
 
 function showCreateScriptForm(pipelineId) {

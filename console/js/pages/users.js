@@ -211,14 +211,29 @@ async function handleEditUser(event, id) {
 
 /* ===== DELETE USER ===== */
 async function deleteUser(id) {
-  if (!confirm('Delete this user? This cannot be undone.')) return;
-  try {
-    await API.del(`/auth/users/${id}`);
-    App.toast('User deleted', 'info');
-    App.render();
-  } catch (err) {
-    App.toast('Failed: ' + err.message, 'error');
-  }
+  App.showModal(`
+    <div class="modal-header">
+      <h2>Confirmation</h2>
+      <button class="modal-close" onclick="App.closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="color:var(--text-secondary);font-size:13px;margin-bottom:16px;">Delete this user? This cannot be undone.</p>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button class="btn btn-secondary" onclick="App.closeModal()">Cancel</button>
+        <button class="btn btn-danger" id="confirmDeleteUser">Confirm</button>
+      </div>
+    </div>
+  `);
+  document.getElementById('confirmDeleteUser').addEventListener('click', async () => {
+    App.closeModal();
+    try {
+      await API.del(`/auth/users/${id}`);
+      App.toast('User deleted', 'info');
+      App.render();
+    } catch (err) {
+      App.toast('Failed: ' + err.message, 'error');
+    }
+  });
 }
 
 // Globals
