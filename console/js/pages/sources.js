@@ -521,6 +521,16 @@ async function handleAddSource(event) {
     };
   }
 
+  // Parse table filter input
+  const filterVal = (document.getElementById('srcFilters')?.value || '').trim();
+  if (filterVal) {
+    const filters = filterVal.split(',').map(s => s.trim()).filter(Boolean);
+    const include = filters.filter(f => !f.startsWith('-')).map(f => f.replace(/^\+/, ''));
+    const exclude = filters.filter(f => f.startsWith('-')).map(f => f.slice(1));
+    if (include.length > 0) data.table_include = include;
+    if (exclude.length > 0) data.table_exclude = exclude;
+  }
+
   try {
     const result = await API.post('/sources', data);
     App.closeModal();
