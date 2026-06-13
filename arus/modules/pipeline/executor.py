@@ -464,14 +464,17 @@ class PipelineExecutor:
                     "status": "failed" if error else "success",
                     "finished_at": finished_at,
                     "duration_ms": int((finished_at - started_at).total_seconds() * 1000),
+                    "rows_synced": total_rows,
                     "error_message": error,
                 })
             except Exception as e:
                 logger.warning(f"Could not update run_log: {e}")
 
+        # Compute total rows for rows_synced
+        total_rows = sum(r.get("rows", 0) for r in results)
+
         # Send success notification if pipeline didn't error
         if not error and self.notif_svc:
-            total_rows = sum(r.get("rows", 0) for r in results)
             self.notif_svc.notify_pipeline_event(
                 pipeline_id=pipeline_id,
                 event_type="success",
@@ -491,6 +494,7 @@ class PipelineExecutor:
             "started_at": started_at.isoformat() if started_at else None,
             "finished_at": finished_at.isoformat() if finished_at else None,
             "duration_ms": int((finished_at - started_at).total_seconds() * 1000),
+            "rows_synced": total_rows,
         }
 
     # ---- Retry wrappers (Phase 2) ----

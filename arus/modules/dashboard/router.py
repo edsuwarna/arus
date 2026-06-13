@@ -31,8 +31,8 @@ async def dashboard_summary(
     total_runs_24h = runs_24h.count()
     failed_runs_24h = runs_24h.filter(Run.status == "failed").count()
 
-    # Sum of rows synced in last 24h (stored as duration_ms for simplicity)
-    rows_24h = db.query(func.coalesce(func.sum(Run.duration_ms), 0)).filter(
+    # Sum of rows synced in last 24h
+    rows_24h = db.query(func.coalesce(func.sum(Run.rows_synced), 0)).filter(
         Run.started_at >= text("NOW() - INTERVAL '24 hours'")
     ).scalar() or 0
 
@@ -50,7 +50,7 @@ async def dashboard_summary(
 
     # Real stats replacing hardcoded defaults
     total_tables_synced = db.query(PipelineTable).filter(PipelineTable.enabled == True).count()
-    total_rows_synced = db.query(func.coalesce(func.sum(Run.duration_ms), 0)).filter(
+    total_rows_synced = db.query(func.coalesce(func.sum(Run.rows_synced), 0)).filter(
         Run.status == "success",
     ).scalar() or 0
 
@@ -116,7 +116,7 @@ async def recent_runs(
                 "run_id": str(r.id),
                 "pipeline_id": str(r.pipeline_id),
                 "status": r.status,
-                "rows_synced": r.duration_ms or 0,
+                "rows_synced": r.rows_synced or 0,
                 "duration_ms": r.duration_ms,
                 "started_at": r.started_at,
             }

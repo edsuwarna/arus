@@ -5,6 +5,7 @@ PipelineService — manages pipeline lifecycle:
 import logging
 from datetime import datetime, timezone
 
+from sqlalchemy import case, func
 from arus.shared.exceptions import NotFoundError
 from arus.shared.crypto import decrypt_password
 from arus.modules.pipeline.repository import PipelineRepository
@@ -69,22 +70,34 @@ class PipelineService:
             })
 
         return {
-            "id": str(p.id),
-            "name": p.name,
-            "source": {"id": str(source.id), "name": source.name, "type": source.type} if source else {},
-            "destination": {"id": str(dest.id), "name": dest.name, "type": dest.type} if dest else {},
-            "status": p.status,
-            "schedule": p.schedule,
-            "target_schema": p.target_schema or "public",
-            "load_mode": p.load_mode or "direct",
-            "tables": table_details,
-            "stats": {
-                "total_rows_synced": 0,
-                "total_runs": 0,
-                "successful_runs": 0,
-                "failed_runs": 0,
-            },
-            "created_at": p.created_at,
+            'id': str(p.id),
+            'name': p.name,
+            'source': {'id': str(source.id), 'name': source.name, 'type': source.type} if source else {},
+            'destination': {'id': str(dest.id), 'name': dest.name, 'type': dest.type} if dest else {},
+            'status': p.status,
+            'schedule': p.schedule,
+            'target_schema': p.target_schema or 'public',
+            'load_mode': p.load_mode or 'direct',
+            'tables': table_details,
+            'stats': self._get_pipeline_stats(pipeline_id),
+            'created_at': p.created_at,
+        }
+
+    def _get_pipeline_stats(self, pipeline_id: str) -> dict:
+        from arus.modules.run_log.models import Run
+
+        stats = self.db.query(
+            func.coalesce(func.sum(Run.rows_synced), 0).label('total_rows_synced'),
+            func.count(Run.id).label('total_runs'),
+            func.coalesce(func.sum(case((Run.status == 'success', 1), else_=0)), 0).label('successful_runs'),
+            func.coalesce(func.sum(case((Run.status == 'failed', 1), else_=0)), 0).label('failed_runs'),
+        ).filter(Run.pipeline_id == pipeline_id).first()
+
+        return {
+            'total_rows_synced': stats.total_rows_synced or 0,
+            'total_runs': stats.total_runs or 0,
+            'successful_runs': stats.successful_runs or 0,
+            'failed_runs': stats.failed_runs or 0,
         }
 
     def create_pipeline(self, data: dict) -> dict:

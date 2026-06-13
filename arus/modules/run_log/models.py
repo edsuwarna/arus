@@ -15,6 +15,7 @@ class Run(Base):
     started_at = Column(DateTime(timezone=True), default=func.now())
     finished_at = Column(DateTime(timezone=True), nullable=True)
     duration_ms = Column(Integer, nullable=True)
+    rows_synced = Column(Integer, default=0)
     trigger_type = Column(String(20), default="scheduled")
     error_message = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

@@ -152,7 +152,7 @@ async def daily_run_stats(
         db.query(
             func.date_trunc("day", Run.started_at).label("day"),
             func.count(Run.id).label("run_count"),
-            func.coalesce(func.sum(Run.duration_ms), 0).label("total_rows"),
+            func.coalesce(func.sum(Run.rows_synced), 0).label("total_rows"),
         )
         .filter(Run.started_at >= sa_text(f"NOW() - INTERVAL '{days} days'"))
         .group_by(func.date_trunc("day", Run.started_at))
