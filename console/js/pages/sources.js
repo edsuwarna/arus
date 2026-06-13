@@ -277,7 +277,7 @@ async function editSource(id) {
   App.closeModal();
   try {
     const res = await API.get(`/sources/${id}`);
-    const s = res?.data || {};
+    const s = res || {};
     const isMongo = s.type === 'mongodb';
     App.showModal(`
       <div class="modal-header">

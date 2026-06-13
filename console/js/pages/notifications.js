@@ -4,7 +4,7 @@ async function renderNotificationsPage(container) {
 
   try {
     const resp = await API.get('/notifications/targets');
-    const targets = resp?.data || [];
+    const targets = resp || [];
     const targetList = Array.isArray(targets) ? targets : [];
 
     container.innerHTML = `

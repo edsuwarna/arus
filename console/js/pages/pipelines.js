@@ -96,7 +96,7 @@ async function editDestination(id) {
   App.closeModal();
   try {
     const res = await API.get(`/destinations/${id}`);
-    const d = res?.data || {};
+    const d = res || {};
     App.showModal(`
       <div class="modal-header">
         <h2>Edit Destination — ${d.name || ''}</h2>
@@ -528,7 +528,7 @@ async function renderSettingsPage(container) {
 
   try {
     const resp = await API.get('/settings');
-    const s = resp?.data || {};
+    const s = resp || {};
 
     container.innerHTML = `
       <div class="page-header">
@@ -753,7 +753,7 @@ async function handleAddDest(event) {
 async function testDestination(id) {
   try {
     const result = await API.post(`/destinations/${id}/test`);
-    const data = result?.data || {};
+    const data = result || {};
     App.toast(data.connected ? '✅ Connection successful!' : '❌ Connection failed', data.connected ? 'success' : 'error');
   } catch (err) {
     App.toast(err.message, 'error');

@@ -102,6 +102,7 @@ class PipelineService:
 
     def create_pipeline(self, data: dict) -> dict:
         tables = data.pop("tables", None)
+        schedule = data.get("schedule")
         p = self.repo.create(data)
         if tables:
             table_list = []
@@ -126,6 +127,10 @@ class PipelineService:
                         "enabled": True,
                     })
             self.repo.set_tables(str(p.id), table_list)
+        # Sync with scheduler
+        if schedule and p.status == "active":
+            from arus.modules.pipeline.scheduler import schedule_pipeline
+            schedule_pipeline(str(p.id), schedule)
         return {"id": str(p.id)}
 
     def update_pipeline(self, pipeline_id: str, data: dict) -> dict:
@@ -134,7 +139,10 @@ class PipelineService:
             raise NotFoundError(f"Pipeline {pipeline_id} not found")
 
         tables = data.pop("tables", None)
+        had_schedule = "schedule" in data
+        old_schedule = p.schedule
         self.repo.update(p, data)
+
         if tables is not None:
             table_list = []
             for t in tables:
@@ -157,12 +165,35 @@ class PipelineService:
                         "enabled": True,
                     })
             self.repo.set_tables(pipeline_id, table_list)
+
+        # Sync schedule with APScheduler
+        if had_schedule:
+            from arus.modules.pipeline.scheduler import schedule_pipeline, unschedule_pipeline
+            new_schedule = data.get("schedule")
+            if new_schedule and data.get("status", p.status) == "active":
+                schedule_pipeline(pipeline_id, new_schedule)
+            elif old_schedule and not new_schedule:
+                unschedule_pipeline(pipeline_id)
+        else:
+            # Status change might affect schedule — pause/resume
+            from arus.modules.pipeline.scheduler import schedule_pipeline, unschedule_pipeline
+            new_status = data.get("status")
+            current_schedule = p.schedule
+            if current_schedule and new_status == "paused":
+                unschedule_pipeline(pipeline_id)
+            elif current_schedule and new_status == "active":
+                schedule_pipeline(pipeline_id, current_schedule)
+
         return {"updated": True}
 
     def delete_pipeline(self, pipeline_id: str) -> None:
         p = self.repo.get_by_id(pipeline_id)
         if not p:
             raise NotFoundError(f"Pipeline {pipeline_id} not found")
+        # Unschedule if scheduled
+        if p.schedule:
+            from arus.modules.pipeline.scheduler import unschedule_pipeline
+            unschedule_pipeline(pipeline_id)
         self.repo.delete(p)
 
     def trigger_pipeline(self, pipeline_id: str, force_full_refresh: bool = False, backfill_from: str = None) -> dict:

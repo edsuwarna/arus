@@ -9,9 +9,9 @@ async function renderDashboardPage(container) {
       API.get('/runs/stats/daily?days=7').catch(() => ({})),
     ]);
 
-    const s = summary?.data || {};
-    const runs = Array.isArray(recentRuns?.data) ? recentRuns.data : [];
-    const chartData = dailyStats?.data || [];
+    const s = summary || {};
+    const runs = Array.isArray(recentRuns) ? recentRuns : [];
+    const chartData = dailyStats || [];
 
     const activeSources = s.active_sources || 0;
     const activePipelines = s.active_pipelines || 0;

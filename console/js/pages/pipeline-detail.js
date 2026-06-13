@@ -420,7 +420,7 @@ async function showDeadLetters(pipelineId) {
 
   try {
     const data = await API.get(`/pipelines/${pipelineId}/dead-letters?limit=50`);
-    const rows = data?.data || [];
+    const rows = data || [];
     const content = document.getElementById('dead-letter-content');
     if (!content) return;
 

@@ -21,7 +21,7 @@ from arus.modules.dag.router import router as dag_router
 from arus.modules.notification.router import router as notification_router
 from arus.modules.transform.router import router as transform_router
 from arus.modules.destination.repository import DestinationRepository
-from arus.modules.pipeline.scheduler import start_scheduler
+from arus.modules.pipeline.scheduler import start_scheduler, load_scheduled_pipelines
 
 app = FastAPI(title="Arus API", version="0.1.0")
 
@@ -66,6 +66,7 @@ async def startup():
     _seed_default_destination()
     _seed_settings()
     start_scheduler()
+    load_scheduled_pipelines()
 
 
 def _seed_admin():
