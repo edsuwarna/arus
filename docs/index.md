@@ -82,17 +82,54 @@ Source DB ──→ [Batch SELECT with watermark]
 
 ## Quick Start
 
+Run Arus in under 2 minutes on any VPS or local machine with Docker.
+
+### 1. Prepare `.env` file
+
+Create an `.env` file next to your `docker-compose.yml`:
+
 ```bash
-# Get the docker-compose.yml from the docs site
-# Then start all services
+cat > .env << 'EOF'
+# REQUIRED — generate with: openssl rand -hex 32
+ARUS_JWT_SECRET=your-32-byte-hex-secret-here
+ARUS_ENCRYPTION_KEY=your-32-byte-hex-key-here
+
+# Optional overrides (defaults shown)
+ARUS_DB_USER=arus
+ARUS_DB_PASSWORD=arus_secret
+ARUS_DB_NAME=arus_warehouse
+ARUS_LOG_LEVEL=INFO
+ARUS_BATCH_SIZE=10000
+TZ=UTC
+EOF
+```
+
+> **Generate secure values**: `openssl rand -hex 32` (run it twice — once for `JWT_SECRET`, once for `ENCRYPTION_KEY`).
+
+### 2. Start everything
+
+```bash
 docker compose up -d
+```
 
-# Access the console
-open http://localhost:8082
+### 3. Open the Console
 
-# Default credentials
-# Email: admin@arus.io
-# Password: admin123
+```
+http://localhost:8082
+```
+
+**Default login:** `admin@arus.io` / `admin123`
+
+---
+
+### Docker Compose file
+
+Download [`docker-compose.yml`](https://raw.githubusercontent.com/edsuwarna/arus/main/docker-compose.yml) or clone the repo:
+
+```bash
+git clone https://github.com/edsuwarna/arus.git
+cd arus
+docker compose up -d
 ```
 
 ---
