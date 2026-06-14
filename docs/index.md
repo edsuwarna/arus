@@ -2,6 +2,9 @@
 
 > _Data flows without the cluster._
 
+![Arus Console Dashboard](images/arus-dashboard.png)
+*Arus Console — real-time dashboard with pipeline health, sync performance, and source overview*
+
 Arus is a lightweight, self-hosted **CDC & ETL framework** purpose-built for teams running on VPS-class infrastructure (no Kubernetes). It ingests data from MySQL, MariaDB, PostgreSQL, and MongoDB sources, applies transformations, and lands them into a PostgreSQL, MySQL, or ClickHouse data warehouse — with a visual DAG interface for monitoring and troubleshooting.
 
 ---

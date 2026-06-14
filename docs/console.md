@@ -32,8 +32,6 @@ Features:
 - Forgot password link
 - Rate-limited (10 attempts per 60 seconds per IP)
 
-![Login Mockup](../sketches/arus-login.png)
-
 ---
 
 ## Dashboard
@@ -66,7 +64,8 @@ Table showing all configured sources with:
 - Connection status (Connected/Error)
 - Last sync timestamp
 
-![Dashboard Mockup](../sketches/arus-dashboard.png)
+![Arus Dashboard](images/arus-dashboard.png)
+*Dashboard overview — stat cards, sync performance chart, recent runs, and sources table*
 
 ---
 
@@ -120,7 +119,8 @@ After adding/rescanning a source, tables are displayed with:
 - Enable/disable checkbox
 - Save Table Selection button (auto-creates or updates the pipeline)
 
-![Sources Mockup](../sketches/arus-sources.png)
+![Arus Sources](images/arus-sources.png)
+*Sources page — PostgreSQL source cards with sync status and discovered tables*
 
 ---
 
@@ -145,6 +145,9 @@ Each destination card shows:
 | **Edit** | Update destination configuration |
 | **Test Connection** | Verify destination connectivity |
 | **Delete** | Remove destination (with confirmation) |
+
+![Arus Destinations](images/arus-destinations.png)
+*Destinations page — Warehouse (PostgreSQL) destination card with connection details and sync status*
 
 ---
 
@@ -185,7 +188,8 @@ Each pipeline card shows:
 - Load mode (Direct / Raw)
 - Optional notification linking
 
-![Pipelines Mockup](../sketches/arus-pipelines.png)
+![Arus Pipelines](images/arus-pipelines.png)
+*Pipelines page — E-Commerce Pipeline card with metrics, status, and controls*
 
 ---
 
@@ -253,7 +257,8 @@ Inline modal for configuring transform steps:
 | **Edit Config** | Name, target schema, load mode |
 | **Notifications** | Link/unlink notification targets |
 
-![Pipeline Detail Mockup](../sketches/arus-pipeline-detail.png)
+![Arus Pipeline Detail — DAG View](images/arus-dag.png)
+*Pipeline detail with interactive DAG — Source, Raw, and Target layer visualization*
 
 ---
 
@@ -268,6 +273,9 @@ Global view of all pipeline runs across all pipelines.
 - Columns: Time, Pipeline name (clickable), Status, Duration, Rows, Trigger (scheduled/manual), Actions
 - Actions: Logs, Cancel (if running), Retry (if failed)
 - Refresh button
+
+![Arus Run History](images/arus-run-history.png)
+*Run History — pipeline execution logs with status badges, duration, and retry controls*
 
 ---
 
@@ -306,7 +314,8 @@ Interactive SVG-based asset graph showing the three-layer pipeline architecture.
 - **Pipeline selector**: Dropdown to switch between all pipelines or a specific one
 - **Legend**: Toggle legend visibility
 
-![DAG Mockup](../sketches/arus-dag-top.png)
+![Arus DAG View](images/arus-dag.png)
+*Interactive three-layer DAG — Source, Raw, and Target nodes with bezier edge connections*
 
 ---
 
