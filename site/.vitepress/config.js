@@ -29,7 +29,7 @@ export default defineConfig({
           text: 'Architecture',
           items: [
             { text: 'System Design', link: '/guide/architecture' },
-            { text: 'Data Flow', link: '/guide/architecture#data-flow' },
+            { text: 'Data Flow', link: '/guide/architecture#data-flow-detail' },
           ],
         },
         {
