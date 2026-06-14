@@ -132,11 +132,11 @@ footer{text-align:center;padding:24px;border-top:1px solid var(--border);font-si
          │
 4. Batch arrives as list[dict]
          │
-5. Write to staging raw zone (JSONB):
-   INSERT INTO staging.&lt;source&gt;_&lt;table&gt;_raw
+5. Write to raw zone (JSONB):
+   INSERT INTO raw.&lt;source&gt;_&lt;table&gt;_raw
          │
-6. Normalize and upsert to analytics:
-   INSERT INTO analytics.&lt;table&gt; ...
+6. Normalize and upsert to target:
+   INSERT INTO target.&lt;table&gt; ...
    ON CONFLICT (id) DO UPDATE SET ...
          │
 7. Update watermark
@@ -151,7 +151,7 @@ footer{text-align:center;padding:24px;border-top:1px solid var(--border);font-si
     <p>Alternatively, tables can be configured for full refresh — truncating the target and reloading all rows. Useful for small dimension tables or initial backfills.</p>
 
     <h3>Schema Drift</h3>
-    <p>When new columns appear in the source, the raw zone (JSONB) is unaffected. The analytics zone auto-runs <code>ALTER TABLE ADD COLUMN IF NOT EXISTS</code> — no pipeline breakage.</p>
+    <p>When new columns appear in the source, the raw zone (JSONB) is unaffected. The target zone auto-runs <code>ALTER TABLE ADD COLUMN IF NOT EXISTS</code> — no pipeline breakage.</p>
 
     <h2>Module Architecture</h2>
     <div class="diagram">

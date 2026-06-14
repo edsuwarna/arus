@@ -318,13 +318,13 @@ footer .logo .icon{width:24px;height:24px;background:linear-gradient(135deg,var(
       <rect width="960" height="480" fill="url(#dots)"/>
 
       <!-- Layer headers -->
-      <text x="60" y="48" fill="#5c626e" font-family="Inter,sans-serif" font-size="11" font-weight="600" letter-spacing="1">SOURCE</text>
+      <text x="60" y="48" fill="#3b82f6" font-family="Inter,sans-serif" font-size="11" font-weight="700" letter-spacing="1">SOURCE</text>
       <line x1="60" y1="60" x2="900" y2="60" stroke="#23262e" stroke-width="1"/>
 
-      <text x="60" y="200" fill="#5c626e" font-family="Inter,sans-serif" font-size="11" font-weight="600" letter-spacing="1">STAGING (RAW)</text>
+      <text x="60" y="200" fill="#f59e0b" font-family="Inter,sans-serif" font-size="11" font-weight="700" letter-spacing="1">RAW</text>
       <line x1="60" y1="212" x2="900" y2="212" stroke="#23262e" stroke-width="1"/>
 
-      <text x="60" y="352" fill="#5c626e" font-family="Inter,sans-serif" font-size="11" font-weight="600" letter-spacing="1">ANALYTICS</text>
+      <text x="60" y="352" fill="#10b981" font-family="Inter,sans-serif" font-size="11" font-weight="700" letter-spacing="1">TARGET</text>
       <line x1="60" y1="364" x2="900" y2="364" stroke="#23262e" stroke-width="1"/>
 
       <!-- Source nodes -->
@@ -353,11 +353,11 @@ footer .logo .icon{width:24px;height:24px;background:linear-gradient(135deg,var(
 
       <!-- Analytics nodes -->
       <rect x="120" y="380" width="200" height="48" rx="8" fill="#1c1f26" stroke="#10b981" stroke-width="1.5" filter="url(#g)"/>
-      <text x="150" y="410" fill="#e8eaed" font-family="Inter,sans-serif" font-size="13" font-weight="600">analytics.users</text>
+      <text x="150" y="410" fill="#e8eaed" font-family="Inter,sans-serif" font-size="13" font-weight="600">users</text>
       <circle cx="140" cy="404" r="4" fill="#10b981"/>
 
       <rect x="510" y="380" width="200" height="48" rx="8" fill="#1c1f26" stroke="#10b981" stroke-width="1.5" filter="url(#g)"/>
-      <text x="540" y="410" fill="#e8eaed" font-family="Inter,sans-serif" font-size="13" font-weight="600">analytics.orders</text>
+      <text x="540" y="410" fill="#e8eaed" font-family="Inter,sans-serif" font-size="13" font-weight="600">orders</text>
       <circle cx="530" cy="404" r="4" fill="#10b981"/>
 
       <!-- Edges - Source to Staging -->
@@ -408,7 +408,7 @@ footer .logo .icon{width:24px;height:24px;background:linear-gradient(135deg,var(
       <div class="feature-card">
         <div class="icon-wrap"><i data-lucide="git-branch"></i></div>
         <h3>Visual DAG</h3>
-        <p>Interactive 3-layer asset graph (Source → Staging → Analytics) with color-coded node statuses and zoom/pan controls.</p>
+        <p>Interactive 3-layer asset graph (Source → Raw → Target) with color-coded node statuses and zoom/pan controls.</p>
       </div>
       <div class="feature-card">
         <div class="icon-wrap"><i data-lucide="clock"></i></div>
@@ -418,7 +418,7 @@ footer .logo .icon{width:24px;height:24px;background:linear-gradient(135deg,var(
       <div class="feature-card">
         <div class="icon-wrap"><i data-lucide="layers"></i></div>
         <h3>Schema Drift Detection</h3>
-        <p>New columns in source detected automatically. Raw zone (JSONB) never breaks. Analytics zone auto-ALTERs.</p>
+        <p>New columns in source detected automatically. Raw zone (JSONB) never breaks. Target zone auto-ALTERs.</p>
       </div>
       <div class="feature-card">
         <div class="icon-wrap"><i data-lucide="bell"></i></div>

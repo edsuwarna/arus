@@ -205,7 +205,7 @@ footer{text-align:center;padding:24px;border-top:1px solid var(--border);font-si
       <div class="endpoint-head"><span class="method post">POST</span> /api/pipelines</div>
       <div class="endpoint-body">
         <p>Create a new pipeline (one per source DB).</p>
-        <pre>{ "source_id": "src_001", "destination_id": "dest_001", "schedule": "*/5 * * * *", "target_schema": "analytics" }</pre>
+        <pre>{ "source_id": "src_001", "destination_id": "dest_001", "schedule": "*/5 * * * *", "target_schema": "target" }</pre>
       </div>
     </div>
 
@@ -256,7 +256,7 @@ footer{text-align:center;padding:24px;border-top:1px solid var(--border);font-si
     <div class="endpoint">
       <div class="endpoint-head"><span class="method get">GET</span> /api/dag/{pipeline_id}</div>
       <div class="endpoint-body">
-        <p>Get DAG asset graph data (3-layer: Source → Staging → Analytics) with node statuses.</p>
+        <p>Get DAG asset graph data (3-layer: Source → Raw → Target) with node statuses.</p>
       </div>
     </div>
 
