@@ -193,12 +193,29 @@
       <div class="code-blocks">
         <div class="code-block">
           <div class="code-header">
-            <span>Start with Docker</span>
+            <span>1. Follow the Quickstart guide</span>
+          </div>
+          <pre><code># Get the full setup guide at:
+/guide/quickstart</code></pre>
+        </div>
+        <div class="code-block">
+          <div class="code-header">
+            <span>2. Start Arus</span>
             <button class="copy-btn" @click="copyCode(0)">{{ copied === 0 ? 'Copied!' : 'Copy' }}</button>
           </div>
           <pre><code>docker compose up -d</code></pre>
         </div>
+        <div class="code-block">
+          <div class="code-header">
+            <span>3. Open the Console</span>
+            <button class="copy-btn" @click="copyCode(1)">{{ copied === 1 ? 'Copied!' : 'Copy' }}</button>
+          </div>
+          <pre><code>http://localhost:8082</code></pre>
+        </div>
       </div>
+      <p style="text-align:center; margin-top: 16px; font-size: 14px; color: #9aa0a8;">
+        See the <a href="/guide/quickstart" style="color: #10b981;">Quickstart Guide</a> for full setup instructions.
+      </p>
     </section>
 
     <!-- CTA -->
@@ -251,6 +268,7 @@ const copied = ref(null)
 function copyCode(idx) {
   const codes = [
     'docker compose up -d',
+    'http://localhost:8082',
   ]
   navigator.clipboard.writeText(codes[idx])
   copied.value = idx

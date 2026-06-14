@@ -10,11 +10,8 @@ export default defineConfig({
     logo: { src: '/arus-icon.svg', width: 28, height: 28 },
 
     nav: [
+      { text: 'Home', link: '/' },
       { text: 'Docs', link: '/guide/' },
-      { text: 'Tutorial', link: '/guide/tutorial-mysql-to-postgres' },
-      { text: 'FAQ', link: '/guide/faq' },
-      { text: 'Architecture', link: '/guide/architecture' },
-      { text: 'API', link: '/reference/api' },
     ],
 
     sidebar: {
