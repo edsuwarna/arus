@@ -6,37 +6,118 @@ Arus is a lightweight, self-hosted **CDC & ETL framework** purpose-built for tea
 
 ---
 
-## Why Arus?
+## Features
 
-| vs Airbyte | vs Debezium | vs Custom Scripts |
-|---|---|---|
-| No Kubernetes needed | No Kafka needed | Built-in DAG UI |
-| Single `docker-compose.yml` | Single `docker-compose.yml` | Watermark tracking |
-| Python-native connectors | Python-native connectors | Auto-retry + alerting |
-| Runs on 2-core / 4GB RAM | Runs on 2-core / 4GB RAM | Schema drift detection |
+### Connector Framework
+
+Pluggable source and destination connectors based on abstract base classes.
+
+| Feature | Description | Documentation |
+|---------|-------------|---------------|
+| **Source Connectors** | MySQL, MariaDB, PostgreSQL, MongoDB — watermark-based batch extraction | [Connectors Guide →](/guide/connectors) |
+| **Destination Connectors** | PostgreSQL, MySQL, ClickHouse — raw + normalized load modes | [Connectors Guide →](/guide/connectors) |
+| **Auto-discover Tables** | Scan source databases, detect tables, columns, and sync modes automatically | [Console Guide →](/guide/console) |
+| **Column Type Mapping** | Auto-map source types to destination types (e.g., MySQL `TINYINT` → PostgreSQL `BOOLEAN`) | [Connectors Guide →](/guide/connectors) |
+| **Custom Connectors** | Implement `BaseSource` / `BaseDestination` for any database | [Development Guide →](/guide/development) |
+
+### Pipeline Orchestration
+
+Core engine for scheduling, executing, and monitoring data syncs.
+
+| Feature | Description | Documentation |
+|---------|-------------|---------------|
+| **Incremental Sync** | Watermark-based batch CDC using timestamp columns (`updated_at`, `created_at`) | [Pipelines →](/guide/pipelines) |
+| **Full Refresh** | Truncate and reload entire tables on demand or on schedule | [Pipelines →](/guide/pipelines) |
+| **Backfill** | Re-sync historical data from a specific date | [Pipelines →](/guide/pipelines) |
+| **Scheduling** | APScheduler cron-based with configurable intervals (default: every 5 minutes) | [Pipelines →](/guide/pipelines) |
+| **Pipeline Dependencies** | Chain pipelines — B waits for A's successful run | [Pipelines →](/guide/pipelines) |
+| **Load Modes** | Direct (source → analytics) or Raw → Normalize (staging JSONB → analytics) | [Pipelines →](/guide/pipelines) |
+
+### Transform Engine
+
+Process data between extraction and loading.
+
+| Feature | Description | Documentation |
+|---------|-------------|---------------|
+| **Built-in Steps** | Rename, remove, compute, filter, map values, type cast, concat fields | [Pipelines →](/guide/pipelines) |
+| **Python Scripts** | Custom `transform(row)` functions per pipeline | [Pipelines →](/guide/pipelines) |
+| **Re-orderable Steps** | Drag-and-drop step ordering in the Console UI | [Console Guide →](/guide/console) |
+
+### Reliability & Quality
+
+Production-grade error handling and data validation.
+
+| Feature | Description | Documentation |
+|---------|-------------|---------------|
+| **Retry with Backoff** | Exponential backoff via `tenacity` (default: 3 attempts, 2s → 16s max) | [Pipelines →](/guide/pipelines) |
+| **Dead Letter Queue** | Failed rows stored in `staging._dead_letters` for review and reprocessing | [Pipelines →](/guide/pipelines) |
+| **Data Quality Checks** | Row count validation + null checks on NOT NULL columns (threshold: 5%) | [Pipelines →](/guide/pipelines) |
+| **Schema Drift Detection** | Detect new columns in source, optionally auto-ALTER warehouse tables | [Pipelines →](/guide/pipelines) |
+| **Soft-Delete Reconciliation** | Track `deleted_at` columns and propagate deletions to warehouse | [Pipelines →](/guide/pipelines) |
+
+### Alerting & Notifications
+
+Stay informed about pipeline health.
+
+| Feature | Description | Documentation |
+|---------|-------------|---------------|
+| **Notification Targets** | Telegram, Discord, Slack — configurable per pipeline | [Pipelines →](/guide/pipelines) |
+| **Alert Events** | Failure, success, dead letter, schema drift, quality breach | [Pipelines →](/guide/pipelines) |
+| **Pipeline Linking** | Link multiple targets to a pipeline with specific event types | [Console Guide →](/guide/console) |
+
+### Web Console
+
+Browser-based management UI.
+
+| Feature | Description | Documentation |
+|---------|-------------|---------------|
+| **Dashboard** | Stats cards, sync performance chart, recent runs feed, sources overview | [Console Guide →](/guide/console) |
+| **Source Management** | Add, test, rescale, edit, delete source connections | [Console Guide →](/guide/console) |
+| **Pipeline Management** | Create, configure, pause, resume, trigger pipelines | [Console Guide →](/guide/console) |
+| **Pipeline Detail** | Run history, logs, transforms, dead letters, notifications per pipeline | [Console Guide →](/guide/console) |
+| **DAG View** | Interactive SVG asset graph with zoom/pan and color-coded status | [Console Guide →](/guide/console) |
+| **Run History** | Global view of all pipeline runs with filters and actions | [Console Guide →](/guide/console) |
+| **User Management** | CRUD users with Admin/Editor/Viewer roles (admin only) | [Console Guide →](/guide/console) |
+| **Settings** | Global runtime settings — schedule, retry, quality, notifications (admin only) | [Console Guide →](/guide/console) |
+
+### Authentication & Security
+
+| Feature | Description | Documentation |
+|---------|-------------|---------------|
+| **JWT Authentication** | Access token (15 min) + refresh token (7 days) | [Architecture →](/guide/architecture) |
+| **Role-Based Access** | Admin, Editor, Viewer roles with granular permissions | [Architecture →](/guide/architecture) |
+| **Password Hashing** | bcrypt via `passlib` | [Architecture →](/guide/architecture) |
+| **Credential Encryption** | Fernet AES-128-CBC for stored source/destination passwords | [Security →](/guide/security) |
+| **Rate Limiting** | Login: 10 attempts per 60 seconds per IP | [Security →](/guide/security) |
 
 ---
 
-## Key Features
+## Quick Comparison
 
-| Feature | Status |
-|---|---|
-| **Source Connectors**: MySQL, MariaDB, PostgreSQL, MongoDB | ✅ Phase 1 |
-| **Destination Connectors**: PostgreSQL, MySQL, ClickHouse | ✅ Phase 1 |
-| **Watermark-based Incremental Sync** | ✅ Phase 1 |
-| **Full Refresh & Backfill** | ✅ Phase 2 |
-| **Pipeline Scheduling** (APScheduler cron) | ✅ Phase 1 |
-| **Retry with Exponential Backoff** (tenacity) | ✅ Phase 2 |
-| **Dead Letter Queue** for failed rows | ✅ Phase 2 |
-| **Data Quality Checks** (row count, null checks) | ✅ Phase 2 |
-| **Schema Drift Detection** with auto-ALTER | ✅ Phase 2 |
-| **Soft-Delete Reconciliation** | ✅ Phase 2 |
-| **Pipeline Dependency Resolution** | ✅ Phase 2 |
-| **Transform Engine** (built-in steps + Python scripts) | ✅ Phase 2 |
-| **Web Console** — Dashboard, DAG View, Run History | ✅ Phase 1 |
-| **JWT Authentication** — Admin/Editor/Viewer roles | ✅ Phase 1 |
-| **Notification Targets** — Telegram, Discord, Slack | ✅ Phase 2 |
-| **CLI Tools** (`arusctl`) | 🔄 Phase 3 |
+| Feature | Arus | Airbyte OSS | Debezium | Custom Scripts |
+|---------|------|-------------|----------|----------------|
+| Infrastructure | Docker Compose (3 containers) | Kubernetes or Docker + workers | Kafka + Zookeeper + Connect | Anything |
+| Setup time | ~2 minutes | 30-60 minutes | 1-2 hours | Varies |
+| RAM idle | ~200MB | ~2GB | ~3GB+ | ~100MB |
+| CDC method | Watermark-based batch | Watermark + log-based | Log-based (WAL/binlog) | Custom |
+| Schema drift | ✅ Auto | ✅ Auto | ✅ | ❌ |
+| Dead letter queue | ✅ | ✅ | ❌ | ❌ |
+| DAG / Pipeline UI | ✅ Built-in | ✅ Basic | ❌ | ❌ |
+| Transform engine | ✅ Built-in steps + Python | ✅ Basic | ❌ | ❌ |
+
+---
+
+## Getting Started
+
+```bash
+# Deploy Arus in under 2 minutes
+docker compose up -d
+
+# Access the console
+open http://localhost:8082
+```
+
+**New to Arus?** Start with the [Quickstart Guide →](/guide/quickstart)
 
 ---
 
@@ -60,59 +141,17 @@ Arus is a lightweight, self-hosted **CDC & ETL framework** purpose-built for tea
                     └─────────────────────────────────────────┘
 ```
 
----
-
-## Data Flow
-
-```
-Source DB ──→ [Batch SELECT with watermark]
-                ──→ Python dict[]
-                ──→ [Column type mapping]
-                ──→ [Raw JSONB to staging.*_raw]  (if raw mode)
-                ──→ [Extract typed columns]
-                ──→ [Normalize]
-                ──→ [Upsert to analytics.*]
-                ──→ [Update arus_state watermark]
-```
-
----
-
-## Quick Start
-
-```bash
-# Get the docker-compose.yml from the docs site
-# Then start all services
-docker compose up -d
-
-# Access the console
-open http://localhost:8082
-
-# Default credentials
-# Email: admin@arus.io
-# Password: admin123
-```
-
----
-
-## Documentation Structure
-
-| Document | Description |
-|---|---|
-| [Architecture](/guide/architecture) | System design, component interaction, data flow |
-| [Quickstart](/guide/quickstart) | Installation, configuration, first pipeline |
-| [Configuration](/reference/configuration) | Environment variables, runtime settings reference |
-| [Connectors](/guide/connectors) | Source/destination connector framework guide |
-| [Pipelines](/guide/pipelines) | Pipeline orchestration, scheduling, transforms |
-| [API Reference](/reference/api) | REST API endpoint documentation |
-| [Console Guide](/guide/console) | Web UI feature walkthrough |
-| [Data Model](/reference/datamodel) | Database schema, tables, relationships |
-| [Development](/guide/development) | Setting up dev environment, testing, contributing |
-| [Deployment](/guide/deployment) | Production deployment, scaling, security |
+See the [Architecture Guide →](/guide/architecture) for a deep dive.
 
 ---
 
 ## Project Status
 
-- **Phase 1 (Foundation)**: ✅ Complete — core connectors, auth, console MVP, DAG visualization
-- **Phase 2 (Reliability)**: ✅ Complete — retry, DLQ, quality checks, schema drift, notifications, transforms
-- **Phase 3 (Production Hardening)**: 🔄 In Progress — CLI tools, backfill UI, multi-env, secrets management, documentation
+| Phase | Focus | Status |
+|-------|-------|--------|
+| **Phase 1** | Foundation — connectors, auth, console, core pipelines | ✅ Complete |
+| **Phase 2** | Reliability — retry, DLQ, quality checks, schema drift, transforms, notifications | ✅ Complete |
+| **Phase 3** | Production hardening — CLI, backfill UI, secrets, multi-env | 🔄 In Progress |
+| **Phase 4** | Advanced — log-based CDC, cloud warehouses, BI integration | 📋 Planned |
+
+See the [Roadmap →](/guide/roadmap) for details.
