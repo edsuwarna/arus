@@ -9,4 +9,5 @@ venv/
 # VitePress site
 site/node_modules/
 site/.vitepress/dist/
+site/package-lock.json
 
