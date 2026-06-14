@@ -124,13 +124,16 @@ section .inner{max-width:var(--max-w);margin:0 auto}
 .section-label{
   font-size:12px;font-weight:600;text-transform:uppercase;
   letter-spacing:1px;color:var(--emerald);margin-bottom:12px;
+  text-align:center;
 }
 .section-title{
   font-size:clamp(28px,3.5vw,40px);font-weight:700;
   letter-spacing:-1px;margin-bottom:16px;
 }
+.section-title,.section-sub{text-align:center}
 .section-sub{
-  font-size:17px;color:var(--text-secondary);max-width:560px;line-height:1.6;
+  font-size:17px;color:var(--text-secondary);max-width:600px;line-height:1.6;
+  margin:0 auto;
 }
 
 /* Features */
@@ -141,12 +144,13 @@ section .inner{max-width:var(--max-w);margin:0 auto}
 .feature-card{
   background:var(--bg-card);border:1px solid var(--border);
   border-radius:var(--radius);padding:28px;transition:all .3s;
+  text-align:center;
 }
 .feature-card:hover{border-color:var(--emerald-dim);background:var(--bg-hover)}
 .feature-card .icon-wrap{
   width:40px;height:40px;border-radius:10px;
   background:var(--emerald-dim);border:1px solid rgba(16,185,129,.12);
-  display:flex;align-items:center;justify-content:center;margin-bottom:16px;
+  display:flex;align-items:center;justify-content:center;margin:0 auto 16px;
 }
 .feature-card .icon-wrap i{width:20px;height:20px;stroke:var(--emerald);stroke-width:1.5}
 .feature-card h3{font-size:16px;font-weight:600;margin-bottom:8px}
@@ -168,7 +172,7 @@ section .inner{max-width:var(--max-w);margin:0 auto}
 .step p{font-size:14px;color:var(--text-secondary);line-height:1.6}
 
 /* Sources badges */
-.sources{display:flex;gap:12px;flex-wrap:wrap;margin-top:24px}
+.sources{display:flex;gap:12px;flex-wrap:wrap;margin-top:24px;justify-content:center}
 .source-badge{
   display:inline-flex;align-items:center;gap:8px;
   background:var(--bg-card);border:1px solid var(--border);
@@ -199,6 +203,7 @@ section .inner{max-width:var(--max-w);margin:0 auto}
   background:var(--bg-card);border:1px solid var(--border);
   border-radius:var(--radius);padding:40px;margin-top:32px;
   display:flex;align-items:center;gap:32px;flex-wrap:wrap;
+  justify-content:center;
 }
 .deploy-box .code{
   flex:1;min-width:280px;
