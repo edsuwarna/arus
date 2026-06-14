@@ -80,15 +80,8 @@ Source DB ──→ [Batch SELECT with watermark]
 ## Quick Start
 
 ```bash
-# Clone the repository
-git clone https://github.com/edsuwarna/arus.git
-cd arus
-
-# Configure environment
-cp .env.example .env
-# Edit .env with your secrets
-
-# Start all services
+# Get the docker-compose.yml from the docs site
+# Then start all services
 docker compose up -d
 
 # Access the console

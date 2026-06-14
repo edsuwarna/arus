@@ -13,7 +13,6 @@ export default defineConfig({
       { text: 'Docs', link: '/guide/' },
       { text: 'Architecture', link: '/guide/architecture' },
       { text: 'API', link: '/reference/api' },
-      { text: 'GitHub', link: 'https://github.com/edsuwarna/arus' },
     ],
 
     sidebar: {
@@ -54,12 +53,9 @@ export default defineConfig({
       ],
     },
 
-    socialLinks: [
-      { icon: 'github', link: 'https://github.com/edsuwarna/arus' },
-    ],
+    socialLinks: [],
 
     footer: {
-      message: 'Released under the MIT License.',
       copyright: 'Copyright © 2024-2026 Endang Suwarna',
     },
 

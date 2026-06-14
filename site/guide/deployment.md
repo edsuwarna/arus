@@ -27,11 +27,14 @@ apt update && apt upgrade -y
 curl -fsSL https://get.docker.com | sh
 ```
 
-### 2. Clone and Configure
+### 2. Deploy with Docker Compose
 
 ```bash
-git clone https://github.com/edsuwarna/arus.git /opt/arus
-cd /opt/arus
+# Create project directory
+mkdir -p /opt/arus && cd /opt/arus
+
+# Download docker-compose.yml
+curl -O https://<your-site>/docker-compose.yml
 
 cp .env.example .env
 ```

@@ -18,6 +18,7 @@ Guide for setting up a local development environment and contributing to Arus.
 ### 1. Clone and Install Dependencies
 
 ```bash
+# This repository is private — clone with appropriate access
 git clone https://github.com/edsuwarna/arus.git
 cd arus
 

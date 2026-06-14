@@ -7,18 +7,91 @@ Get Arus up and running in under 5 minutes.
 ## Prerequisites
 
 - **Docker** & **Docker Compose** (v2+)
-- **Git**
 - At least **2 CPU cores** and **4GB RAM**
 
 ---
 
 ## Installation
 
-### 1. Clone the Repository
+### 1. Get the Docker Compose File
 
-```bash
-git clone https://github.com/edsuwarna/arus.git
-cd arus
+Download `docker-compose.yml` from the [deployment guide](/guide/deployment) or copy it directly:
+
+```yaml
+# docker-compose.yml
+version: "3.8"
+
+services:
+  arus-db:
+    image: postgres:15-alpine
+    container_name: arus-db
+    environment:
+      POSTGRES_USER: ${ARUS_DB_USER:-arus}
+      POSTGRES_PASSWORD: ${ARUS_DB_PASSWORD:-arus_secret}
+      POSTGRES_DB: ${ARUS_DB_NAME:-arus_warehouse}
+    volumes:
+      - arus-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U arus"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - arus-net
+    restart: unless-stopped
+
+  arus-api:
+    image: registry.edsuwarna.xyz/arus-api:main-latest
+    container_name: arus-api
+    environment:
+      ARUS_DB_HOST: arus-db
+      ARUS_DB_PORT: "5432"
+      ARUS_DB_USER: ${ARUS_DB_USER:-arus}
+      ARUS_DB_PASSWORD: ${ARUS_DB_PASSWORD:-arus_secret}
+      ARUS_DB_NAME: ${ARUS_DB_NAME:-arus_warehouse}
+      ARUS_JWT_SECRET: ${ARUS_JWT_SECRET:-}
+      ARUS_ENCRYPTION_KEY: ${ARUS_ENCRYPTION_KEY:-}
+      ARUS_LOG_LEVEL: ${ARUS_LOG_LEVEL:-INFO}
+      ARUS_DEFAULT_SCHEDULE: ${ARUS_DEFAULT_SCHEDULE:-*/5 * * * *}
+      ARUS_BATCH_SIZE: ${ARUS_BATCH_SIZE:-10000}
+      ARUS_RETRY_MAX: ${ARUS_RETRY_MAX:-3}
+      ARUS_AUTO_ALTER_SCHEMA: ${ARUS_AUTO_ALTER_SCHEMA:-false}
+      ARUS_QUALITY_CHECK_THRESHOLD: ${ARUS_QUALITY_CHECK_THRESHOLD:-5.0}
+      ARUS_TELEGRAM_BOT_TOKEN: ${ARUS_TELEGRAM_BOT_TOKEN:-}
+      ARUS_TELEGRAM_CHAT_ID: ${ARUS_TELEGRAM_CHAT_ID:-}
+      TZ: ${TZ:-UTC}
+    ports:
+      - "8081:8081"
+    depends_on:
+      arus-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - arus-net
+    restart: unless-stopped
+
+  arus-console:
+    image: registry.edsuwarna.xyz/arus-console:main-latest
+    container_name: arus-console
+    ports:
+      - "8082:80"
+    depends_on:
+      arus-api:
+        condition: service_healthy
+    networks:
+      - arus-net
+    restart: unless-stopped
+
+volumes:
+  arus-db-data:
+
+networks:
+  arus-net:
+    driver: bridge
 ```
 
 ### 2. Configure Environment

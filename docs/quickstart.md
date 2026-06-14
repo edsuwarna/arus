@@ -7,19 +7,15 @@ Get Arus up and running in under 5 minutes.
 ## Prerequisites
 
 - **Docker** & **Docker Compose** (v2+)
-- **Git**
 - At least **2 CPU cores** and **4GB RAM**
 
 ---
 
 ## Installation
 
-### 1. Clone the Repository
+### 1. Get the Docker Compose File
 
-```bash
-git clone https://github.com/edsuwarna/arus.git
-cd arus
-```
+Download `docker-compose.yml` from the deployment guide or copy it from the project.
 
 ### 2. Configure Environment
 

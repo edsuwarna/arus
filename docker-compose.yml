@@ -20,9 +20,7 @@ services:
     restart: unless-stopped
 
   arus-api:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: registry.edsuwarna.xyz/arus-api:main-latest
     container_name: arus-api
     environment:
       ARUS_DB_HOST: arus-db
@@ -56,9 +54,7 @@ services:
     restart: unless-stopped
 
   arus-console:
-    build:
-      context: .
-      dockerfile: Dockerfile.console
+    image: registry.edsuwarna.xyz/arus-console:main-latest
     container_name: arus-console
     ports:
       - "8082:80"
