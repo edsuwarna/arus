@@ -193,22 +193,25 @@
       <div class="code-blocks">
         <div class="code-block">
           <div class="code-header">
-            <span>1. Follow the Quickstart guide</span>
+            <span>1. Create a <code>.env</code> file</span>
+            <button class="copy-btn" @click="copyCode(0)">{{ copied === 0 ? 'Copied!' : 'Copy' }}</button>
           </div>
-          <pre><code># Get the full setup guide at:
-/guide/quickstart</code></pre>
+          <pre><code># Generate with: openssl rand -hex 32
+ARUS_JWT_SECRET=your-secret-key
+ARUS_ENCRYPTION_KEY=your-secret-key
+</code></pre>
         </div>
         <div class="code-block">
           <div class="code-header">
             <span>2. Start Arus</span>
-            <button class="copy-btn" @click="copyCode(0)">{{ copied === 0 ? 'Copied!' : 'Copy' }}</button>
+            <button class="copy-btn" @click="copyCode(1)">{{ copied === 1 ? 'Copied!' : 'Copy' }}</button>
           </div>
           <pre><code>docker compose up -d</code></pre>
         </div>
         <div class="code-block">
           <div class="code-header">
             <span>3. Open the Console</span>
-            <button class="copy-btn" @click="copyCode(1)">{{ copied === 1 ? 'Copied!' : 'Copy' }}</button>
+            <button class="copy-btn" @click="copyCode(2)">{{ copied === 2 ? 'Copied!' : 'Copy' }}</button>
           </div>
           <pre><code>http://localhost:8082</code></pre>
         </div>
@@ -267,6 +270,7 @@ const copied = ref(null)
 
 function copyCode(idx) {
   const codes = [
+    'ARUS_JWT_SECRET=your-secret-key\nARUS_ENCRYPTION_KEY=your-secret-key',
     'docker compose up -d',
     'http://localhost:8082',
   ]
