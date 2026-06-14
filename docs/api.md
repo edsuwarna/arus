@@ -1,17 +1,12 @@
 # API Reference
 
-REST API for the Arus backend. Base URL: `http://localhost:8081/api`
+Arus exposes a **REST API** on port 8081. All endpoints return JSON with a consistent response envelope.
 
-## Conventions
+---
 
-### Authentication
-All endpoints except `/auth/login` require a Bearer token in the `Authorization` header:
+## Response Format
 
-```
-Authorization: Bearer eyJhbG...
-```
-
-### Response Format
+### Success
 
 ```json
 {
@@ -20,310 +15,558 @@ Authorization: Bearer eyJhbG...
 }
 ```
 
-### Error Format
+### Error
 
 ```json
 {
   "status": "error",
   "error": {
-    "code": "NOT_FOUND",
-    "message": "Source with id 'abc-123' not found"
+    "code": "AUTH_FAILED",
+    "message": "Invalid email or password"
   }
 }
 ```
 
-### Pagination
+### Error Codes
 
-```
-?page=1&per_page=20
+| HTTP Status | Code | Description |
+|---|---|---|
+| 400 | `VALIDATION_ERROR` | Invalid request body |
+| 401 | `AUTH_FAILED` | Authentication failure |
+| 403 | `FORBIDDEN` | Insufficient permissions |
+| 404 | `NOT_FOUND` | Resource not found |
+| 409 | `CONFLICT` | Resource conflict |
+| 422 | `VALIDATION_ERROR` | Request validation failure |
+| 500 | `INTERNAL_ERROR` | Unexpected server error |
+| 502 | `CONNECTION_FAILED` | Database connection error |
 
-{
-  "data": [...],
-  "pagination": {
-    "page": 1, "per_page": 20,
-    "total": 147, "total_pages": 8
-  }
-}
-```
+---
 
 ## Authentication
 
-### `POST /api/auth/login`
+All endpoints except `/api/auth/login` and `/api/health` require JWT authentication.
 
-Login with email + password. Returns access + refresh token pair and user profile.
+### Headers
 
-```json
-{ "email": "admin@arus.io", "password": "admin123" }
+```
+Authorization: Bearer <access_token>
+X-Refresh-Token: <refresh_token>   (for refresh endpoint)
 ```
 
-Response: `{ "access_token": "eyJ...", "refresh_token": "eyJ...", "expires_in": 900, "refresh_expires_in": 604800, "user": { "id", "email", "name", "role" }, "expires_at" }`
+### POST /api/auth/login
 
-Access token expires in **15 minutes**. Use the refresh token to get a new pair.
+Authenticate and receive JWT tokens.
 
-### `POST /api/auth/logout`
+**Request:**
+```json
+{
+  "email": "admin@arus.io",
+  "password": "admin123"
+}
+```
 
-Logout — invalidates session on client side. JWT tokens are stateless.
+**Response:**
+```json
+{
+  "status": "ok",
+  "data": {
+    "access_token": "eyJhbGci...",
+    "refresh_token": "eyJhbGci...",
+    "expires_in": 900,
+    "refresh_expires_in": 604800,
+    "user": {
+      "id": "uuid",
+      "email": "admin@arus.io",
+      "name": "Arus Admin",
+      "role": "admin"
+    },
+    "expires_at": "2026-01-01T00:00:00+00:00"
+  }
+}
+```
 
-Requires Bearer token. Returns confirmation.
+### POST /api/auth/refresh
 
-### `GET /api/auth/me`
+Refresh an expired access token.
 
-Get current user profile.
+**Headers:** `X-Refresh-Token: <refresh_token>`
 
-Requires Bearer token.
+### GET /api/auth/me
 
-### `POST /api/auth/refresh`
+Get current user info from the access token.
 
-Refresh access token using a refresh token.
+### POST /api/auth/logout
 
-Pass refresh token in `X-Refresh-Token` header (no Bearer prefix). Returns a new access + refresh token pair.
+Stateless logout (client-side token removal).
+
+---
+
+## User Management (Admin Only)
+
+### GET /api/auth/users
+
+List all users. Query params: `limit`, `offset`.
+
+### POST /api/auth/users
+
+Create a new user.
+
+```json
+{
+  "email": "user@example.com",
+  "name": "User Name",
+  "password": "secure_pass",
+  "role": "viewer"
+}
+```
+
+### PATCH /api/auth/users/{id}
+
+Update user fields. Fields are optional.
+
+```json
+{
+  "name": "New Name",
+  "role": "editor",
+  "is_active": true
+}
+```
+
+### DELETE /api/auth/users/{id}
+
+Delete a user (cannot delete self).
+
+---
 
 ## Sources
 
-### `GET /api/sources`
+### GET /api/sources
 
-List all registered source databases. Supports pagination, type filter, and search.
+List all source connections. Query params: `limit`, `offset`.
 
-Query: `?page=1&per_page=20&type=mysql&search=prod`
+### POST /api/sources
 
-### `POST /api/sources`
-
-Register a new source database.
+Create a new source connection.
 
 ```json
-{ "name": "Production MySQL", "type": "mysql", "host": "10.0.0.50", "port": 3306, "database": "ecommerce", "username": "reader", "password": "readonly_pass" }
+{
+  "name": "Production DB",
+  "type": "mysql",
+  "host": "db.example.com",
+  "port": 3306,
+  "database": "mydb",
+  "username": "reader",
+  "password": "secret",
+  "sync_method": "auto",
+  "table_include": ["+orders*", "+users*"],
+  "table_exclude": ["-audit_*"]
+}
 ```
 
-### `GET /api/sources/{id}`
+### GET /api/sources/{id}
 
-Get source details.
+Get source connection details.
 
-### `DELETE /api/sources/{id}`
+### PUT /api/sources/{id}
 
-Delete a source database.
+Update source connection. All fields optional.
 
-### `POST /api/sources/{id}/test`
+### DELETE /api/sources/{id}
 
-Test connection to source database. Returns latency and server version.
+Delete source connection.
 
-### `POST /api/sources/{id}/discover`
+### POST /api/sources/{id}/test
 
-Scan source database and auto-detect all tables with their sync modes (incremental / full refresh).
+Test the source connection.
 
-### `POST /api/sources/{id}/schemas`
-
-Discover available schemas in the source database. Returns a list of schema names.
-
-### `PUT /api/sources/{id}/tables`
-
-Update which tables are enabled/disabled and configure per-table settings.
-
+**Response:**
 ```json
-{ "tables": [{ "name": "orders", "enabled": true, "sync_mode": "incremental", "watermark_column": "updated_at" }] }
+{
+  "status": "ok",
+  "data": {
+    "connected": true
+  }
+}
 ```
 
-## Pipelines
+### POST /api/sources/{id}/discover
 
-### `GET /api/pipelines`
+Auto-discover tables and detect sync modes.
 
-List all pipelines. Supports pagination and status filter.
-
-### `POST /api/pipelines`
-
-Create a new pipeline (one per source DB).
-
+**Response:**
 ```json
-{ "source_id": "src_001", "destination_id": "dest_001", "schedule": "*/5 * * * *", "target_schema": "target" }
+{
+  "status": "ok",
+  "data": {
+    "source_id": "uuid",
+    "tables": [
+      {
+        "name": "orders",
+        "schema": "public",
+        "row_count_estimate": 50000,
+        "columns": [...],
+        "detected_sync": "incremental",
+        "watermark_column": "updated_at",
+        "enabled": true
+      }
+    ]
+  }
+}
 ```
 
-### `GET /api/pipelines/{id}`
+### POST /api/sources/{id}/schemas
 
-Get pipeline details with table configurations.
+Discover available schemas (PostgreSQL only).
 
-### `DELETE /api/pipelines/{id}`
+### PUT /api/sources/{id}/tables
 
-Delete a pipeline and unschedule its jobs.
-
-### `POST /api/pipelines/{id}/trigger`
-
-Manually trigger a pipeline run.
-
-### `POST /api/pipelines/{id}/pause`
-
-Pause pipeline scheduler.
-
-### `POST /api/pipelines/{id}/resume`
-
-Resume pipeline scheduler.
-
-## Transform Scripts
-
-### `GET /api/pipelines/{pipeline_id}/scripts`
-
-List transform scripts for a pipeline. Per-pipeline Python scripts run between raw and target load.
-
-### `POST /api/pipelines/{pipeline_id}/scripts`
-
-Create a transform script. Name must be unique per pipeline.
+Update table selection and auto-create pipeline.
 
 ```json
-{ "name": "normalize_users", "description": "Normalize user data", "content": "def transform(row):\n    row['email'] = row['email'].lower()\n    return row" }
-```
-
-### `GET /api/pipelines/{pipeline_id}/scripts/{script_id}`
-
-Get a specific transform script by ID.
-
-### `PUT /api/pipelines/{pipeline_id}/scripts/{script_id}`
-
-Update a transform script.
-
-### `DELETE /api/pipelines/{pipeline_id}/scripts/{script_id}`
-
-Delete a transform script.
-
-## Dashboard & Monitoring
-
-### `GET /api/dashboard/summary`
-
-Get dashboard stats: active sources, pipelines, rows synced, failures, uptime %, avg latency, and new sources this week.
-
-### `GET /api/dashboard/recent-runs`
-
-Get recent pipeline runs. Supports `?limit=10` (max 50). Returns run ID, status, rows synced, and duration.
-
-### `GET /api/dag/{pipeline_id}`
-
-Get DAG asset graph data (3-layer: Source → Raw → Target) with node statuses.
-
-### `GET /api/runs`
-
-List run history. Supports pagination and pipeline_id filter.
-
-### `GET /api/runs/{id}`
-
-Get run details with per-table results and logs.
-
-### `GET /api/health`
-
-Health check. Returns version, database status, and scheduler state.
-
-```json
-{ "status": "ok", "data": { "version": "0.1.0", "database": "connected", "scheduler": "running" } }
-```
-
-## Destinations
-
-### `GET /api/destinations`
-
-List all destinations. Supports pagination.
-
-### `POST /api/destinations`
-
-Register a new destination warehouse connection.
-
-```json
-{ "name": "Warehouse", "type": "postgresql", "host": "10.0.0.10", "port": 5432, "database": "warehouse", "username": "arus", "password": "secret", "raw_schema": "raw", "target_schema": "target" }
-```
-
-### `GET /api/destinations/{id}`
-
-Get destination details.
-
-### `PUT /api/destinations/{id}`
-
-Update a destination.
-
-### `POST /api/destinations/{id}/test`
-
-Test connection to destination warehouse. Returns connected status and error message if failed.
-
-### `DELETE /api/destinations/{id}`
-
-Delete a destination.
-
-## Notifications
-
-### `GET /api/notifications/targets`
-
-List all notification targets (Telegram, Discord, Slack).
-
-### `POST /api/notifications/targets`
-
-Create a notification target.
-
-```json
-{ "name": "Team Alerts", "type": "telegram", "config": { "bot_token": "...", "chat_id": "..." }, "is_active": true }
-```
-
-Supported types: `telegram`, `discord`, `slack`.
-
-### `PUT /api/notifications/targets/{target_id}`
-
-Update a notification target.
-
-### `DELETE /api/notifications/targets/{target_id}`
-
-Delete a notification target.
-
-### `POST /api/notifications/targets/{target_id}/test`
-
-Send a test notification. Optionally specify `event_type` in body to test a specific template.
-
-```json
-{ "event_type": "pipeline_failed" }
-```
-
-### `GET /api/notifications/links/{pipeline_id}`
-
-List notification links for a pipeline — which targets get notified for which events.
-
-### `POST /api/notifications/links`
-
-Link a notification target to a pipeline with event types.
-
-```json
-{ "pipeline_id": "pl_001", "target_id": "nt_001", "event_types": ["pipeline_failed", "pipeline_success", "schema_drift"] }
-```
-
-### `PUT /api/notifications/links/{link_id}`
-
-Update a pipeline notification link (event types).
-
-### `DELETE /api/notifications/links/{link_id}`
-
-Delete a pipeline notification link.
-
-## Settings & Users
-
-### `GET /api/settings`
-
-Get all runtime settings (key-value from DB).
-
-### `PUT /api/settings`
-
-Update settings.
-
-### `GET /api/auth/users`
-
-List users (admin only). Supports pagination.
-
-### `POST /api/auth/users`
-
-Create user (admin only). Roles: viewer, editor, admin.
-
-```json
-{ "email": "newuser@example.com", "name": "New User", "password": "secret123", "role": "editor" }
-```
-
-### `PATCH /api/auth/users/{user_id}`
-
-Update user fields (admin only). Email, name, role, password, or is_active.
-
-```json
-{ "name": "Updated Name", "role": "admin" }
+{
+  "tables": [
+    {
+      "name": "orders",
+      "sync_mode": "incremental",
+      "load_mode": "direct",
+      "enabled": true
+    }
+  ]
+}
 ```
 
 ---
 
-📖 OpenAPI spec available via `/docs` when the API is running.
+## Destinations
+
+### GET /api/destinations
+
+List all destinations.
+
+### POST /api/destinations
+
+Create a destination.
+
+```json
+{
+  "name": "Warehouse",
+  "type": "postgresql",
+  "host": "arus-db",
+  "port": 5432,
+  "database": "arus_warehouse",
+  "username": "arus",
+  "password": "arus_secret",
+  "raw_schema": "staging",
+  "target_schema": "analytics",
+  "is_default": true
+}
+```
+
+### GET /api/destinations/{id}
+
+Get destination details.
+
+### PUT /api/destinations/{id}
+
+Update destination.
+
+### DELETE /api/destinations/{id}
+
+Delete destination.
+
+### POST /api/destinations/{id}/test
+
+Test destination connection.
+
+---
+
+## Pipelines
+
+### GET /api/pipelines
+
+List all pipelines. Query params: `limit`, `offset`.
+
+### POST /api/pipelines
+
+Create a pipeline.
+
+```json
+{
+  "name": "Orders Pipeline",
+  "source_id": "uuid",
+  "destination_id": "uuid",
+  "schedule": "*/5 * * * *",
+  "target_schema": "analytics",
+  "load_mode": "direct",
+  "tables": [
+    {
+      "name": "orders",
+      "load_mode": "direct",
+      "sync_mode": "incremental",
+      "watermark_column": "updated_at"
+    }
+  ],
+  "depends_on": null
+}
+```
+
+### GET /api/pipelines/{id}
+
+Get pipeline detail with tables, stats, and last run info.
+
+### PUT /api/pipelines/{id}
+
+Update pipeline configuration.
+
+### DELETE /api/pipelines/{id}
+
+Delete pipeline.
+
+### POST /api/pipelines/{id}/trigger
+
+Trigger an immediate pipeline run.
+
+**Response:**
+```json
+{
+  "status": "ok",
+  "data": {
+    "run_id": "uuid",
+    "status": "running",
+    "started_at": "2026-01-01T00:00:00Z"
+  }
+}
+```
+
+### POST /api/pipelines/{id}/pause
+
+Pause the pipeline schedule.
+
+### POST /api/pipelines/{id}/resume
+
+Resume the pipeline schedule.
+
+### POST /api/pipelines/{id}/full-refresh
+
+Trigger a full refresh (reset watermarks, re-sync all data).
+
+### POST /api/pipelines/{id}/backfill
+
+Trigger a backfill from a specific date.
+
+```json
+{
+  "from_date": "2024-01-01"
+}
+```
+
+### GET /api/pipelines/{id}/dead-letters
+
+Get dead letter queue entries for this pipeline. Query params: `limit`.
+
+### POST /api/pipelines/pause-all
+
+Pause all pipelines.
+
+### POST /api/pipelines/resume-all
+
+Resume all pipelines.
+
+---
+
+## Runs & Run Logs
+
+### GET /api/pipelines/{id}/runs
+
+List runs for a specific pipeline. Query params: `limit`, `offset`.
+
+### GET /api/runs
+
+List all runs globally. Query params: `limit`, `offset`, `status` (success/failed/running), `pipeline_id`.
+
+### GET /api/runs/{id}
+
+Get run details.
+
+### GET /api/runs/{id}/logs
+
+Get run log entries. Query params: `limit`, `offset`.
+
+### POST /api/runs/{id}/cancel
+
+Cancel a running/pending run.
+
+### POST /api/runs/{id}/retry
+
+Retry a failed/cancelled run.
+
+### GET /api/runs/stats/daily
+
+Get daily run statistics for dashboard chart. Query params: `days` (default: 7).
+
+---
+
+## Dashboard
+
+### GET /api/dashboard/summary
+
+Get dashboard summary stats.
+
+**Response:**
+```json
+{
+  "status": "ok",
+  "data": {
+    "total_sources": 3,
+    "total_pipelines": 5,
+    "active_pipelines": 4,
+    "total_rows_synced": 1500000,
+    "rows_synced_24h": 50000,
+    "failed_runs_24h": 0,
+    "unique_tables": 12
+  }
+}
+```
+
+### GET /api/dashboard/recent-runs
+
+Get latest runs for the dashboard feed.
+
+---
+
+## DAG
+
+### GET /api/dag
+
+Get the full pipeline dependency graph with three-layer asset structure (Source → Raw → Target or Source → Target for direct mode).
+
+---
+
+## Settings (Admin Only)
+
+### GET /api/settings
+
+Get all runtime settings as key-value map.
+
+### PUT /api/settings
+
+Update runtime settings.
+
+```json
+{
+  "pipeline_name_prefix": "arus-prod-",
+  "max_retries": "3"
+}
+```
+
+---
+
+## Transform Scripts
+
+### GET /api/pipelines/{id}/scripts
+
+List transform scripts for a pipeline.
+
+### POST /api/pipelines/{id}/scripts
+
+Create a transform script.
+
+```json
+{
+  "name": "clean_orders",
+  "description": "Cleans order data",
+  "content": "def transform(row):\n    row['email_domain'] = row['email'].split('@')[1] if row.get('email') else None\n    return row"
+}
+```
+
+### GET /api/pipelines/{id}/scripts/{script_id}
+
+Get script details.
+
+### PUT /api/pipelines/{id}/scripts/{script_id}
+
+Update script.
+
+### DELETE /api/pipelines/{id}/scripts/{script_id}
+
+Delete script.
+
+---
+
+## Notifications
+
+### GET /api/notifications/targets
+
+List notification targets.
+
+### POST /api/notifications/targets
+
+Create a notification target.
+
+```json
+{
+  "name": "Team Alerts",
+  "type": "telegram",
+  "config": {
+    "bot_token": "123456:ABC-DEF",
+    "chat_id": "-123456789"
+  },
+  "active": true
+}
+```
+
+### PUT /api/notifications/targets/{id}
+
+Update notification target.
+
+### DELETE /api/notifications/targets/{id}
+
+Delete notification target.
+
+### POST /api/notifications/targets/{id}/test
+
+Send a test notification.
+
+### GET /api/notifications/links/{pipeline_id}
+
+Get notification links for a pipeline.
+
+### POST /api/notifications/links
+
+Create a pipeline-notification link.
+
+```json
+{
+  "pipeline_id": "uuid",
+  "target_id": "uuid",
+  "events": ["failure", "dead_letter", "schema_drift"]
+}
+```
+
+### PUT /api/notifications/links/{id}
+
+Update notification link.
+
+### DELETE /api/notifications/links/{id}
+
+Delete notification link.
+
+---
+
+## Health
+
+### GET /api/health
+
+Simple health check.
+
+**Response:**
+```json
+{
+  "status": "ok",
+  "data": {
+    "version": "0.1.0",
+    "database": "connected",
+    "scheduler": "running"
+  }
+}
+```

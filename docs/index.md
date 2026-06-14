@@ -1,44 +1,125 @@
-# Documentation
+# Arus — Data Pipeline Platform
 
-Everything you need to set up, configure, and operate Arus — a lightweight CDC & ETL platform for VPS-class infrastructure.
+> _Data flows without the cluster._
 
-## Getting Started
-
-### [Quick Start](/docs/getting-started.md)
-Get Arus running in under 5 minutes. Clone, configure, and start your first pipeline.
-
-### [Configuration](/docs/setup.md)
-Environment variables, docker-compose options, and runtime settings reference.
-
-## Architecture
-
-### [System Architecture](/docs/architecture.md)
-Understand the modular monolith design, data flow, and component interactions.
-
-### [Data Flow](/docs/architecture.md#data-flow)
-See how data moves from source → raw → target with watermark-based incremental extraction.
-
-## Reference
-
-### [API Reference](/docs/api.md)
-Complete REST API documentation for sources, pipelines, DAG, and monitoring endpoints.
-
-### [GitHub Repository](https://github.com/edsuwarna/arus)
-Source code, issues, and contribution guidelines.
+Arus is a lightweight, self-hosted **CDC & ETL framework** purpose-built for teams running on VPS-class infrastructure (no Kubernetes). It ingests data from MySQL, MariaDB, PostgreSQL, and MongoDB sources, applies transformations, and lands them into a PostgreSQL, MySQL, or ClickHouse data warehouse — with a visual DAG interface for monitoring and troubleshooting.
 
 ---
 
-## Quick overview
+## Why Arus?
 
-Arus is a **lightweight CDC & ETL platform** designed for teams running on VPS-class infrastructure. It ingests data from MySQL, MariaDB, and PostgreSQL sources, applies transformations, and lands them into a PostgreSQL data warehouse — with a visual DAG interface for monitoring and troubleshooting.
-
-- **Zero Kubernetes** — runs on a single Docker host with `docker compose up`
-- **No Kafka** — watermark-based incremental extraction, no event streaming infrastructure
-- **Built-in DAG UI** — interactive asset graph with real-time pipeline status
-- **Auto-discover** — register a source, system detects all tables automatically
-- **Schema drift handling** — new columns detected without pipeline breakage
-- **Notification alerts** — Telegram, Discord, Slack on failure
+| vs Airbyte | vs Debezium | vs Custom Scripts |
+|---|---|---|
+| No Kubernetes needed | No Kafka needed | Built-in DAG UI |
+| Single `docker-compose.yml` | Single `docker-compose.yml` | Watermark tracking |
+| Python-native connectors | Python-native connectors | Auto-retry + alerting |
+| Runs on 2-core / 4GB RAM | Runs on 2-core / 4GB RAM | Schema drift detection |
 
 ---
 
-> **Need help?** Open an issue on [GitHub](https://github.com/edsuwarna/arus/issues).
+## Key Features
+
+| Feature | Status |
+|---|---|
+| **Source Connectors**: MySQL, MariaDB, PostgreSQL, MongoDB | ✅ Phase 1 |
+| **Destination Connectors**: PostgreSQL, MySQL, ClickHouse | ✅ Phase 1 |
+| **Watermark-based Incremental Sync** | ✅ Phase 1 |
+| **Full Refresh & Backfill** | ✅ Phase 2 |
+| **Pipeline Scheduling** (APScheduler cron) | ✅ Phase 1 |
+| **Retry with Exponential Backoff** (tenacity) | ✅ Phase 2 |
+| **Dead Letter Queue** for failed rows | ✅ Phase 2 |
+| **Data Quality Checks** (row count, null checks) | ✅ Phase 2 |
+| **Schema Drift Detection** with auto-ALTER | ✅ Phase 2 |
+| **Soft-Delete Reconciliation** | ✅ Phase 2 |
+| **Pipeline Dependency Resolution** | ✅ Phase 2 |
+| **Transform Engine** (built-in steps + Python scripts) | ✅ Phase 2 |
+| **Web Console** — Dashboard, DAG View, Run History | ✅ Phase 1 |
+| **JWT Authentication** — Admin/Editor/Viewer roles | ✅ Phase 1 |
+| **Notification Targets** — Telegram, Discord, Slack | ✅ Phase 2 |
+| **CLI Tools** (`arusctl`) | 🔄 Phase 3 |
+
+---
+
+## Architecture at a Glance
+
+```
+                    Docker Host
+                    ┌─────────────────────────────────────────┐
+                    │  arus-console    arus-api               │
+                    │  :8082 (nginx)   :8081 (FastAPI)        │
+                    │       │               │                  │
+                    │       └───────┬───────┘                  │
+                    │               ▼                          │
+                    │  arus-db (PostgreSQL)                    │
+                    │  ├─ arus_config.*    (auth, sources,     │
+                    │  │                   pipelines, settings)│
+                    │  ├─ arus_state.*     (watermarks)        │
+                    │  ├─ arus_run_logs.*  (run history)       │
+                    │  ├─ staging.*        (raw landing zone)  │
+                    │  └─ analytics.*      (normalized tables) │
+                    └─────────────────────────────────────────┘
+```
+
+---
+
+## Data Flow
+
+```
+Source DB ──→ [Batch SELECT with watermark]
+                ──→ Python dict[]
+                ──→ [Column type mapping]
+                ──→ [Raw JSONB to staging.*_raw]  (if raw mode)
+                ──→ [Extract typed columns]
+                ──→ [Normalize]
+                ──→ [Upsert to analytics.*]
+                ──→ [Update arus_state watermark]
+```
+
+---
+
+## Quick Start
+
+```bash
+# Clone the repository
+git clone https://github.com/edsuwarna/arus.git
+cd arus
+
+# Configure environment
+cp .env.example .env
+# Edit .env with your secrets
+
+# Start all services
+docker compose up -d
+
+# Access the console
+open http://localhost:8082
+
+# Default credentials
+# Email: admin@arus.io
+# Password: admin123
+```
+
+---
+
+## Documentation Structure
+
+| Document | Description |
+|---|---|
+| [Architecture](architecture.md) | System design, component interaction, data flow |
+| [Quickstart](quickstart.md) | Installation, configuration, first pipeline |
+| [Configuration](configuration.md) | Environment variables, runtime settings reference |
+| [Connectors](connectors.md) | Source/destination connector framework guide |
+| [Pipelines](pipelines.md) | Pipeline orchestration, scheduling, transforms |
+| [API Reference](api.md) | REST API endpoint documentation |
+| [Console Guide](console.md) | Web UI feature walkthrough |
+| [Data Model](datamodel.md) | Database schema, tables, relationships |
+| [Development](development.md) | Setting up dev environment, testing, contributing |
+| [Deployment](deployment.md) | Production deployment, scaling, security |
+
+---
+
+## Project Status
+
+- **Phase 1 (Foundation)**: ✅ Complete — core connectors, auth, console MVP, DAG visualization
+- **Phase 2 (Reliability)**: ✅ Complete — retry, DLQ, quality checks, schema drift, notifications, transforms
+- **Phase 3 (Production Hardening)**: 🔄 In Progress — CLI tools, backfill UI, multi-env, secrets management, documentation
