@@ -107,11 +107,14 @@ footer{text-align:center;padding:24px;border-top:1px solid var(--border);font-si
     <h3>Runtime</h3>
     <table>
       <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
-      <tr><td><code>ARUS_CONSOLE_URL</code></td><td>http://localhost:8080</td><td>Console URL for CORS</td></tr>
       <tr><td><code>ARUS_LOG_LEVEL</code></td><td>INFO</td><td>Python log level (DEBUG, INFO, WARN, ERROR)</td></tr>
       <tr><td><code>ARUS_DEFAULT_SCHEDULE</code></td><td>*/5 * * * *</td><td>Default pipeline schedule (cron)</td></tr>
       <tr><td><code>ARUS_BATCH_SIZE</code></td><td>10000</td><td>Rows per batch for extraction</td></tr>
       <tr><td><code>ARUS_RETRY_MAX</code></td><td>3</td><td>Maximum retry attempts per run</td></tr>
+      <tr><td><code>ARUS_AUTO_ALTER_SCHEMA</code></td><td>false</td><td>Auto-ALTER target table on schema drift (recommended: true)</td></tr>
+      <tr><td><code>ARUS_QUALITY_CHECK_THRESHOLD</code></td><td>5.0</td><td>Max % row count deviation before alert</td></tr>
+      <tr><td><code>ARUS_TELEGRAM_BOT_TOKEN</code></td><td>-</td><td>Telegram bot token for notification alerts</td></tr>
+      <tr><td><code>ARUS_TELEGRAM_CHAT_ID</code></td><td>-</td><td>Telegram chat ID for notification alerts</td></tr>
       <tr><td><code>TZ</code></td><td>UTC</td><td>Timezone</td></tr>
     </table>
 
@@ -137,7 +140,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.console
-    ports: [ "8080:80" ]
+    ports: [ "8082:80" ]
     depends_on: [ arus-api ]</pre>
 
     <h2>First Run Setup</h2>

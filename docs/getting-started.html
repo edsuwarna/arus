@@ -110,7 +110,7 @@ ARUS_ENCRYPTION_KEY=your-encryption-key-here</pre>
     <pre>docker compose up -d</pre>
     <p>This starts three containers:</p>
     <ul>
-      <li><code>arus-console</code> — Frontend SPA at <strong>http://localhost:8080</strong></li>
+      <li><code>arus-console</code> — Frontend SPA at <strong>http://localhost:8082</strong></li>
       <li><code>arus-api</code> — Backend API at <strong>http://localhost:8081</strong></li>
       <li><code>arus-db</code> — PostgreSQL database (internal only)</li>
     </ul>
@@ -122,7 +122,7 @@ curl http://localhost:8081/api/health</pre>
     <pre>{"status":"ok","data":{"version":"0.1.0","database":"connected","scheduler":"running"}}</pre>
 
     <h2>5. Login</h2>
-    <p>Open <strong>http://localhost:8080</strong> in your browser and log in with the default admin credentials:</p>
+    <p>Open <strong>http://localhost:8082</strong> in your browser and log in with the default admin credentials:</p>
     <ul>
       <li><strong>Email:</strong> admin@arus.io</li>
       <li><strong>Password:</strong> admin123</li>

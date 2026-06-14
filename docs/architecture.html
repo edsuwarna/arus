@@ -90,7 +90,7 @@ footer{text-align:center;padding:24px;border-top:1px solid var(--border);font-si
 │  ┌──────────────┐     ┌──────────────────┐  ┌────────────┐ │
 │  │ Arus Console │     │   Backend API     │  │ PostgreSQL │ │
 │  │    (SPA)     │◄───►│  (FastAPI +       │◄─►│  (15+)     │ │
-│  │   :8080      │     │   APScheduler)    │  │  :5432     │ │
+│  │   :8082      │     │   APScheduler)    │  │  :5432     │ │
 │  │              │     │  :8081            │  │            │ │
 │  └──────┬───────┘     └────────┬──────────┘  └────────────┘ │
 │         │                      │                             │
@@ -179,7 +179,7 @@ footer{text-align:center;padding:24px;border-top:1px solid var(--border);font-si
 
     <h2>Container Layout</h2>
     <ul>
-      <li><strong>arus-console</strong> — Nginx serving the static SPA. Port 8080.</li>
+      <li><strong>arus-console</strong> — Nginx serving the static SPA. Port 8082.</li>
       <li><strong>arus-api</strong> — FastAPI + APScheduler. Port 8081.</li>
       <li><strong>arus-db</strong> — PostgreSQL 15+. Port 5432 (internal).</li>
     </ul>
