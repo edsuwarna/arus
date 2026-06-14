@@ -15,7 +15,11 @@ Get Arus up and running in under 5 minutes.
 
 ### 1. Get the Docker Compose File
 
-Download `docker-compose.yml` from the [deployment guide](/guide/deployment) or copy it directly:
+```bash
+curl -O https://registry.edsuwarna.xyz/arus/docker-compose.yml
+```
+
+Or copy it directly:
 
 ```yaml
 # docker-compose.yml

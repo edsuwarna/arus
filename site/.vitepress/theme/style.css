@@ -1,9 +1,35 @@
+/* Light mode (default) */
 :root {
   --vp-c-brand-1: #10b981;
   --vp-c-brand-2: #059669;
   --vp-c-brand-3: #047857;
   --vp-c-brand-soft: rgba(16, 185, 129, 0.14);
 
+  --vp-c-bg: #ffffff;
+  --vp-c-bg-alt: #f6f6f7;
+  --vp-c-bg-elv: #ffffff;
+  --vp-c-bg-soft: #f9f9f9;
+
+  --vp-c-border: #e2e2e3;
+  --vp-c-divider: #e2e2e3;
+  --vp-c-gutter: #e2e2e3;
+
+  --vp-c-text-1: #1f2937;
+  --vp-c-text-2: #6b7280;
+  --vp-c-text-3: #9ca3af;
+
+  --vp-home-hero-name-color: #10b981;
+  --vp-button-brand-bg: #10b981;
+  --vp-button-brand-hover-bg: #059669;
+  --vp-button-brand-text: #ffffff;
+
+  --vp-sidebar-bg-color: #f9f9f9;
+  --vp-custom-block-tip-bg: rgba(16, 185, 129, 0.08);
+  --vp-custom-block-tip-border: #10b981;
+}
+
+/* Dark mode */
+.dark {
   --vp-c-bg: #0b0d11;
   --vp-c-bg-alt: #111318;
   --vp-c-bg-elv: #14171d;
@@ -17,17 +43,10 @@
   --vp-c-text-2: #9aa0a8;
   --vp-c-text-3: #5c626e;
 
-  --vp-home-hero-name-color: #10b981;
-  --vp-button-brand-bg: #10b981;
-  --vp-button-brand-hover-bg: #059669;
-  --vp-button-brand-text: #fff;
-
   --vp-sidebar-bg-color: #0b0d11;
-  --vp-custom-block-tip-bg: rgba(16, 185, 129, 0.08);
-  --vp-custom-block-tip-border: #10b981;
 }
 
-/* Custom landing page background */
+/* Custom landing page — always dark (brand surface) */
 .arus-home {
   background: #0b0d11;
   min-height: 100vh;

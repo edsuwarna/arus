@@ -11,6 +11,8 @@ export default defineConfig({
 
     nav: [
       { text: 'Docs', link: '/guide/' },
+      { text: 'Tutorial', link: '/guide/tutorial-mysql-to-postgres' },
+      { text: 'FAQ', link: '/guide/faq' },
       { text: 'Architecture', link: '/guide/architecture' },
       { text: 'API', link: '/reference/api' },
     ],
@@ -31,6 +33,12 @@ export default defineConfig({
           ],
         },
         {
+          text: 'Tutorials',
+          items: [
+            { text: 'MySQL → PostgreSQL', link: '/guide/tutorial-mysql-to-postgres' },
+          ],
+        },
+        {
           text: 'Guides',
           items: [
             { text: 'Connectors', link: '/guide/connectors' },
@@ -38,6 +46,20 @@ export default defineConfig({
             { text: 'Console', link: '/guide/console' },
             { text: 'Deployment', link: '/guide/deployment' },
             { text: 'Development', link: '/guide/development' },
+          ],
+        },
+        {
+          text: 'Production',
+          items: [
+            { text: 'Monitoring', link: '/guide/monitoring' },
+            { text: 'Security', link: '/guide/security' },
+          ],
+        },
+        {
+          text: 'More',
+          items: [
+            { text: 'FAQ', link: '/guide/faq' },
+            { text: 'Roadmap', link: '/guide/roadmap' },
           ],
         },
       ],
@@ -65,5 +87,5 @@ export default defineConfig({
   },
 
   // Override VitePress dark theme colors to match Arus branding
-  appearance: 'dark',
+  appearance: true,
 })
