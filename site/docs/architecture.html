@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>System Architecture — Arus Docs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg-primary:#0b0d11;--bg-secondary:#111318;--bg-card:#14171d;--bg-hover:#1c1f26;
+  --border:#23262e;--border-light:#2a2d35;
+  --text-primary:#e8eaed;--text-secondary:#9aa0a8;--text-tertiary:#5c626e;
+  --emerald:#10b981;--emerald-deep:#059669;--emerald-dim:rgba(16,185,129,0.12);
+  --radius:12px;--radius-sm:6px;
+  --font:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --mono:'JetBrains Mono',monospace;
+  --max-w:1200px;--sidebar-w:260px;
+}
+body{font-family:var(--font);background:var(--bg-primary);color:var(--text-primary);line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:var(--emerald);text-decoration:none}a:hover{opacity:.8}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(11,13,17,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+nav .inner{max-width:var(--max-w);margin:0 auto;padding:0 24px;display:flex;align-items:center;height:60px;gap:24px}
+nav .logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:16px;color:var(--text-primary)}
+nav .logo .icon{width:26px;height:26px;background:linear-gradient(135deg,var(--emerald),var(--emerald-deep));border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;color:#fff}
+nav .breadcrumb{font-size:14px;color:var(--text-secondary)}
+nav .breadcrumb a{color:var(--text-secondary)}nav .breadcrumb a:hover{color:var(--text-primary)}
+nav .nav-right{margin-left:auto;display:flex;gap:12px;align-items:center}
+nav .nav-right a{font-size:13px;color:var(--text-secondary)}
+.page{display:flex;max-width:var(--max-w);margin:80px auto 0;padding:0 24px 60px;gap:40px}
+.sidebar{width:var(--sidebar-w);flex-shrink:0;position:sticky;top:80px;align-self:start;max-height:calc(100vh - 100px);overflow-y:auto;padding-right:8px}
+.sidebar::-webkit-scrollbar{width:4px}.sidebar::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.sidebar h4{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--text-tertiary);margin:24px 0 8px 0}
+.sidebar h4:first-child{margin-top:0}
+.sidebar a{display:block;font-size:14px;color:var(--text-secondary);padding:6px 12px;border-radius:6px;margin:1px 0;transition:all .15s}
+.sidebar a:hover{color:var(--text-primary);background:var(--bg-hover)}
+.sidebar a.active{color:var(--emerald);background:var(--emerald-dim);font-weight:500}
+.content{flex:1;min-width:0}
+.content h1{font-size:32px;font-weight:700;letter-spacing:-.5px;margin-bottom:8px}
+.content .lead{font-size:16px;color:var(--text-secondary);margin-bottom:40px}
+.content h2{font-size:22px;font-weight:600;margin:40px 0 12px;letter-spacing:-.3px}
+.content h3{font-size:17px;font-weight:600;margin:32px 0 8px}
+.content p{font-size:15px;color:var(--text-secondary);margin-bottom:16px;line-height:1.7}
+.content p strong{color:var(--text-primary)}
+.content code{font-family:var(--mono);font-size:13px;background:var(--bg-card);padding:2px 6px;border-radius:4px;border:1px solid var(--border);color:var(--emerald)}
+.content pre{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px 20px;font-family:var(--mono);font-size:13px;line-height:1.6;overflow-x:auto;margin:16px 0;color:var(--text-primary)}
+.content pre .cmt{color:var(--text-tertiary)}
+.content ul{list-style:none;padding:0;margin:0 0 16px}
+.content ul li{font-size:15px;color:var(--text-secondary);padding:4px 0 4px 20px;position:relative;line-height:1.6}
+.content ul li::before{content:'';position:absolute;left:0;top:12px;width:6px;height:6px;border-radius:50%;background:var(--emerald);opacity:.5}
+.content .diagram{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:24px;margin:24px 0;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.5;color:var(--text-secondary)}
+.content .arch-box{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin:16px 0}
+.content .arch-box h4{font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:4px}
+.content .arch-box p{font-size:13px;margin:0}
+footer{text-align:center;padding:24px;border-top:1px solid var(--border);font-size:13px;color:var(--text-tertiary)}
+@media(max-width:900px){.sidebar{display:none}.page{flex-direction:column}}
+</style>
+</head>
+<body>
+<nav>
+  <div class="inner">
+    <a href="/" class="logo"><span class="icon">Ar</span> Arus</a>
+    <div class="breadcrumb"><a href="/">Home</a> / <a href="/docs/">Docs</a> / <span>Architecture</span></div>
+    <div class="nav-right"><a href="https://github.com/edsuwarna/arus" target="_blank">GitHub</a></div>
+  </div>
+</nav>
+<div class="page">
+  <aside class="sidebar">
+    <h4>Getting Started</h4>
+    <a href="/docs/getting-started">Quick Start</a>
+    <a href="/docs/setup">Configuration</a>
+    <h4>Architecture</h4>
+    <a href="/docs/architecture" class="active">System Overview</a>
+    <a href="/docs/architecture#data-flow">Data Flow</a>
+    <h4>Reference</h4>
+    <a href="/docs/api">API Reference</a>
+    <a href="https://github.com/edsuwarna/arus">GitHub Repository</a>
+  </aside>
+  <main class="content">
+    <h1>System Architecture</h1>
+    <p class="lead">Arus is a modular monolith — a single Python process organized into bounded-context modules that follow microservice boundaries.</p>
+
+    <h2>High-Level Design</h2>
+    <div class="diagram">
+┌─────────────────────────────────────────────────────────────┐
+│                     Docker Host                              │
+│                                                             │
+│  ┌──────────────┐     ┌──────────────────┐  ┌────────────┐ │
+│  │ Arus Console │     │   Backend API     │  │ PostgreSQL │ │
+│  │    (SPA)     │◄───►│  (FastAPI +       │◄─►│  (15+)     │ │
+│  │   :8080      │     │   APScheduler)    │  │  :5432     │ │
+│  │              │     │  :8081            │  │            │ │
+│  └──────┬───────┘     └────────┬──────────┘  └────────────┘ │
+│         │                      │                             │
+│         └──────HTTP API────────┘                             │
+│                                                             │
+│  ┌──────────────────────────────────────────────────────┐   │
+│  │         Source Databases (external)                   │   │
+│  │  ┌─────────┐  ┌──────────┐  ┌──────────────┐        │   │
+│  │  │  MySQL  │  │ MariaDB  │  │ PostgreSQL   │  ...    │   │
+│  │  └─────────┘  └──────────┘  └──────────────┘        │   │
+│  └──────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────┘
+    </div>
+
+    <h2>Component Stack</h2>
+    <div class="arch-box">
+      <h4>Frontend — Arus Console</h4>
+      <p>Vanilla HTML/CSS/JS SPA. Zero build step, no npm, single container. Communicates with the backend via REST API.</p>
+    </div>
+    <div class="arch-box">
+      <h4>Backend API — FastAPI</h4>
+      <p>Python 3.11+ REST API with built-in APScheduler for pipeline scheduling. Handles both API requests and pipeline execution.</p>
+    </div>
+    <div class="arch-box">
+      <h4>Database — PostgreSQL 15+</h4>
+      <p>Single instance for config, state, run logs, and warehouse data — separated by schemas. No external DB needed.</p>
+    </div>
+
+    <h2 id="data-flow">Data Flow</h2>
+    <div class="diagram">
+1. APScheduler triggers pipeline (every N minutes)
+         │
+2. Read watermark from arus_state
+         │
+3. Extract from source:
+   SELECT * FROM source_table
+   WHERE updated_at &gt; watermark_value
+   ORDER BY updated_at LIMIT 10000
+         │
+4. Batch arrives as list[dict]
+         │
+5. Write to staging raw zone (JSONB):
+   INSERT INTO staging.&lt;source&gt;_&lt;table&gt;_raw
+         │
+6. Normalize and upsert to analytics:
+   INSERT INTO analytics.&lt;table&gt; ...
+   ON CONFLICT (id) DO UPDATE SET ...
+         │
+7. Update watermark
+         │
+8. Log completion to arus_run_logs
+    </div>
+
+    <h3>Incremental CDC (Watermark-based)</h3>
+    <p>Arus uses watermark-based CDC — the most practical method for VPS-class infrastructure. Each table tracks a cursor (usually <code>updated_at</code>). On each run, Arus fetches rows newer than the stored watermark, processes them, and updates the cursor.</p>
+
+    <h3>Full Refresh</h3>
+    <p>Alternatively, tables can be configured for full refresh — truncating the target and reloading all rows. Useful for small dimension tables or initial backfills.</p>
+
+    <h3>Schema Drift</h3>
+    <p>When new columns appear in the source, the raw zone (JSONB) is unaffected. The analytics zone auto-runs <code>ALTER TABLE ADD COLUMN IF NOT EXISTS</code> — no pipeline breakage.</p>
+
+    <h2>Module Architecture</h2>
+    <div class="diagram">
+┌──────────────────────────────────────────────────────┐
+│                 Backend Process (arus-api)           │
+│                                                      │
+│  ┌────────┐ ┌────────┐ ┌──────────┐ ┌───────────┐  │
+│  │ Auth   │ │ Source │ │ Pipeline │ │ Connector │  │
+│  │ Module │ │ Module │ │ Module   │ │ Module    │  │
+│  └────────┘ └────────┘ └────┬─────┘ └───────────┘  │
+│                              │                      │
+│                    ┌────────▼────────┐              │
+│                    │   APScheduler   │              │
+│                    │  (in-process)   │              │
+│                    └─────────────────┘              │
+│                                                      │
+│  ┌──────────────────────────────────────────────┐   │
+│  │           Shared Kernel                       │   │
+│  │  config.py · db/session.py · crypto.py       │   │
+│  └──────────────────────────────────────────────┘   │
+└──────────────────────────────────────────────────────┘
+    </div>
+
+    <p>Each module follows a clean architecture pattern: <strong>Router → Service → Repository</strong>. Modules communicate through service interfaces (Python ABCs), not direct imports — making the system testable and future-proof for splitting into microservices.</p>
+
+    <h2>Container Layout</h2>
+    <ul>
+      <li><strong>arus-console</strong> — Nginx serving the static SPA. Port 8080.</li>
+      <li><strong>arus-api</strong> — FastAPI + APScheduler. Port 8081.</li>
+      <li><strong>arus-db</strong> — PostgreSQL 15+. Port 5432 (internal).</li>
+    </ul>
+    <p>All inter-container communication happens over the Docker internal network. The database port is not exposed externally.</p>
+
+  </main>
+</div>
+<footer>Arus — Data flows without the cluster. MIT License.</footer>
+<script>lucide.createIcons();</script>
+</body>
+</html>

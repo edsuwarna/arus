@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arus — Data Pipeline Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg-primary:#0b0d11;
+  --bg-secondary:#111318;
+  --bg-tertiary:#191b21;
+  --bg-card:#14171d;
+  --bg-hover:#1c1f26;
+  --border:#23262e;
+  --border-light:#2a2d35;
+  --text-primary:#e8eaed;
+  --text-secondary:#9aa0a8;
+  --text-tertiary:#5c626e;
+  --emerald:#10b981;
+  --emerald-deep:#059669;
+  --emerald-dim:rgba(16,185,129,0.12);
+  --emerald-glow:rgba(16,185,129,0.08);
+  --emerald-soft:rgba(16,185,129,0.06);
+  --blue:#3b82f6;
+  --amber:#f59e0b;
+  --red:#ef4444;
+  --radius:12px;
+  --radius-sm:6px;
+  --radius-lg:16px;
+  --font:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --mono:'JetBrains Mono',monospace;
+  --max-w:1200px;
+}
+body{font-family:var(--font);background:var(--bg-primary);color:var(--text-primary);line-height:1.6;-webkit-font-smoothing:antialiased;min-height:100vh}
+a{color:var(--emerald);text-decoration:none;transition:opacity .2s}
+a:hover{opacity:.8}
+img{max-width:100%;height:auto}
+
+/* Nav */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  background:rgba(11,13,17,.85);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+}
+nav .inner{
+  max-width:var(--max-w);margin:0 auto;padding:0 24px;
+  display:flex;align-items:center;height:64px;gap:32px;
+}
+nav .logo{
+  display:flex;align-items:center;gap:10px;
+  font-weight:700;font-size:18px;color:var(--text-primary);
+  letter-spacing:-.3px;
+}
+nav .logo .icon{
+  width:30px;height:30px;
+  background:linear-gradient(135deg,var(--emerald),var(--emerald-deep));
+  border-radius:8px;display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:14px;color:#fff;flex-shrink:0;
+}
+nav .nav-links{display:flex;gap:24px;flex:1;align-items:center}
+nav .nav-links a{color:var(--text-secondary);font-size:14px;font-weight:500;transition:color .2s}
+nav .nav-links a:hover{color:var(--text-primary)}
+nav .nav-right{display:flex;align-items:center;gap:16px}
+nav .nav-right .gh-stars{display:flex;align-items:center;gap:6px;color:var(--text-secondary);font-size:13px}
+nav .nav-right .gh-stars i{width:16px;height:16px}
+.btn{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:var(--font);font-size:14px;font-weight:500;
+  padding:10px 20px;border-radius:var(--radius-sm);
+  border:none;cursor:pointer;transition:all .2s;
+}
+.btn-primary{background:var(--emerald);color:#fff}
+.btn-primary:hover{background:var(--emerald-deep);opacity:1}
+.btn-outline{background:transparent;color:var(--text-primary);border:1px solid var(--border)}
+.btn-outline:hover{background:var(--bg-hover);border-color:var(--border-light);opacity:1}
+.btn-lg{padding:14px 28px;font-size:15px;border-radius:var(--radius-sm)}
+
+/* Hero */
+.hero{
+  padding:160px 24px 100px;text-align:center;
+  position:relative;overflow:hidden;
+}
+.hero::before{
+  content:'';position:absolute;top:-200px;left:50%;transform:translateX(-50%);
+  width:800px;height:800px;
+  background:radial-gradient(circle,var(--emerald-soft) 0%,transparent 70%);
+  pointer-events:none;
+}
+.hero .tag{
+  display:inline-flex;align-items:center;gap:6px;
+  background:var(--emerald-dim);border:1px solid rgba(16,185,129,.15);
+  color:var(--emerald);font-size:13px;font-weight:600;
+  padding:6px 14px;border-radius:999px;margin-bottom:24px;
+  letter-spacing:.3px;text-transform:uppercase;
+}
+.hero h1{
+  font-size:clamp(40px,6vw,72px);font-weight:800;
+  letter-spacing:-2px;line-height:1.08;
+  margin-bottom:20px;position:relative;z-index:1;
+}
+.hero h1 em{font-style:normal;color:var(--emerald)}
+.hero p{
+  font-size:clamp(16px,2vw,20px);color:var(--text-secondary);
+  max-width:640px;margin:0 auto 36px;line-height:1.6;
+  position:relative;z-index:1;
+}
+.hero .ctas{display:flex;gap:12px;justify-content:center;position:relative;z-index:1;flex-wrap:wrap}
+.hero .graphic{
+  margin:60px auto 0;max-width:960px;
+  position:relative;z-index:1;
+  border:1px solid var(--border);border-radius:var(--radius-lg);
+  background:var(--bg-card);overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.5);
+}
+.hero .graphic img{display:block;width:100%}
+
+/* sections */
+section{padding:80px 24px}
+section .inner{max-width:var(--max-w);margin:0 auto}
+.section-label{
+  font-size:12px;font-weight:600;text-transform:uppercase;
+  letter-spacing:1px;color:var(--emerald);margin-bottom:12px;
+}
+.section-title{
+  font-size:clamp(28px,3.5vw,40px);font-weight:700;
+  letter-spacing:-1px;margin-bottom:16px;
+}
+.section-sub{
+  font-size:17px;color:var(--text-secondary);max-width:560px;line-height:1.6;
+}
+
+/* Features */
+.features-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));
+  gap:16px;margin-top:48px;
+}
+.feature-card{
+  background:var(--bg-card);border:1px solid var(--border);
+  border-radius:var(--radius);padding:28px;transition:all .3s;
+}
+.feature-card:hover{border-color:var(--emerald-dim);background:var(--bg-hover)}
+.feature-card .icon-wrap{
+  width:40px;height:40px;border-radius:10px;
+  background:var(--emerald-dim);border:1px solid rgba(16,185,129,.12);
+  display:flex;align-items:center;justify-content:center;margin-bottom:16px;
+}
+.feature-card .icon-wrap i{width:20px;height:20px;stroke:var(--emerald);stroke-width:1.5}
+.feature-card h3{font-size:16px;font-weight:600;margin-bottom:8px}
+.feature-card p{font-size:14px;color:var(--text-secondary);line-height:1.6}
+
+/* How it works */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:48px;counter-reset:step}
+.step{text-align:center;position:relative;padding:40px 24px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius)}
+.step::before{
+  counter-increment:step;content:counter(step);
+  width:36px;height:36px;border-radius:50%;
+  background:var(--emerald-dim);color:var(--emerald);
+  display:flex;align-items:center;justify-content:center;
+  font-weight:700;font-size:14px;margin:0 auto 16px;
+}
+.step .icon-wrap{width:48px;height:48px;margin:0 auto 16px;border-radius:12px;background:var(--emerald-soft);display:flex;align-items:center;justify-content:center}
+.step .icon-wrap i{width:24px;height:24px;stroke:var(--emerald);stroke-width:1.5}
+.step h3{font-size:16px;font-weight:600;margin-bottom:8px}
+.step p{font-size:14px;color:var(--text-secondary);line-height:1.6}
+
+/* Sources badges */
+.sources{display:flex;gap:12px;flex-wrap:wrap;margin-top:24px}
+.source-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  background:var(--bg-card);border:1px solid var(--border);
+  border-radius:8px;padding:10px 16px;font-size:14px;font-weight:500;
+}
+.source-badge .mono{
+  width:28px;height:28px;border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
+  font-weight:700;font-size:11px;color:#fff;flex-shrink:0;
+}
+.mono-pg{background:#336791}
+.mono-my{background:#00758F}
+.mono-ma{background:#A1664A}
+
+/* Comparison table */
+.compare-wrap{overflow-x:auto;margin-top:48px;border:1px solid var(--border);border-radius:var(--radius)}
+.compare{width:100%;border-collapse:collapse;font-size:14px}
+.compare th,.compare td{padding:16px 20px;text-align:left;border-bottom:1px solid var(--border)}
+.compare th{background:var(--bg-card);font-weight:600;color:var(--text-secondary);font-size:12px;text-transform:uppercase;letter-spacing:.5px}
+.compare tr:last-child td{border-bottom:none}
+.compare td:first-child{font-weight:600;white-space:nowrap;color:var(--text-primary)}
+.compare td{color:var(--text-secondary)}
+.compare .check{color:var(--emerald)}
+.compare .cross{color:var(--text-tertiary)}
+
+/* Deployment */
+.deploy-box{
+  background:var(--bg-card);border:1px solid var(--border);
+  border-radius:var(--radius);padding:40px;margin-top:32px;
+  display:flex;align-items:center;gap:32px;flex-wrap:wrap;
+}
+.deploy-box .code{
+  flex:1;min-width:280px;
+  background:var(--bg-primary);border:1px solid var(--border);
+  border-radius:var(--radius-sm);padding:16px 20px;
+  font-family:var(--mono);font-size:14px;color:var(--emerald);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.deploy-box .code span{color:var(--text-tertiary)}
+.deploy-box .code .copy-btn{
+  background:var(--emerald-dim);border:none;border-radius:4px;
+  padding:6px 12px;color:var(--emerald);font-size:12px;font-weight:500;cursor:pointer;
+}
+
+/* Stats bar */
+.stats-bar{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:1px;
+  background:var(--border);border-radius:var(--radius);overflow:hidden;
+  margin-top:48px;
+}
+.stat-item{background:var(--bg-card);padding:32px 24px;text-align:center}
+.stat-item .num{font-size:32px;font-weight:800;color:var(--emerald);letter-spacing:-1px}
+.stat-item .label{font-size:13px;color:var(--text-secondary);font-weight:500;margin-top:4px}
+
+/* CTA section */
+.cta-section{
+  text-align:center;padding:100px 24px;
+  position:relative;overflow:hidden;
+}
+.cta-section::before{
+  content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:600px;height:600px;
+  background:radial-gradient(circle,var(--emerald-glow) 0%,transparent 70%);
+  pointer-events:none;
+}
+.cta-section h2{font-size:clamp(28px,3vw,38px);font-weight:700;margin-bottom:16px;position:relative;z-index:1}
+.cta-section p{color:var(--text-secondary);margin-bottom:28px;position:relative;z-index:1}
+.cta-section .ctas{display:flex;gap:12px;justify-content:center;position:relative;z-index:1;flex-wrap:wrap}
+
+/* Footer */
+footer{
+  border-top:1px solid var(--border);padding:48px 24px 32px;
+}
+footer .inner{max-width:var(--max-w);margin:0 auto}
+footer .grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:40px}
+footer h4{font-size:13px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:16px}
+footer a{display:block;font-size:14px;color:var(--text-tertiary);margin-bottom:8px;transition:color .2s}
+footer a:hover{color:var(--text-secondary)}
+footer .brand p{font-size:14px;color:var(--text-tertiary);margin-top:8px}
+footer .bottom{border-top:1px solid var(--border);padding-top:24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;font-size:13px;color:var(--text-tertiary)}
+footer .logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:16px;letter-spacing:-.3px}
+footer .logo .icon{width:24px;height:24px;background:linear-gradient(135deg,var(--emerald),var(--emerald-deep));border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;color:#fff}
+
+/* mobile */
+@media(max-width:768px){
+  nav .nav-links{display:none}
+  .steps{grid-template-columns:1fr}
+  .features-grid{grid-template-columns:1fr}
+  .stats-bar{grid-template-columns:repeat(2,1fr)}
+  footer .grid{grid-template-columns:1fr;gap:32px}
+  .hero{padding:120px 20px 60px}
+  .hero .graphic{display:none}
+  .compare-wrap{font-size:13px}
+  .deploy-box{padding:24px}
+}
+</style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav>
+  <div class="inner">
+    <a href="/" class="logo">
+      <span class="icon">Ar</span>
+      Arus
+    </a>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#how-it-works">How It Works</a>
+      <a href="/docs/">Docs</a>
+      <a href="https://github.com/edsuwarna/arus" target="_blank">GitHub</a>
+    </div>
+    <div class="nav-right">
+      <a href="https://github.com/edsuwarna/arus" target="_blank" class="gh-stars">
+        <i data-lucide="star"></i>
+        <span>GitHub</span>
+      </a>
+      <a href="/docs/getting-started" class="btn btn-primary">Get Started</a>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="tag"><i data-lucide="zap" style="width:14px;height:14px"></i> Lightweight CDC &amp; ETL</div>
+  <h1>Data flows<br><em>without the cluster.</em></h1>
+  <p>A self-hosted CDC &amp; ETL platform that runs on a single VPS — no Kubernetes, no Kafka, no six-figure SaaS bill. Just <strong>docker compose up</strong>.</p>
+  <div class="ctas">
+    <a href="/docs/getting-started" class="btn btn-primary btn-lg"><i data-lucide="download" style="width:16px;height:16px"></i> Get Started</a>
+    <a href="https://github.com/edsuwarna/arus" target="_blank" class="btn btn-outline btn-lg"><i data-lucide="github" style="width:16px;height:16px"></i> View on GitHub</a>
+  </div>
+  <div class="graphic">
+    <svg viewBox="0 0 960 480" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
+      <defs>
+        <linearGradient id="gl" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#10b981" stop-opacity=".15"/><stop offset="100%" stop-color="#059669" stop-opacity=".05"/></linearGradient>
+        <linearGradient id="g2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#10b981" stop-opacity=".12"/><stop offset="100%" stop-color="#10b981" stop-opacity="0"/></linearGradient>
+        <filter id="g"><feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#10b981" flood-opacity=".2"/></filter>
+      </defs>
+      <!-- Background grid dots -->
+      <pattern id="dots" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse"><circle cx="20" cy="20" r="1" fill="#23262e"/></pattern>
+      <rect width="960" height="480" fill="#14171d"/>
+      <rect width="960" height="480" fill="url(#dots)"/>
+
+      <!-- Layer headers -->
+      <text x="100" y="48" fill="#5c626e" font-family="Inter,sans-serif" font-size="11" font-weight="600" letter-spacing="1">SOURCE</text>
+      <line x1="48" y1="60" x2="912" y2="60" stroke="#23262e" stroke-width="1"/>
+
+      <text x="100" y="200" fill="#5c626e" font-family="Inter,sans-serif" font-size="11" font-weight="600" letter-spacing="1">STAGING (RAW)</text>
+      <line x1="48" y1="212" x2="912" y2="212" stroke="#23262e" stroke-width="1"/>
+
+      <text x="100" y="352" fill="#5c626e" font-family="Inter,sans-serif" font-size="11" font-weight="600" letter-spacing="1">ANALYTICS</text>
+      <line x1="48" y1="364" x2="912" y2="364" stroke="#23262e" stroke-width="1"/>
+
+      <!-- Source nodes -->
+      <rect x="80" y="80" width="140" height="48" rx="8" fill="#1c1f26" stroke="#336791" stroke-width="1.5" filter="url(#g)"/>
+      <text x="110" y="110" fill="#e8eaed" font-family="Inter,sans-serif" font-size="13" font-weight="600">PostgreSQL</text>
+      <circle cx="100" cy="104" r="4" fill="#10b981"/>
+
+      <rect x="280" y="80" width="140" height="48" rx="8" fill="#1c1f26" stroke="#00758F" stroke-width="1.5" filter="url(#g)"/>
+      <text x="310" y="110" fill="#e8eaed" font-family="Inter,sans-serif" font-size="13" font-weight="600">MySQL</text>
+      <circle cx="300" cy="104" r="4" fill="#10b981"/>
+
+      <rect x="480" y="80" width="140" height="48" rx="8" fill="#1c1f26" stroke="#A1664A" stroke-width="1.5" filter="url(#g)"/>
+      <text x="510" y="110" fill="#e8eaed" font-family="Inter,sans-serif" font-size="13" font-weight="600">MariaDB</text>
+      <circle cx="500" cy="104" r="4" fill="#10b981"/>
+
+      <!-- Staging nodes -->
+      <rect x="140" y="228" width="160" height="48" rx="8" fill="#1c1f26" stroke="#4a4e5a" stroke-width="1.5"/>
+      <rect x="139" y="227" width="162" height="4" rx="2" fill="#10b981" opacity=".6"/>
+      <text x="170" y="258" fill="#e8eaed" font-family="Inter,sans-serif" font-size="12" font-weight="500">stg_users_raw</text>
+      <text x="265" y="258" fill="#5c626e" font-family="JetBrains Mono,monospace" font-size="10">JSONB</text>
+
+      <rect x="380" y="228" width="190" height="48" rx="8" fill="#1c1f26" stroke="#4a4e5a" stroke-width="1.5"/>
+      <rect x="379" y="227" width="192" height="4" rx="2" fill="#10b981" opacity=".6"/>
+      <text x="410" y="258" fill="#e8eaed" font-family="Inter,sans-serif" font-size="12" font-weight="500">stg_orders_raw</text>
+      <text x="535" y="258" fill="#5c626e" font-family="JetBrains Mono,monospace" font-size="10">JSONB</text>
+
+      <!-- Analytics nodes -->
+      <rect x="140" y="380" width="200" height="48" rx="8" fill="#1c1f26" stroke="#10b981" stroke-width="1.5" filter="url(#g)"/>
+      <text x="170" y="410" fill="#e8eaed" font-family="Inter,sans-serif" font-size="13" font-weight="600">analytics.users</text>
+      <circle cx="160" cy="404" r="4" fill="#10b981"/>
+
+      <rect x="380" y="380" width="200" height="48" rx="8" fill="#1c1f26" stroke="#10b981" stroke-width="1.5" filter="url(#g)"/>
+      <text x="410" y="410" fill="#e8eaed" font-family="Inter,sans-serif" font-size="13" font-weight="600">analytics.orders</text>
+      <circle cx="400" cy="404" r="4" fill="#10b981"/>
+
+      <!-- Edges - Source to Staging -->
+      <path d="M150 128L150 140Q150 150 160 150L170 150Q180 150 180 160L180 228" stroke="#4a4e5a" stroke-width="1.5" fill="none" stroke-dasharray="4 3"/>
+      <path d="M350 128L350 140Q350 150 360 150L380 150Q390 150 390 160L390 228" stroke="#4a4e5a" stroke-width="1.5" fill="none" stroke-dasharray="4 3"/>
+      <path d="M550 128L550 228" stroke="#4a4e5a" stroke-width="1.5" fill="none" stroke-dasharray="4 3"/>
+
+      <!-- Edges - Staging to Analytics -->
+      <path d="M220 276L220 380" stroke="#10b981" stroke-width="1.5" fill="none" opacity=".6"/>
+      <path d="M475 276L475 380" stroke="#10b981" stroke-width="1.5" fill="none" opacity=".6"/>
+
+      <!-- Pipeline label -->
+      <rect x="720" y="380" width="160" height="48" rx="24" fill="transparent" stroke="#23262e" stroke-width="1"/>
+      <text x="755" y="410" fill="#5c626e" font-family="Inter,sans-serif" font-size="12">⏱ Every 5 min</text>
+    </svg>
+  </div>
+</section>
+
+<!-- Stats -->
+<section style="padding-top:0">
+  <div class="inner">
+    <div class="stats-bar">
+      <div class="stat-item"><div class="num">3</div><div class="label">Supported Sources</div></div>
+      <div class="stat-item"><div class="num">2</div><div class="label">Sync Modes</div></div>
+      <div class="stat-item"><div class="num">3</div><div class="label">Containers</div></div>
+      <div class="stat-item"><div class="num">~200MB</div><div class="label">RAM Idle</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- Features -->
+<section id="features">
+  <div class="inner">
+    <div class="section-label">Features</div>
+    <h2 class="section-title">Everything you need for<br>data ingestion on a VPS.</h2>
+    <p class="section-sub">Arus gives you the observability of Airflow with the simplicity of a single <code>docker compose up</code>. No Kube, no Kafka, no bloat.</p>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="icon-wrap"><i data-lucide="arrow-left-right"></i></div>
+        <h3>CDC &amp; ETL</h3>
+        <p>Watermark-based incremental extraction from MySQL, MariaDB, and PostgreSQL. Direct (typed) or Raw (JSONB) load modes.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon-wrap"><i data-lucide="search"></i></div>
+        <h3>Auto-discover Tables</h3>
+        <p>Register a source DB and Arus automatically discovers all tables, detects sync modes, and suggests configurations.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon-wrap"><i data-lucide="git-branch"></i></div>
+        <h3>Visual DAG</h3>
+        <p>Interactive 3-layer asset graph (Source → Staging → Analytics) with color-coded node statuses and zoom/pan controls.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon-wrap"><i data-lucide="clock"></i></div>
+        <h3>Scheduling</h3>
+        <p>APScheduler with per-pipeline cron expressions. Set it and forget it — automatic syncs with retry logic.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon-wrap"><i data-lucide="layers"></i></div>
+        <h3>Schema Drift Detection</h3>
+        <p>New columns in source detected automatically. Raw zone (JSONB) never breaks. Analytics zone auto-ALTERs.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon-wrap"><i data-lucide="bell"></i></div>
+        <h3>Alerting</h3>
+        <p>Telegram, Discord, or Slack notifications on pipeline failures, schema changes, and data quality breaches.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon-wrap"><i data-lucide="folder-sync"></i></div>
+        <h3>Run History &amp; Logs</h3>
+        <p>Full audit trail per pipeline run. View logs, row counts, and durations without SSH access.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon-wrap"><i data-lucide="archive"></i></div>
+        <h3>Dead Letter Queue</h3>
+        <p>Failed rows are captured and stored. Review, reprocess, or debug without losing data.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Supported Sources -->
+<section style="background:var(--bg-secondary);border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
+  <div class="inner">
+    <div class="section-label">Sources</div>
+    <h2 class="section-title">Connect your databases.</h2>
+    <p class="section-sub">Arus natively supports the most common source databases. Add a connection string and auto-discover kicks in.</p>
+    <div class="sources">
+      <div class="source-badge"><span class="mono mono-pg">PG</span> PostgreSQL</div>
+      <div class="source-badge"><span class="mono mono-my">MY</span> MySQL</div>
+      <div class="source-badge"><span class="mono mono-ma">MA</span> MariaDB</div>
+      <div class="source-badge" style="border-style:dashed;color:var(--text-tertiary)">+ More coming</div>
+    </div>
+  </div>
+</section>
+
+<!-- How It Works -->
+<section id="how-it-works">
+  <div class="inner">
+    <div class="section-label">How It Works</div>
+    <h2 class="section-title">Three steps to flowing data.</h2>
+    <p class="section-sub">From zero to a running pipeline in under 5 minutes.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="icon-wrap"><i data-lucide="plug"></i></div>
+        <h3>Connect</h3>
+        <p>Add your source database — just a name, type, and connection string. Test the connection, then let Arus auto-discover all tables.</p>
+      </div>
+      <div class="step">
+        <div class="icon-wrap"><i data-lucide="sliders-horizontal"></i></div>
+        <h3>Configure</h3>
+        <p>Select which tables to sync, choose incremental or full refresh, pick your target schema, and set the schedule.</p>
+      </div>
+      <div class="step">
+        <div class="icon-wrap"><i data-lucide="monitor"></i></div>
+        <h3>Monitor</h3>
+        <p>Watch your data flow through the DAG dashboard. Check run history, inspect logs, get alerts — all from the browser.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Comparison -->
+<section style="background:var(--bg-secondary);border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
+  <div class="inner">
+    <div class="section-label">Why Arus</div>
+    <h2 class="section-title">Built for teams without a<br>dedicated infra team.</h2>
+    <p class="section-sub">Arus fills the gap between fragile custom scripts and heavyweight enterprise tools.</p>
+    <div class="compare-wrap">
+      <table class="compare">
+        <thead>
+          <tr><th>Feature</th><th>Arus</th><th>Airbyte OSS</th><th>Debezium</th><th>Custom Script</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Kubernetes required</td><td class="check">❌ No</td><td class="cross">✅ Yes</td><td class="check">❌ No*</td><td class="check">❌ No</td></tr>
+          <tr><td>DAG / Pipeline UI</td><td class="check">✅ Built-in</td><td class="check">✅ Basic</td><td class="cross">❌</td><td class="cross">❌</td></tr>
+          <tr><td>Setup time</td><td>2 hours</td><td>1-2 days</td><td>3-5 days</td><td>1 hour (no UI)</td></tr>
+          <tr><td>RAM usage (idle)</td><td><strong>~200MB</strong></td><td>~2GB</td><td>~3GB+</td><td>~100MB</td></tr>
+          <tr><td>Auto-retry</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td><td class="cross">❌</td></tr>
+          <tr><td>Schema drift handling</td><td class="check">✅ Auto</td><td class="check">✅ Auto</td><td class="check">✅</td><td class="cross">❌</td></tr>
+          <tr><td>Dead letter queue</td><td class="check">✅</td><td class="check">✅</td><td class="cross">❌</td><td class="cross">❌</td></tr>
+          <tr><td>Connector language</td><td>Python</td><td>Python</td><td>Java</td><td>Anything</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="font-size:13px;color:var(--text-tertiary);margin-top:12px">* Debezium needs Kafka — no Kube, but still resource-heavy</p>
+  </div>
+</section>
+
+<!-- Deployment -->
+<section>
+  <div class="inner">
+    <div class="section-label">Deploy</div>
+    <h2 class="section-title">One command to start.</h2>
+    <p class="section-sub">Arus runs entirely in Docker Compose. Clone the repo, configure, and go.</p>
+    <div class="deploy-box">
+      <div class="code">
+        <span>$</span> git clone https://github.com/edsuwarna/arus.git<span class="copy-btn" onclick="navigator.clipboard.writeText('git clone https://github.com/edsuwarna/arus.git && cd arus && docker compose up -d')">Copy</span>
+      </div>
+      <div class="code">
+        <span>$</span> cd arus &amp;&amp; docker compose up -d<span class="copy-btn" onclick="navigator.clipboard.writeText('cd arus && docker compose up -d')">Copy</span>
+      </div>
+    </div>
+    <p style="font-size:14px;color:var(--text-secondary);margin-top:16px;text-align:center">
+      3 containers · 1 command · <strong>zero infrastructure</strong>
+    </p>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <h2>Ready to ship data pipelines<br><em style="font-style:normal;color:var(--emerald)">without the overhead?</em></h2>
+  <p>Self-hosted. Open source. Runs anywhere Docker does.</p>
+  <div class="ctas">
+    <a href="/docs/getting-started" class="btn btn-primary btn-lg">Get Started</a>
+    <a href="https://github.com/edsuwarna/arus" target="_blank" class="btn btn-outline btn-lg">View on GitHub</a>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <div class="inner">
+    <div class="grid">
+      <div class="brand">
+        <div class="logo"><span class="icon">Ar</span> Arus</div>
+        <p>Data flows without the cluster. A lightweight CDC &amp; ETL platform for VPS-class infrastructure.</p>
+      </div>
+      <div>
+        <h4>Product</h4>
+        <a href="#features">Features</a>
+        <a href="#how-it-works">How It Works</a>
+        <a href="/docs/">Documentation</a>
+      </div>
+      <div>
+        <h4>Resources</h4>
+        <a href="https://github.com/edsuwarna/arus">GitHub</a>
+        <a href="/docs/architecture">Architecture</a>
+        <a href="/docs/api">API Reference</a>
+      </div>
+      <div>
+        <h4>Contact</h4>
+        <a href="https://github.com/edsuwarna/arus/issues">Report Issue</a>
+        <a href="https://github.com/edsuwarna/arus">Contribute</a>
+      </div>
+    </div>
+    <div class="bottom">
+      <span>&copy; <script>document.write(new Date().getFullYear())</script> Arus. Open source under MIT License.</span>
+      <span>Built with FastAPI + Vanilla JS</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+lucide.createIcons();
+</script>
+</body>
+</html>

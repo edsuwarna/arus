@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>API Reference — Arus Docs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg-primary:#0b0d11;--bg-secondary:#111318;--bg-card:#14171d;--bg-hover:#1c1f26;
+  --border:#23262e;--border-light:#2a2d35;
+  --text-primary:#e8eaed;--text-secondary:#9aa0a8;--text-tertiary:#5c626e;
+  --emerald:#10b981;--emerald-deep:#059669;--emerald-dim:rgba(16,185,129,0.12);
+  --blue:#3b82f6;--amber:#f59e0b;--red:#ef4444;
+  --radius:12px;--radius-sm:6px;
+  --font:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --mono:'JetBrains Mono',monospace;
+  --max-w:1200px;--sidebar-w:260px;
+}
+body{font-family:var(--font);background:var(--bg-primary);color:var(--text-primary);line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:var(--emerald);text-decoration:none}a:hover{opacity:.8}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(11,13,17,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+nav .inner{max-width:var(--max-w);margin:0 auto;padding:0 24px;display:flex;align-items:center;height:60px;gap:24px}
+nav .logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:16px;color:var(--text-primary)}
+nav .logo .icon{width:26px;height:26px;background:linear-gradient(135deg,var(--emerald),var(--emerald-deep));border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;color:#fff}
+nav .breadcrumb{font-size:14px;color:var(--text-secondary)}
+nav .breadcrumb a{color:var(--text-secondary)}nav .breadcrumb a:hover{color:var(--text-primary)}
+nav .nav-right{margin-left:auto;display:flex;gap:12px;align-items:center}
+nav .nav-right a{font-size:13px;color:var(--text-secondary)}
+.page{display:flex;max-width:var(--max-w);margin:80px auto 0;padding:0 24px 60px;gap:40px}
+.sidebar{width:var(--sidebar-w);flex-shrink:0;position:sticky;top:80px;align-self:start;max-height:calc(100vh - 100px);overflow-y:auto;padding-right:8px}
+.sidebar::-webkit-scrollbar{width:4px}.sidebar::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.sidebar h4{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--text-tertiary);margin:24px 0 8px 0}
+.sidebar h4:first-child{margin-top:0}
+.sidebar a{display:block;font-size:14px;color:var(--text-secondary);padding:6px 12px;border-radius:6px;margin:1px 0;transition:all .15s}
+.sidebar a:hover{color:var(--text-primary);background:var(--bg-hover)}
+.sidebar a.active{color:var(--emerald);background:var(--emerald-dim);font-weight:500}
+.content{flex:1;min-width:0}
+.content h1{font-size:32px;font-weight:700;letter-spacing:-.5px;margin-bottom:8px}
+.content .lead{font-size:16px;color:var(--text-secondary);margin-bottom:40px}
+.content h2{font-size:22px;font-weight:600;margin:40px 0 12px;letter-spacing:-.3px}
+.content h3{font-size:17px;font-weight:600;margin:32px 0 8px}
+.content p{font-size:15px;color:var(--text-secondary);margin-bottom:16px;line-height:1.7}
+.content p strong{color:var(--text-primary)}
+.content code{font-family:var(--mono);font-size:13px;background:var(--bg-card);padding:2px 6px;border-radius:4px;border:1px solid var(--border);color:var(--emerald)}
+.content pre{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px 20px;font-family:var(--mono);font-size:13px;line-height:1.6;overflow-x:auto;margin:16px 0;color:var(--text-primary)}
+.content pre .cmt{color:var(--text-tertiary)}
+.content .endpoint{margin:16px 0;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.content .endpoint-head{padding:14px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:13px}
+.content .endpoint-head .method{display:inline-block;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:700;text-transform:uppercase;color:#fff}
+.content .endpoint-head .method.get{background:var(--blue)}
+.content .endpoint-head .method.post{background:var(--emerald)}
+.content .endpoint-head .method.put{background:var(--amber)}
+.content .endpoint-head .method.delete{background:var(--red)}
+.content .endpoint-body{padding:16px 20px}
+.content .endpoint-body p{font-size:13px;margin:0 0 8px}
+.content .endpoint-body code{font-size:12px}
+.content ul{list-style:none;padding:0;margin:0 0 16px}
+.content ul li{font-size:15px;color:var(--text-secondary);padding:4px 0 4px 20px;position:relative;line-height:1.6}
+.content ul li::before{content:'';position:absolute;left:0;top:12px;width:6px;height:6px;border-radius:50%;background:var(--emerald);opacity:.5}
+footer{text-align:center;padding:24px;border-top:1px solid var(--border);font-size:13px;color:var(--text-tertiary)}
+@media(max-width:900px){.sidebar{display:none}.page{flex-direction:column}}
+</style>
+</head>
+<body>
+<nav>
+  <div class="inner">
+    <a href="/" class="logo"><span class="icon">Ar</span> Arus</a>
+    <div class="breadcrumb"><a href="/">Home</a> / <a href="/docs/">Docs</a> / <span>API Reference</span></div>
+    <div class="nav-right"><a href="https://github.com/edsuwarna/arus" target="_blank">GitHub</a></div>
+  </div>
+</nav>
+<div class="page">
+  <aside class="sidebar">
+    <h4>Getting Started</h4>
+    <a href="/docs/getting-started">Quick Start</a>
+    <a href="/docs/setup">Configuration</a>
+    <h4>Architecture</h4>
+    <a href="/docs/architecture">System Overview</a>
+    <a href="/docs/architecture#data-flow">Data Flow</a>
+    <h4>Reference</h4>
+    <a href="/docs/api" class="active">API Reference</a>
+    <a href="https://github.com/edsuwarna/arus">GitHub Repository</a>
+  </aside>
+  <main class="content">
+    <h1>API Reference</h1>
+    <p class="lead">REST API for the Arus backend. Base URL: <code>http://localhost:8081/api</code></p>
+
+    <h2>Conventions</h2>
+    <h3>Authentication</h3>
+    <p>All endpoints except <code>/auth/login</code> require a Bearer token in the <code>Authorization</code> header:</p>
+    <pre>Authorization: Bearer eyJhbG...</pre>
+
+    <h3>Response Format</h3>
+    <pre>{
+  "status": "ok",
+  "data": { ... }
+}</pre>
+
+    <h3>Error Format</h3>
+    <pre>{
+  "status": "error",
+  "error": {
+    "code": "NOT_FOUND",
+    "message": "Source with id 'abc-123' not found"
+  }
+}</pre>
+
+    <h3>Pagination</h3>
+    <pre>?page=1&per_page=20
+
+{
+  "data": [...],
+  "pagination": {
+    "page": 1, "per_page": 20,
+    "total": 147, "total_pages": 8
+  }
+}</pre>
+
+    <h2>Authentication</h2>
+
+    <div class="endpoint">
+      <div class="endpoint-head"><span class="method post">POST</span> /api/auth/login</div>
+      <div class="endpoint-body">
+        <p>Login with email + password. Returns a JWT token and user profile.</p>
+        <pre>{ "email": "admin@arus.io", "password": "admin123" }</pre>
+        <p>Response: <code>{ "token": "eyJ...", "user": { "id", "email", "name", "role" }, "expires_at" }</code></p>
+      </div>
+    </div>
+
+    <div class="endpoint">
+      <div class="endpoint-head"><span class="method get">GET</span> /api/auth/me</div>
+      <div class="endpoint-body">
+        <p>Get current user profile.</p>
+      </div>
+    </div>
+
+    <h2>Sources</h2>
+
+    <div class="endpoint">
+      <div class="endpoint-head"><span class="method get">GET</span> /api/sources</div>
+      <div class="endpoint-body">
+        <p>List all registered source databases. Supports pagination, type filter, and search.</p>
+        <p>Query: <code>?page=1&per_page=20&type=mysql&search=prod</code></p>
+      </div>
+    </div>
+
+    <div class="endpoint">
+      <div class="endpoint-head"><span class="method post">POST</span> /api/sources</div>
+      <div class="endpoint-body">
+        <p>Register a new source database.</p>
+        <pre>{ "name": "Production MySQL", "type": "mysql", "host": "10.0.0.50", "port": 3306, "database": "ecommerce", "username": "reader", "password": "readonly_pass" }</pre>
+      </div>
+    </div>
+
+    <div class="endpoint">
+      <div class="endpoint-head"><span class="method get">GET</span> /api/sources/{id}</div>
+      <div class="endpoint-body">
+        <p>Get source details.</p>
+      </div>
+    </div>
+
+    <div class="endpoint">
+      <div class="endpoint-head"><span class="method delete">DELETE</span> /api/sources/{id}</div>
+      <div class="endpoint-body">
+        <p>Delete a source database.</p>
+      </div>
+    </div>
+
+    <div class="endpoint">
+      <div class="endpoint-head"><span class="method post">POST</span> /api/sources/{id}/test</div>
+      <div class="endpoint-body">
+        <p>Test connection to source database. Returns latency and server version.</p>
+      </div>
+    </div>
+
+    <div class="endpoint">
+      <div class="endpoint-head"><span class="method post">POST</span> /api/sources/{id}/discover</div>
+      <div class="endpoint-body">
+        <p>Scan source database and auto-detect all tables with their sync modes (incremental / full refresh).</p>
+      </div>
+    </div>
+
+    <div class="endpoint">
+      <div class="endpoint-head"><span class="method put">PUT</span> /api/sources/{id}/tables</div>
+      <div class="endpoint-body">
+        <p>Update which tables are enabled/disabled and configure per-table settings.</p>
+        <pre>{ "tables": [{ "name": "orders", "enabled": true, "sync_mode": "incremental", "watermark_column": "updated_at" }] }</pre>
+      </div>
+    </div>
+
+    <h2>Pipelines</h2>
+
+    <div class="endpoint">
+      <div class="endpoint-head"><span class="method get">GET</span> /api/pipelines</div>
+      <div class="endpoint-body">
+        <p>List all pipelines. Supports pagination and status filter.</p>
+      </div>
+    </div>
+
+    <div class="endpoint">
+      <div class="endpoint-head"><span class="method post">POST</span> /api/pipelines</div>
+      <div class="endpoint-body">
+        <p>Create a new pipeline (one per source DB).</p>
+        <pre>{ "source_id": "src_001", "destination_id": "dest_001", "schedule": "*/5 * * * *", "target_schema": "analytics" }</pre>
+      </div>
+    </div>
+
+    <div class="endpoint">
+      <div class="endpoint-head"><span class="method get">GET</span> /api/pipelines/{id}</div>
+      <div class="endpoint-body">
+        <p>Get pipeline details with table configurations.</p>
+      </div>
+    </div>
+
+    <div class="endpoint">
+      <div class="endpoint-head"><span class="method delete">DELETE</span> /api/pipelines/{id}</div>
+      <div class="endpoint-body">
+        <p>Delete a pipeline and unschedule its jobs.</p>
+      </div>
+    </div>
+
+    <div class="endpoint">
+      <div class="endpoint-head"><span class="method post">POST</span> /api/pipelines/{id}/trigger</div>
+      <div class="endpoint-body">
+        <p>Manually trigger a pipeline run.</p>
+      </div>
+    </div>
+
+    <div class="endpoint">
+      <div class="endpoint-head"><span class="method post">POST</span> /api/pipelines/{id}/pause</div>
+      <div class="endpoint-body">
+        <p>Pause pipeline scheduler.</p>
+      </div>
+    </div>
+
+    <div class="endpoint">
+      <div class="endpoint-head"><span class="method post">POST</span> /api/pipelines/{id}/resume</div>
+      <div class="endpoint-body">
+        <p>Resume pipeline scheduler.</p>
+      </div>
+    </div>
+
+    <h2>Dashboard &amp; Monitoring</h2>
+
+    <div class="endpoint">
+      <div class="endpoint-head"><span class="method get">GET</span> /api/dashboard/summary</div>
+      <div class="endpoint-body">
+        <p>Get dashboard stats: active sources, pipelines, rows synced, failures.</p>
+      </div>
+    </div>
+
+    <div class="endpoint">
+      <div class="endpoint-head"><span class="method get">GET</span> /api/dag/{pipeline_id}</div>
+      <div class="endpoint-body">
+        <p>Get DAG asset graph data (3-layer: Source → Staging → Analytics) with node statuses.</p>
+      </div>
+    </div>
+
+    <div class="endpoint">
+      <div class="endpoint-head"><span class="method get">GET</span> /api/runs</div>
+      <div class="endpoint-body">
+        <p>List run history. Supports pagination and pipeline_id filter.</p>
+      </div>
+    </div>
+
+    <div class="endpoint">
+      <div class="endpoint-head"><span class="method get">GET</span> /api/runs/{id}</div>
+      <div class="endpoint-body">
+        <p>Get run details with per-table results and logs.</p>
+      </div>
+    </div>
+
+    <div class="endpoint">
+      <div class="endpoint-head"><span class="method get">GET</span> /api/health</div>
+      <div class="endpoint-body">
+        <p>Health check. Returns version, database status, and scheduler state.</p>
+        <pre>{ "status": "ok", "data": { "version": "0.1.0", "database": "connected", "scheduler": "running" } }</pre>
+      </div>
+    </div>
+
+    <h2>Destinations</h2>
+
+    <div class="endpoint">
+      <div class="endpoint-head"><span class="method get">GET</span> /api/destinations</div>
+      <div class="endpoint-body">
+        <p>List all destinations. Mirror of sources CRUD.</p>
+      </div>
+    </div>
+
+    <div class="endpoint">
+      <div class="endpoint-head"><span class="method post">POST</span> /api/destinations</div>
+      <div class="endpoint-body">
+        <p>Register a new destination warehouse connection.</p>
+      </div>
+    </div>
+
+    <div class="endpoint">
+      <div class="endpoint-head"><span class="method delete">DELETE</span> /api/destinations/{id}</div>
+      <div class="endpoint-body">
+        <p>Delete a destination.</p>
+      </div>
+    </div>
+
+    <h2>Settings &amp; Users</h2>
+
+    <div class="endpoint">
+      <div class="endpoint-head"><span class="method get">GET</span> /api/settings</div>
+      <div class="endpoint-body">
+        <p>Get all runtime settings (key-value from DB).</p>
+      </div>
+    </div>
+
+    <div class="endpoint">
+      <div class="endpoint-head"><span class="method put">PUT</span> /api/settings</div>
+      <div class="endpoint-body">
+        <p>Update settings.</p>
+      </div>
+    </div>
+
+    <div class="endpoint">
+      <div class="endpoint-head"><span class="method get">GET</span> /api/users</div>
+      <div class="endpoint-body">
+        <p>List users (admin only).</p>
+      </div>
+    </div>
+
+    <div class="endpoint">
+      <div class="endpoint-head"><span class="method post">POST</span> /api/users</div>
+      <div class="endpoint-body">
+        <p>Create user (admin only). Roles: viewer, editor, admin.</p>
+      </div>
+    </div>
+
+    <p style="margin-top:40px;padding:16px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:14px;color:var(--text-secondary)">
+      📖 Full API specification available in <code>prd/api-spec.md</code> in the repository.
+    </p>
+  </main>
+</div>
+<footer>Arus — Data flows without the cluster. MIT License.</footer>
+<script>lucide.createIcons();</script>
+</body>
+</html>
