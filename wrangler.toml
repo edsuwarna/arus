@@ -1,0 +1,4 @@
+name = "arus"
+pages_build_output_dir = "site/.vitepress/dist"
+build_command = "cd site && npm install && npm run build"
+compatibility_date = "2026-06-15"
