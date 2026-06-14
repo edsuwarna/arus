@@ -5,3 +5,8 @@ __pycache__/
 venv/
 .hermes/
 .venv/
+
+# VitePress site
+site/node_modules/
+site/.vitepress/dist/
+
