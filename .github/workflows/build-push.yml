@@ -19,8 +19,8 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME_API: ghcr.io/edsuwarna/arus-api
-  IMAGE_NAME_CONSOLE: ghcr.io/edsuwarna/arus-console
+  IMAGE_NAME_API: ghcr.io/edsuwarna/arus/arus-api
+  IMAGE_NAME_CONSOLE: ghcr.io/edsuwarna/arus/arus-console
 
 jobs:
   changes:

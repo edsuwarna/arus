@@ -41,7 +41,7 @@ services:
     restart: unless-stopped
 
   arus-api:
-    image: ghcr.io/edsuwarna/arus-api:latest
+    image: ghcr.io/edsuwarna/arus/arus-api:latest
     container_name: arus-api
     environment:
       ARUS_DB_HOST: arus-db
@@ -75,7 +75,7 @@ services:
     restart: unless-stopped
 
   arus-console:
-    image: ghcr.io/edsuwarna/arus-console:latest
+    image: ghcr.io/edsuwarna/arus/arus-console:latest
     container_name: arus-console
     ports:
       - "8082:80"
