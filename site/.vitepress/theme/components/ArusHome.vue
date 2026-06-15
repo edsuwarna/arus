@@ -380,7 +380,7 @@ function checkClass(v) {
   border: none; cursor: pointer; text-decoration: none;
   transition: all 0.2s;
 }
-.btn-primary { background: #eab308; color: #fff; }
+.btn-primary { background: #eab308; color: #0b0d11; }
 .btn-primary:hover { background: #ca8a04; }
 .btn-outline { background: transparent; color: #e8eaed; border: 1px solid #23262e; }
 .btn-outline:hover { background: #1c1f26; border-color: #2a2d35; }
