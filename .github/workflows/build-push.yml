@@ -3,19 +3,6 @@ name: Build & Push to ghcr.io
 on:
   push:
     branches: [main]
-    paths:
-      - 'arus/**'
-      - 'console/**'
-      - 'Dockerfile'
-      - 'Dockerfile.console'
-      - 'requirements.txt'
-      - 'alembic/**'
-      - 'alembic.ini'
-      - 'config/**'
-      - 'scripts/**'
-      - 'nginx/**'
-      - '.github/**'
-      - 'docker-compose.yml'
 
 env:
   REGISTRY: ghcr.io
