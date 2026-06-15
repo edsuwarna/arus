@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Logo Sketches</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0b0d11; font-family: 'Inter', sans-serif;
+    display: flex; flex-direction: column; align-items: center; padding: 40px;
+  }
+  h1 { color: #e8eaed; font-size: 24px; margin-bottom: 8px; }
+  .subtitle { color: #5c626e; font-size: 14px; margin-bottom: 40px; }
+  .project { display: flex; flex-direction: column; align-items: center; margin-bottom: 48px; }
+  .project-title {
+    font-size: 18px; font-weight: 700; margin-bottom: 24px;
+    padding: 8px 20px; border-radius: 6px;
+  }
+  .project-title.arus { color: #eab308; background: rgba(234,179,8,0.08); }
+  .project-title.anjungan { color: #10b981; background: rgba(16,185,129,0.08); }
+  .grid {
+    display: flex; gap: 48px; flex-wrap: wrap; justify-content: center;
+  }
+  .card {
+    background: #14171d; border: 1px solid #23262e; border-radius: 12px;
+    padding: 32px; text-align: center; width: 220px;
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color: #2a2d35; }
+  .card .preview {
+    width: 120px; height: 120px; margin: 0 auto 16px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .card svg { display: block; }
+  .card .name { font-size: 16px; font-weight: 600; color: #e8eaed; margin-bottom: 4px; }
+  .card .desc { font-size: 13px; color: #5c626e; }
+</style>
+</head>
+<body>
+  <h1>🎨 Logo Concepts</h1>
+  <p class="subtitle">Sketches for Arus &amp; Anjungan</p>
+
+  <!-- ARUS -->
+  <div class="project">
+    <div class="project-title arus">Arus — Data Flow</div>
+    <div class="grid">
+
+      <!-- Arus 1: Wave Lines -->
+      <div class="card">
+        <div class="preview">
+          <svg width="100" height="100" viewBox="0 0 100 100" fill="none">
+            <circle cx="50" cy="50" r="48" stroke="#23262e" stroke-width="2"/>
+            <path d="M22 42 Q30 34 38 42 Q46 50 54 42 Q62 34 70 42 Q78 50 86 42" stroke="#eab308" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+            <path d="M26 50 Q34 42 42 50 Q50 58 58 50 Q66 42 74 50" stroke="#eab308" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.7"/>
+            <path d="M32 58 Q40 50 48 58 Q56 66 64 58 Q72 50 78 58" stroke="#eab308" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.4"/>
+          </svg>
+        </div>
+        <div class="name">Wave Flow</div>
+        <div class="desc">Tiga garis gelombang — arus air/data</div>
+      </div>
+
+      <!-- Arus 2: Chevron Cascade -->
+      <div class="card">
+        <div class="preview">
+          <svg width="100" height="100" viewBox="0 0 100 100" fill="none">
+            <circle cx="50" cy="50" r="48" stroke="#23262e" stroke-width="2"/>
+            <polyline points="32,30 48,50 32,70" stroke="#eab308" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <polyline points="50,30 66,50 50,70" stroke="#ca8a04" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.7"/>
+            <polyline points="68,30 84,50 68,70" stroke="#a16207" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.4"/>
+          </svg>
+        </div>
+        <div class="name">Pipeline Chevrons</div>
+        <div class="desc">Cascade chevron — pipeline stages</div>
+      </div>
+
+      <!-- Arus 3: Abstract A + Flow -->
+      <div class="card">
+        <div class="preview">
+          <svg width="100" height="100" viewBox="0 0 100 100" fill="none">
+            <circle cx="50" cy="50" r="48" stroke="#23262e" stroke-width="2"/>
+            <path d="M30 72 L42 28 L50 48 L58 28 L70 72" stroke="#eab308" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <path d="M30 60 Q50 52 70 60" stroke="#eab308" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.5"/>
+          </svg>
+        </div>
+        <div class="name">A + Ripple</div>
+        <div class="desc">Huruf A abstrak dengan riak aliran</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ANJUNGAN -->
+  <div class="project">
+    <div class="project-title anjungan">Anjungan — IDP Platform</div>
+    <div class="grid">
+
+      <!-- Anjungan 1: Pavilion -->
+      <div class="card">
+        <div class="preview">
+          <svg width="100" height="100" viewBox="0 0 100 100" fill="none">
+            <circle cx="50" cy="50" r="48" stroke="#23262e" stroke-width="2"/>
+            <path d="M24 65 L50 30 L76 65" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <line x1="42" y1="65" x2="42" y2="78" stroke="#10b981" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="58" y1="65" x2="58" y2="78" stroke="#10b981" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="32" y1="78" x2="68" y2="78" stroke="#10b981" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+          </svg>
+        </div>
+        <div class="name">Panggung (Pavilion)</div>
+        <div class="desc">Atap + dua tiang — "anjungan"</div>
+      </div>
+
+      <!-- Anjungan 2: Dashboard Grid -->
+      <div class="card">
+        <div class="preview">
+          <svg width="100" height="100" viewBox="0 0 100 100" fill="none">
+            <circle cx="50" cy="50" r="48" stroke="#23262e" stroke-width="2"/>
+            <rect x="26" y="28" width="20" height="20" rx="3" stroke="#5c626e" stroke-width="2" fill="none"/>
+            <rect x="54" y="28" width="20" height="20" rx="3" stroke="#5c626e" stroke-width="2" fill="none"/>
+            <rect x="26" y="54" width="20" height="20" rx="3" stroke="#5c626e" stroke-width="2" fill="none"/>
+            <rect x="54" y="54" width="20" height="20" rx="3" fill="#10b981" stroke="#10b981" stroke-width="2"/>
+            <rect x="57" y="57" width="14" height="14" rx="1.5" fill="#0b0d11"/>
+          </svg>
+        </div>
+        <div class="name">Dashboard Grid</div>
+        <div class="desc">2×2 grid — "single pane of glass"</div>
+      </div>
+
+      <!-- Anjungan 3: Stacked Panels -->
+      <div class="card">
+        <div class="preview">
+          <svg width="100" height="100" viewBox="0 0 100 100" fill="none">
+            <circle cx="50" cy="50" r="48" stroke="#23262e" stroke-width="2"/>
+            <rect x="28" y="32" width="44" height="12" rx="2" fill="#10b981" opacity="0.3"/>
+            <rect x="28" y="46" width="44" height="12" rx="2" fill="#10b981" opacity="0.5"/>
+            <rect x="28" y="60" width="44" height="12" rx="2" fill="#10b981"/>
+          </svg>
+        </div>
+        <div class="name">Stacked Panels</div>
+        <div class="desc">Lapisan modular — stacked modules</div>
+      </div>
+
+    </div>
+  </div>
+
+</body>
+</html>

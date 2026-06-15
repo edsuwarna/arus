@@ -5,7 +5,12 @@
       <div class="nav-inner">
         <div class="nav-left">
           <a href="/" class="logo">
-            <span class="logo-icon">A</span>
+            <svg width="28" height="28" viewBox="0 0 32 32" fill="none" class="logo-icon">
+              <rect x="1" y="1" width="30" height="30" rx="7" fill="#14171d" stroke="#23262e" stroke-width="0.5"/>
+              <polyline points="8,10 12,14 8,18" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              <polyline points="14,10 18,14 14,18" stroke="#ca8a04" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.6"/>
+              <polyline points="20,10 24,14 20,18" stroke="#a16207" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.3"/>
+            </svg>
             <span class="logo-text">Arus</span>
           </a>
           <div class="nav-links">
@@ -361,12 +366,7 @@ function checkClass(v) {
 }
 .nav-left { display: flex; align-items: center; gap: 32px; }
 .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; color: #e8eaed; text-decoration: none; letter-spacing: -0.3px; }
-.logo-icon {
-  width: 30px; height: 30px;
-  background: linear-gradient(135deg, #eab308, #ca8a04);
-  border-radius: 8px; display: flex; align-items: center; justify-content: center;
-  font-weight: 800; font-size: 14px; color: #fff; flex-shrink: 0;
-}
+.logo-icon { flex-shrink: 0; }
 .nav-links { display: flex; gap: 24px; }
 .nav-links a { color: #9aa0a8; font-size: 14px; font-weight: 500; text-decoration: none; transition: color 0.2s; }
 .nav-links a:hover { color: #e8eaed; }

@@ -1,10 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
-  <defs>
-    <linearGradient id="ag" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#eab308"/>
-      <stop offset="100%" stop-color="#ca8a04"/>
-    </linearGradient>
-  </defs>
-  <rect width="32" height="32" rx="8" fill="url(#ag)"/>
-  <text x="16" y="22" font-family="Inter,sans-serif" font-weight="800" font-size="16" fill="#fff" text-anchor="middle">A</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <rect x="1" y="1" width="30" height="30" rx="7" fill="#14171d" stroke="#23262e" stroke-width="0.5"/>
+  <polyline points="8,10 12,14 8,18" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <polyline points="14,10 18,14 14,18" stroke="#ca8a04" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.6"/>
+  <polyline points="20,10 24,14 20,18" stroke="#a16207" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.3"/>
 </svg>
