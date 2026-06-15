@@ -11,9 +11,12 @@
   --text-primary: #e8eaed;
   --text-secondary: #9aa0a8;
   --text-tertiary: #5c626e;
-  --emerald: #10b981;
-  --emerald-dim: rgba(16,185,129,0.12);
-  --emerald-glow: rgba(16,185,129,0.08);
+  --emerald: #eab308;
+  --emerald-dim: rgba(234,179,8,0.12);
+  --emerald-glow: rgba(234,179,8,0.08);
+  --accent: #eab308;
+  --accent-dim: rgba(234,179,8,0.12);
+  --accent-glow: rgba(234,179,8,0.08);
   --blue: #3b82f6;
   --blue-dim: rgba(59,130,246,0.12);
   --amber: #f59e0b;
@@ -94,7 +97,7 @@ a:hover { opacity: 0.85; }
 .sidebar-logo .logo-icon {
   width: 28px;
   height: 28px;
-  background: linear-gradient(135deg, #10b981, #059669);
+  background: linear-gradient(135deg, #eab308, #ca8a04);
   border-radius: 8px;
   display: flex;
   align-items: center;
@@ -391,7 +394,7 @@ a:hover { opacity: 0.85; }
 }
 
 .btn-primary:hover {
-  background: #059669;
+  background: #ca8a04;
   box-shadow: 0 0 20px var(--emerald-glow);
 }
 
@@ -568,7 +571,7 @@ table tr:last-child td:last-child { border-radius: 0 0 var(--radius) 0; }
   display: inline-block;
 }
 
-.status .dot.green { background: var(--emerald); box-shadow: 0 0 6px rgba(16,185,129,0.4); }
+.status .dot.green { background: var(--emerald); box-shadow: 0 0 6px rgba(234,179,8,0.4); }
 .status .dot.amber { background: var(--amber); box-shadow: 0 0 6px rgba(245,158,11,0.4); }
 .status .dot.red { background: var(--red); box-shadow: 0 0 6px rgba(239,68,68,0.4); }
 .status .dot.gray { background: var(--text-tertiary); }
@@ -799,9 +802,9 @@ table tr:last-child td:last-child { border-radius: 0 0 var(--radius) 0; }
 }
 
 .pipeline-flow .pf-node.pipeline-center {
-  background: rgba(16,185,129,0.15);
+  background: rgba(234,179,8,0.15);
   color: var(--emerald);
-  border: 1px solid rgba(16,185,129,0.2);
+  border: 1px solid rgba(234,179,8,0.2);
   font-weight: 600;
 }
 
@@ -1191,12 +1194,12 @@ table tr:last-child td:last-child { border-radius: 0 0 var(--radius) 0; }
   top: 50%; left: 50%;
   transform: translate(-50%, -50%);
   width: 70px; height: 70px;
-  background: linear-gradient(135deg, #10b981, #059669);
+  background: linear-gradient(135deg, #eab308, #ca8a04);
   border-radius: 20px;
   display: flex; align-items: center; justify-content: center;
   font-size: 28px;
   color: #fff;
-  box-shadow: 0 0 40px rgba(16,185,129,0.3);
+  box-shadow: 0 0 40px rgba(234,179,8,0.3);
 }
 
 .login-right .graphic .flow-line {

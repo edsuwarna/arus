@@ -2,7 +2,7 @@
 let dagState = { panX: 0, panY: 0, zoom: 1 };
 const DAG_LAYERS = ['source', 'raw', 'target'];
 const DAG_LABELS = { source: 'SOURCE LAYER', raw: 'RAW LAYER', target: 'TARGET LAYER' };
-const LAYER_COLORS = { source: '#3b82f6', raw: '#f59e0b', target: '#10b981' };
+const LAYER_COLORS = { source: '#3b82f6', raw: '#f59e0b', target: '#eab308' };
 
 async function renderDagPage(container) {
     container.innerHTML = `<div class="loading"><div class="spinner"></div><p>Loading pipelines...</p></div>`;
@@ -31,7 +31,7 @@ async function renderDagPage(container) {
             </div>
 
             <div class="dag-legend" id="dag-legend" style="display:none">
-                <span class="legend-item"><span class="legend-dot" style="background:#10b981"></span> Success</span>
+                <span class="legend-item"><span class="legend-dot" style="background:#eab308"></span> Success</span>
                 <span class="legend-item"><span class="legend-dot" style="background:#3b82f6"></span> Running</span>
                 <span class="legend-item"><span class="legend-dot" style="background:#f59e0b"></span> Stale</span>
                 <span class="legend-item"><span class="legend-dot" style="background:#ef4444"></span> Failed</span>
@@ -171,15 +171,15 @@ function renderDagGraph(pipelines) {
     });
 
     const statusColors = {
-        success: '#10b981', failed: '#ef4444', running: '#3b82f6',
+        success: '#eab308', failed: '#ef4444', running: '#3b82f6',
         stale: '#f59e0b', not_started: '#6b7280', paused: '#f59e0b',
-        active: '#10b981', inactive: '#6b7280',
+        active: '#eab308', inactive: '#6b7280',
     };
 
     const layerLabels = {
         source: { x: layerX.source, label: 'SOURCE LAYER', color: '#3b82f6' },
         raw: { x: layerX.raw, label: 'RAW LAYER', color: '#f59e0b' },
-        target: { x: layerX.target, label: 'TARGET LAYER', color: '#10b981' },
+        target: { x: layerX.target, label: 'TARGET LAYER', color: '#eab308' },
     };
 
     const g = dagState;

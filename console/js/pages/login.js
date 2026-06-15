@@ -5,7 +5,7 @@ function renderLogin() {
       <div class="login-left">
         <div class="login-logo">
           <span style="display:inline-flex;align-items:center;gap:10px;margin-bottom:20px;">
-            <span style="width:36px;height:36px;background:linear-gradient(135deg,#10b981,#059669);border-radius:10px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;color:#fff;">Ar</span>
+            <span style="width:36px;height:36px;background:linear-gradient(135deg,#eab308,#ca8a04);border-radius:10px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;color:#fff;">Ar</span>
             <span style="font-size:24px;">Ar<em>us</em></span>
           </span>
         </div>

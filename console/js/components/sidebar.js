@@ -53,7 +53,7 @@ function renderSidebar(user) {
   return `
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-logo">
-        <span class="logo-icon" style="width:28px;height:28px;background:linear-gradient(135deg,#10b981,#059669);border-radius:7px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:#fff;flex-shrink:0;">Ar</span>
+        <span class="logo-icon" style="width:28px;height:28px;background:linear-gradient(135deg,#eab308,#ca8a04);border-radius:7px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:#fff;flex-shrink:0;">Ar</span>
         <span>Ar<em>us</em></span>
       </div>
       <nav class="sidebar-nav">${navHtml}</nav>
