@@ -76,6 +76,13 @@
       </div>
     </section>
 
+    <!-- Preview -->
+    <section class="preview">
+      <div class="screenshot-card">
+        <img src="/sketches/arus-dashboard.png" alt="Arus Console Dashboard" class="screenshot" />
+      </div>
+    </section>
+
     <!-- Stats -->
     <section class="stats">
       <div class="stat-item">
@@ -193,31 +200,19 @@
       <div class="code-blocks">
         <div class="code-block">
           <div class="code-header">
-            <span>1. Create a <code>.env</code> file</span>
+            <span>Copy &amp; paste in your terminal</span>
             <button class="copy-btn" @click="copyCode(0)">{{ copied === 0 ? 'Copied!' : 'Copy' }}</button>
           </div>
-          <pre><code># Generate with: openssl rand -hex 32
-ARUS_JWT_SECRET=your-secret-key
-ARUS_ENCRYPTION_KEY=your-secret-key
-</code></pre>
-        </div>
-        <div class="code-block">
-          <div class="code-header">
-            <span>2. Start Arus</span>
-            <button class="copy-btn" @click="copyCode(1)">{{ copied === 1 ? 'Copied!' : 'Copy' }}</button>
-          </div>
-          <pre><code>docker compose up -d</code></pre>
-        </div>
-        <div class="code-block">
-          <div class="code-header">
-            <span>3. Open the Console</span>
-            <button class="copy-btn" @click="copyCode(2)">{{ copied === 2 ? 'Copied!' : 'Copy' }}</button>
-          </div>
-          <pre><code>http://localhost:8082</code></pre>
+          <pre><code>git clone https://github.com/edsuwarna/arus.git
+cd arus
+echo "ARUS_JWT_SECRET=$(openssl rand -hex 32)" > .env
+echo "ARUS_ENCRYPTION_KEY=$(openssl rand -hex 32)" >> .env
+docker compose up -d</code></pre>
         </div>
       </div>
-      <p style="text-align:center; margin-top: 16px; font-size: 14px; color: #9aa0a8;">
-        See the <a href="/guide/quickstart" style="color: #10b981;">Quickstart Guide</a> for full setup instructions.
+      <p class="code-footnote">
+        Your console will be at <a href="http://localhost:8082" style="color:#10b981">http://localhost:8082</a>
+        &mdash; login with <code>admin@arus.io</code> / <code>admin123</code>
       </p>
     </section>
 
@@ -270,9 +265,7 @@ const copied = ref(null)
 
 function copyCode(idx) {
   const codes = [
-    'ARUS_JWT_SECRET=your-secret-key\nARUS_ENCRYPTION_KEY=your-secret-key',
-    'docker compose up -d',
-    'http://localhost:8082',
+    'git clone https://github.com/edsuwarna/arus.git\ncd arus\necho "ARUS_JWT_SECRET=$(openssl rand -hex 32)" > .env\necho "ARUS_ENCRYPTION_KEY=$(openssl rand -hex 32)" >> .env\ndocker compose up -d',
   ]
   navigator.clipboard.writeText(codes[idx])
   copied.value = idx
@@ -419,6 +412,18 @@ function checkClass(v) {
 .dag-node.target { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2); color: #6ee7b7; }
 .dag-arrow { color: #5c626e; display: flex; align-items: center; }
 
+/* === PREVIEW === */
+.preview {
+  max-width: 1100px; margin: 0 auto; padding: 0 24px 48px;
+}
+.screenshot-card {
+  background: #14171d; border: 1px solid #23262e; border-radius: 12px;
+  overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+}
+.screenshot {
+  display: block; width: 100%; height: auto;
+}
+
 /* === STATS === */
 .stats {
   max-width: 800px; margin: 0 auto; padding: 48px 24px;
@@ -509,6 +514,13 @@ function checkClass(v) {
   color: #e8eaed;
 }
 .code-block code { background: none; padding: 0; }
+
+.code-footnote {
+  text-align: center; margin-top: 16px; font-size: 14px; color: #9aa0a8;
+}
+.code-footnote code {
+  background: #1c1f26; padding: 2px 6px; border-radius: 4px; font-size: 13px; color: #e8eaed;
+}
 
 /* === CTA === */
 .cta { max-width: 800px; margin: 0 auto; padding: 80px 24px; }
