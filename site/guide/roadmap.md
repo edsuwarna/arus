@@ -43,7 +43,7 @@ Production hardening — error handling, data quality, notifications, and schema
 - ✅ **Transform Engine** — built-in steps + Python script support
 - ✅ **Notification Targets** — Telegram, Discord, Slack
 - ✅ **Pipeline-Notification Linking** — per-pipeline event selection
-- ✅ **Pull-based Images** — deploy from `registry.edsuwarna.xyz`
+- ✅ **Pull-based Images** — deploy from `ghcr.io/edsuwarna`
 - ✅ **Documentation** — architecture, guides, API reference, deployment
 
 ---

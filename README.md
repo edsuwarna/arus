@@ -34,7 +34,7 @@ docker compose up -d
 | Backend | Go, Chi router, pgx |
 | Database | PostgreSQL 17 |
 | Frontend (Console) | HTML/SVG dashboard |
-| Deployment | Docker Compose, Docker images at `registry.edsuwarna.xyz` |
+| Deployment | Docker Compose, Docker images at `ghcr.io/edsuwarna` |
 
 ## License
 
