@@ -421,7 +421,7 @@ When viewing a pipeline detail's notifications, you can:
 
 | Element | Value |
 |---|---|
-| **Theme** | Dark mode — deep black (`#0b0d11`) with emerald accents (`#10b981`) |
+| **Theme** | Dark mode — deep black (`#0b0d11`) with golden yellow accents (`#eab308`) |
 | **Typography** | Inter, system sans-serif |
 | **Layout** | Fixed sidebar (240px) + scrollable content |
 | **Border Radius** | Cards: 10px, Buttons/Inputs: 6px |

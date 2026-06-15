@@ -1,9 +1,9 @@
 /* Light mode (default) */
 :root {
-  --vp-c-brand-1: #10b981;
-  --vp-c-brand-2: #059669;
-  --vp-c-brand-3: #047857;
-  --vp-c-brand-soft: rgba(16, 185, 129, 0.14);
+  --vp-c-brand-1: #eab308;
+  --vp-c-brand-2: #ca8a04;
+  --vp-c-brand-3: #a16207;
+  --vp-c-brand-soft: rgba(234, 179, 8, 0.14);
 
   --vp-c-bg: #ffffff;
   --vp-c-bg-alt: #f6f6f7;
@@ -18,14 +18,14 @@
   --vp-c-text-2: #6b7280;
   --vp-c-text-3: #9ca3af;
 
-  --vp-home-hero-name-color: #10b981;
-  --vp-button-brand-bg: #10b981;
-  --vp-button-brand-hover-bg: #059669;
+  --vp-home-hero-name-color: #eab308;
+  --vp-button-brand-bg: #eab308;
+  --vp-button-brand-hover-bg: #ca8a04;
   --vp-button-brand-text: #ffffff;
 
   --vp-sidebar-bg-color: #f9f9f9;
-  --vp-custom-block-tip-bg: rgba(16, 185, 129, 0.08);
-  --vp-custom-block-tip-border: #10b981;
+  --vp-custom-block-tip-bg: rgba(234, 179, 8, 0.08);
+  --vp-custom-block-tip-border: #eab308;
 }
 
 /* Dark mode */

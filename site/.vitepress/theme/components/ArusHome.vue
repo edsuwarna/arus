@@ -26,7 +26,7 @@
       <div class="hero-content">
         <span class="hero-badge">LIGHTWEIGHT CDC &amp; ETL</span>
         <h1 class="hero-title">
-          Data flows <span class="text-emerald">without the cluster.</span>
+          Data flows <span class="text-accent">without the cluster.</span>
         </h1>
         <p class="hero-subtitle">
           A self-hosted CDC &amp; ETL platform that runs on a single VPS.
@@ -173,7 +173,7 @@
           <thead>
             <tr>
               <th>Feature</th>
-              <th class="col-emerald">Arus</th>
+              <th class="col-accent">Arus</th>
               <th>Airbyte OSS</th>
               <th>Debezium</th>
               <th>Custom Script</th>
@@ -182,7 +182,7 @@
           <tbody>
             <tr v-for="row in comparison" :key="row.feature">
               <td class="feature-name">{{ row.feature }}</td>
-              <td class="col-emerald"><span :class="checkClass(row.arus)">{{ row.arus }}</span></td>
+              <td class="col-accent"><span :class="checkClass(row.arus)">{{ row.arus }}</span></td>
               <td>{{ row.airbyte }}</td>
               <td>{{ row.debezium }}</td>
               <td>{{ row.script }}</td>
@@ -233,7 +233,7 @@ docker run -d --network arus-net --name arus-console -p 8082:80 \
         </div>
       </div>
       <p class="code-footnote">
-        Your console will be at <a href="http://localhost:8082" style="color:#10b981">http://localhost:8082</a>
+        Your console will be at <a href="http://localhost:8082" style="color:#eab308">http://localhost:8082</a>
         &mdash; login with <code>ARUS_ADMIN_EMAIL</code> / <code>ARUS_ADMIN_PASSWORD</code> from your <code>.env</code> (defaults: <code>admin@arus.io</code> / <code>admin123</code>)
       </p>
     </section>
@@ -241,7 +241,7 @@ docker run -d --network arus-net --name arus-console -p 8082:80 \
     <!-- CTA -->
     <section class="cta">
       <div class="cta-card">
-        <h2>Ready to ship data pipelines <span class="text-emerald">without the overhead?</span></h2>
+        <h2>Ready to ship data pipelines <span class="text-accent">without the overhead?</span></h2>
         <p>Get Arus running on your VPS in under 10 minutes.</p>
         <div class="cta-actions">
           <a href="/guide/quickstart" class="btn btn-primary btn-lg">
@@ -306,9 +306,9 @@ const features = [
 ]
 
 const sources = [
-  { name: 'PostgreSQL', icon: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="1.5"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>' },
-  { name: 'MySQL', icon: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="1.5"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>' },
-  { name: 'MariaDB', icon: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="1.5"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>' },
+  { name: 'PostgreSQL', icon: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="1.5"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>' },
+  { name: 'MySQL', icon: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="1.5"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>' },
+  { name: 'MariaDB', icon: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="1.5"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>' },
 ]
 
 const comparison = [
@@ -347,7 +347,7 @@ function checkClass(v) {
   display: none !important;
 }
 
-.text-emerald { color: #10b981; }
+.text-accent { color: #eab308; }
 
 /* === NAV === */
 .nav {
@@ -363,7 +363,7 @@ function checkClass(v) {
 .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; color: #e8eaed; text-decoration: none; letter-spacing: -0.3px; }
 .logo-icon {
   width: 30px; height: 30px;
-  background: linear-gradient(135deg, #10b981, #059669);
+  background: linear-gradient(135deg, #eab308, #ca8a04);
   border-radius: 8px; display: flex; align-items: center; justify-content: center;
   font-weight: 800; font-size: 14px; color: #fff; flex-shrink: 0;
 }
@@ -380,8 +380,8 @@ function checkClass(v) {
   border: none; cursor: pointer; text-decoration: none;
   transition: all 0.2s;
 }
-.btn-primary { background: #10b981; color: #fff; }
-.btn-primary:hover { background: #059669; }
+.btn-primary { background: #eab308; color: #fff; }
+.btn-primary:hover { background: #ca8a04; }
 .btn-outline { background: transparent; color: #e8eaed; border: 1px solid #23262e; }
 .btn-outline:hover { background: #1c1f26; border-color: #2a2d35; }
 .btn-lg { padding: 14px 28px; font-size: 15px; border-radius: 8px; }
@@ -395,19 +395,19 @@ function checkClass(v) {
 .hero-bg-glow {
   position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
   width: 700px; height: 700px;
-  background: radial-gradient(circle, rgba(16,185,129,0.06) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(234,179,8,0.06) 0%, transparent 70%);
   pointer-events: none;
 }
 .hero-content { position: relative; z-index: 1; max-width: 720px; }
 .hero-badge {
   display: inline-block; padding: 6px 14px; border-radius: 100px;
-  background: rgba(16,185,129,0.1); color: #10b981;
+  background: rgba(234,179,8,0.1); color: #eab308;
   font-size: 12px; font-weight: 600; letter-spacing: 1px;
   margin-bottom: 20px;
 }
 .hero-title { font-size: 56px; font-weight: 800; line-height: 1.1; letter-spacing: -1.5px; margin-bottom: 16px; }
 .hero-subtitle { font-size: 18px; color: #9aa0a8; margin-bottom: 32px; }
-.hero-subtitle code { background: #1c1f26; padding: 2px 8px; border-radius: 4px; font-size: 15px; color: #10b981; }
+.hero-subtitle code { background: #1c1f26; padding: 2px 8px; border-radius: 4px; font-size: 15px; color: #eab308; }
 .hero-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 
 /* DAG Card */
@@ -419,7 +419,7 @@ function checkClass(v) {
 .dag-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
 .dag-title { font-size: 13px; font-weight: 600; font-family: 'JetBrains Mono', monospace; color: #9aa0a8; }
 .dag-status { font-size: 11px; padding: 3px 10px; border-radius: 100px; font-weight: 500; }
-.status-active { background: rgba(16,185,129,0.12); color: #10b981; }
+.status-active { background: rgba(234,179,8,0.12); color: #eab308; }
 .dag-body { display: flex; align-items: center; justify-content: center; gap: 12px; }
 .dag-layer { display: flex; flex-direction: column; align-items: center; gap: 8px; }
 .layer-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #5c626e; font-weight: 600; }
@@ -431,7 +431,7 @@ function checkClass(v) {
 }
 .dag-node.source { background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.2); color: #93c5fd; }
 .dag-node.raw { background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.2); color: #fcd34d; }
-.dag-node.target { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2); color: #6ee7b7; }
+.dag-node.target { background: rgba(234,179,8,0.1); border: 1px solid rgba(234,179,8,0.2); color: #fde68a; }
 .dag-arrow { color: #5c626e; display: flex; align-items: center; }
 
 /* === PREVIEW === */
@@ -452,7 +452,7 @@ function checkClass(v) {
   display: flex; align-items: center; justify-content: center; gap: 32px;
 }
 .stat-item { text-align: center; }
-.stat-value { display: block; font-size: 36px; font-weight: 800; color: #10b981; letter-spacing: -1px; }
+.stat-value { display: block; font-size: 36px; font-weight: 800; color: #eab308; letter-spacing: -1px; }
 .stat-label { font-size: 14px; color: #5c626e; margin-top: 4px; }
 .stat-divider { width: 1px; height: 48px; background: #23262e; }
 
@@ -469,8 +469,8 @@ function checkClass(v) {
   background: #14171d; border: 1px solid #23262e; border-radius: 12px;
   padding: 24px; transition: border-color 0.2s, transform 0.2s;
 }
-.feature-card:hover { border-color: #10b981; transform: translateY(-2px); }
-.feature-icon { color: #10b981; margin-bottom: 14px; }
+.feature-card:hover { border-color: #eab308; transform: translateY(-2px); }
+.feature-icon { color: #eab308; margin-bottom: 14px; }
 .feature-title { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
 .feature-desc { font-size: 14px; color: #9aa0a8; line-height: 1.6; }
 
@@ -492,8 +492,8 @@ function checkClass(v) {
 .step { text-align: center; flex: 1; }
 .step-number {
   width: 48px; height: 48px; border-radius: 50%;
-  background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.3);
-  color: #10b981; font-size: 20px; font-weight: 700;
+  background: rgba(234,179,8,0.12); border: 1px solid rgba(234,179,8,0.3);
+  color: #eab308; font-size: 20px; font-weight: 700;
   display: flex; align-items: center; justify-content: center;
   margin: 0 auto 16px;
 }
@@ -508,10 +508,10 @@ function checkClass(v) {
 .compare-table th, .compare-table td { padding: 14px 20px; text-align: left; border-bottom: 1px solid #23262e; }
 .compare-table th { font-weight: 600; color: #9aa0a8; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
 .compare-table thead tr th:first-child { width: 200px; }
-.compare-table .col-emerald { color: #10b981; font-weight: 500; }
+.compare-table .col-accent { color: #eab308; font-weight: 500; }
 .compare-table tbody tr:hover { background: rgba(255,255,255,0.02); }
 .feature-name { color: #9aa0a8; }
-.check { color: #10b981; }
+.check { color: #eab308; }
 
 /* === CODE SECTION === */
 .code-section { max-width: 700px; margin: 0 auto; padding: 80px 24px; }
@@ -529,7 +529,7 @@ function checkClass(v) {
   color: #9aa0a8; font-size: 11px; padding: 4px 10px; cursor: pointer;
   font-family: inherit; transition: all 0.2s;
 }
-.code-header button:hover { border-color: #10b981; color: #10b981; }
+.code-header button:hover { border-color: #eab308; color: #eab308; }
 .code-block pre {
   padding: 16px; overflow-x: auto;
   font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.7;

@@ -19,9 +19,9 @@
     --text-primary: #e8eaed;
     --text-secondary: #9aa0a8;
     --text-tertiary: #5c626e;
-    --emerald: #10b981;
-    --emerald-dim: rgba(16,185,129,0.12);
-    --emerald-glow: rgba(16,185,129,0.08);
+    --accent: #eab308;
+    --accent-dim: rgba(234,179,8,0.12);
+    --accent-glow: rgba(234,179,8,0.08);
     --blue: #3b82f6;
     --blue-dim: rgba(59,130,246,0.12);
     --amber: #f59e0b;
@@ -78,7 +78,7 @@
   .sidebar-logo .logo-icon {
     width: 28px;
     height: 28px;
-    background: linear-gradient(135deg, #10b981, #059669);
+    background: linear-gradient(135deg, #eab308, #ca8a04);
     border-radius: 8px;
     display: flex;
     align-items: center;
@@ -94,7 +94,7 @@
   }
   .sidebar-logo span em {
     font-style: normal;
-    color: var(--emerald);
+    color: var(--accent);
   }
 
   .sidebar-nav {
@@ -132,8 +132,8 @@
     color: var(--text-primary);
   }
   .nav-item.active {
-    background: var(--emerald-dim);
-    color: var(--emerald);
+    background: var(--accent-dim);
+    color: var(--accent);
   }
   .nav-item .nav-icon {
     width: 18px;
@@ -155,7 +155,7 @@
     font-weight: 600;
     color: var(--text-secondary);
   }
-  .nav-item .badge.green { background: var(--emerald-dim); color: var(--emerald); }
+  .nav-item .badge.green { background: var(--accent-dim); color: var(--accent); }
   .nav-item .badge.amber { background: var(--amber-dim); color: var(--amber); }
 
   .sidebar-footer {
@@ -223,7 +223,7 @@
     font-family: inherit;
   }
   .header-search input::placeholder { color: var(--text-tertiary); }
-  .header-search input:focus { border-color: var(--emerald); }
+  .header-search input:focus { border-color: var(--accent); }
   .header-search .icon {
     position: absolute;
     left: 10px;
@@ -301,12 +301,12 @@
     text-decoration: none;
   }
   .btn-primary {
-    background: var(--emerald);
+    background: var(--accent);
     color: #fff;
   }
   .btn-primary:hover {
-    background: #059669;
-    box-shadow: 0 0 20px var(--emerald-glow);
+    background: #ca8a04;
+    box-shadow: 0 0 20px var(--accent-glow);
   }
   .btn-secondary {
     background: var(--bg-tertiary);
@@ -363,7 +363,7 @@
     font-weight: 500;
     margin-top: 4px;
   }
-  .stat-change.up { color: var(--emerald); }
+  .stat-change.up { color: var(--accent); }
   .stat-change.down { color: var(--red); }
 
   .stat-card .stat-icon {
@@ -373,7 +373,7 @@
     display: flex; align-items: center; justify-content: center;
     font-size: 18px;
   }
-  .stat-icon.green { background: var(--emerald-dim); color: var(--emerald); }
+  .stat-icon.green { background: var(--accent-dim); color: var(--accent); }
   .stat-icon.blue { background: var(--blue-dim); color: var(--blue); }
   .stat-icon.amber { background: var(--amber-dim); color: var(--amber); }
   .stat-icon.purple { background: var(--purple-dim); color: var(--purple); }
@@ -443,13 +443,13 @@
     width: 7px; height: 7px;
     border-radius: 50%;
   }
-  .status .dot.green { background: var(--emerald); box-shadow: 0 0 6px rgba(16,185,129,0.4); }
+  .status .dot.green { background: var(--accent); box-shadow: 0 0 6px rgba(234,179,8,0.4); }
   .status .dot.amber { background: var(--amber); box-shadow: 0 0 6px rgba(245,158,11,0.4); }
   .status .dot.red { background: var(--red); box-shadow: 0 0 6px rgba(239,68,68,0.4); }
   .status .dot.gray { background: var(--text-tertiary); }
   .status .dot.blue { background: var(--blue); box-shadow: 0 0 6px rgba(59,130,246,0.4); }
 
-  .status .label.green { color: var(--emerald); }
+  .status .label.green { color: var(--accent); }
   .status .label.amber { color: var(--amber); }
   .status .label.red { color: var(--red); }
   .status .label.gray { color: var(--text-tertiary); }
@@ -465,7 +465,7 @@
     background: var(--bg-tertiary);
     color: var(--text-secondary);
   }
-  .tag.green { background: var(--emerald-dim); color: var(--emerald); }
+  .tag.green { background: var(--accent-dim); color: var(--accent); }
   .tag.blue { background: var(--blue-dim); color: var(--blue); }
   .tag.amber { background: var(--amber-dim); color: var(--amber); }
   .tag.purple { background: var(--purple-dim); color: var(--purple); }
@@ -486,8 +486,8 @@
     box-shadow: var(--shadow-card);
   }
   .source-card:hover {
-    border-color: var(--emerald);
-    box-shadow: 0 0 0 1px var(--emerald-dim), var(--shadow-elevated);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent-dim), var(--shadow-elevated);
   }
   .source-card .sc-top {
     display: flex;
@@ -553,7 +553,7 @@
     border-radius: 2px;
     flex-shrink: 0;
   }
-  .pipeline-item .pi-indicator.green { background: var(--emerald); }
+  .pipeline-item .pi-indicator.green { background: var(--accent); }
   .pipeline-item .pi-indicator.amber { background: var(--amber); }
   .pipeline-item .pi-indicator.red { background: var(--red); }
 
@@ -614,7 +614,7 @@
     border: none;
     flex-shrink: 0;
   }
-  .toggle.on { background: var(--emerald); }
+  .toggle.on { background: var(--accent); }
   .toggle::after {
     content: '';
     position: absolute;
@@ -698,7 +698,7 @@
     outline: none;
     transition: border var(--transition);
   }
-  .form-group input:focus, .form-group select:focus { border-color: var(--emerald); }
+  .form-group input:focus, .form-group select:focus { border-color: var(--accent); }
   .form-group input::placeholder { color: var(--text-tertiary); }
   .form-group .hint {
     font-size: 11px;
@@ -725,10 +725,10 @@
     transition: all var(--transition);
   }
   .checkbox-item:hover { border-color: var(--border-light); }
-  .checkbox-item input { accent-color: var(--emerald); }
+  .checkbox-item input { accent-color: var(--accent); }
   .checkbox-item.checked {
-    border-color: var(--emerald);
-    background: var(--emerald-dim);
+    border-color: var(--accent);
+    background: var(--accent-dim);
   }
 
   /* Detail Pipeline */
@@ -812,7 +812,7 @@
   .mb-4 { margin-bottom: 16px; }
   .text-secondary { color: var(--text-secondary); }
   .text-tertiary { color: var(--text-tertiary); }
-  .text-emerald { color: var(--emerald); }
+  .text-emerald { color: var(--accent); }
   .text-sm { font-size: 12px; }
   .text-xs { font-size: 11px; }
   .font-mono { font-family: 'SF Mono', 'Cascadia Code', monospace; font-size: 12px; }
@@ -853,8 +853,8 @@
     color: var(--blue);
   }
   .pipeline-flow .pf-node.source {
-    background: var(--emerald-dim);
-    color: var(--emerald);
+    background: var(--accent-dim);
+    color: var(--accent);
   }
 
   /* ===== LOGIN PAGE ===== */
@@ -879,7 +879,7 @@
     font-weight: 800;
     margin-bottom: 8px;
   }
-  .login-left .login-logo em { font-style: normal; color: var(--emerald); }
+  .login-left .login-logo em { font-style: normal; color: var(--accent); }
   .login-left .login-tagline {
     font-size: 14px;
     color: var(--text-tertiary);
@@ -910,14 +910,14 @@
     border: 1px solid var(--border);
   }
   .login-right .graphic .circle-1 { width: 320px; height: 320px; top: 40px; left: 40px; }
-  .login-right .graphic .circle-2 { width: 240px; height: 240px; top: 80px; left: 80px; border-color: var(--emerald-dim); }
+  .login-right .graphic .circle-2 { width: 240px; height: 240px; top: 80px; left: 80px; border-color: var(--accent-dim); }
   .login-right .graphic .circle-3 { width: 160px; height: 160px; top: 120px; left: 120px; }
   .login-right .graphic .center-icon {
     position: absolute;
     top: 50%; left: 50%;
     transform: translate(-50%, -50%);
     width: 70px; height: 70px;
-    background: linear-gradient(135deg, #10b981, #059669);
+    background: linear-gradient(135deg, #eab308, #ca8a04);
     border-radius: 20px;
     display: flex; align-items: center; justify-content: center;
     font-size: 28px;
@@ -927,7 +927,7 @@
   .login-right .graphic .flow-line {
     position: absolute;
     width: 2px;
-    background: linear-gradient(to bottom, transparent, var(--emerald-dim), transparent);
+    background: linear-gradient(to bottom, transparent, var(--accent-dim), transparent);
     animation: pulseLine 3s ease-in-out infinite;
   }
   .login-right .graphic .flow-line-1 { height: 200px; top: 50px; left: 80px; animation-delay: 0s; }
@@ -969,7 +969,7 @@
   <div class="login-left">
     <div class="login-logo">
       <span style="display:inline-flex;align-items:center;gap:10px;margin-bottom:20px;">
-        <span style="width:36px;height:36px;background:linear-gradient(135deg,#10b981,#059669);border-radius:10px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;color:#fff;">Ar</span>
+        <span style="width:36px;height:36px;background:linear-gradient(135deg,#eab308,#ca8a04);border-radius:10px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;color:#fff;">Ar</span>
         <span style="font-size:24px;">Ar<em>us</em></span>
       </span>
     </div>
@@ -985,14 +985,14 @@
       </div>
       <div class="flex items-center justify-between mb-4">
         <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-secondary);cursor:pointer;">
-          <input type="checkbox" checked style="accent-color:var(--emerald);"> Keep me signed in
+          <input type="checkbox" checked style="accent-color:var(--accent);"> Keep me signed in
         </label>
-        <a href="#" style="font-size:12px;color:var(--emerald);text-decoration:none;">Forgot password?</a>
+        <a href="#" style="font-size:12px;color:var(--accent);text-decoration:none;">Forgot password?</a>
       </div>
       <button type="submit" class="btn btn-primary w-full" style="justify-content:center;padding:10px;font-size:14px;">Sign in to Arus →</button>
     </form>
     <p style="font-size:12px;color:var(--text-tertiary);margin-top:16px;">
-      Don't have an account? <a href="#" style="color:var(--emerald);text-decoration:none;">Request access</a>
+      Don't have an account? <a href="#" style="color:var(--accent);text-decoration:none;">Request access</a>
     </p>
   </div>
   <div class="login-right">
@@ -1125,13 +1125,13 @@
           </div>
           <div class="card-body">
             <div style="display:flex;align-items:flex-end;gap:6px;height:100px;padding-top:10px;">
-              <div style="flex:1;background:var(--emerald-dim);border-radius:4px 4px 0 0;height:48px;position:relative;"><span style="position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--text-tertiary);">1.2M</span></div>
-              <div style="flex:1;background:var(--emerald-dim);border-radius:4px 4px 0 0;height:62px;position:relative;"><span style="position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--text-tertiary);">1.8M</span></div>
-              <div style="flex:1;background:var(--emerald-dim);border-radius:4px 4px 0 0;height:45px;position:relative;"><span style="position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--text-tertiary);">1.1M</span></div>
-              <div style="flex:1;background:var(--emerald);border-radius:4px 4px 0 0;height:85px;position:relative;"><span style="position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--text-tertiary);">2.4M</span></div>
-              <div style="flex:1;background:var(--emerald-dim);border-radius:4px 4px 0 0;height:55px;position:relative;"><span style="position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--text-tertiary);">1.5M</span></div>
-              <div style="flex:1;background:var(--emerald-dim);border-radius:4px 4px 0 0;height:70px;position:relative;"><span style="position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--text-tertiary);">1.9M</span></div>
-              <div style="flex:1;background:var(--emerald-dim);border-radius:4px 4px 0 0;height:40px;position:relative;"><span style="position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--text-tertiary);">0.9M</span></div>
+              <div style="flex:1;background:var(--accent-dim);border-radius:4px 4px 0 0;height:48px;position:relative;"><span style="position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--text-tertiary);">1.2M</span></div>
+              <div style="flex:1;background:var(--accent-dim);border-radius:4px 4px 0 0;height:62px;position:relative;"><span style="position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--text-tertiary);">1.8M</span></div>
+              <div style="flex:1;background:var(--accent-dim);border-radius:4px 4px 0 0;height:45px;position:relative;"><span style="position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--text-tertiary);">1.1M</span></div>
+              <div style="flex:1;background:var(--accent);border-radius:4px 4px 0 0;height:85px;position:relative;"><span style="position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--text-tertiary);">2.4M</span></div>
+              <div style="flex:1;background:var(--accent-dim);border-radius:4px 4px 0 0;height:55px;position:relative;"><span style="position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--text-tertiary);">1.5M</span></div>
+              <div style="flex:1;background:var(--accent-dim);border-radius:4px 4px 0 0;height:70px;position:relative;"><span style="position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--text-tertiary);">1.9M</span></div>
+              <div style="flex:1;background:var(--accent-dim);border-radius:4px 4px 0 0;height:40px;position:relative;"><span style="position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--text-tertiary);">0.9M</span></div>
             </div>
             <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-tertiary);margin-top:6px;">
               <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
@@ -1141,7 +1141,7 @@
         <div class="card">
           <div class="card-header">
             <h3>Recent Runs</h3>
-            <a href="#" style="font-size:12px;color:var(--emerald);text-decoration:none;" onclick="switchPage('pipeline-detail', null); return false;">View all →</a>
+            <a href="#" style="font-size:12px;color:var(--accent);text-decoration:none;" onclick="switchPage('pipeline-detail', null); return false;">View all →</a>
           </div>
           <div class="card-body pt-0">
             <div class="run-item" style="padding-left:0;padding-right:0;">
@@ -1309,15 +1309,15 @@
         <div class="table-wrap">
           <table>
             <thead>
-              <tr><th style="width:24px;"><input type="checkbox" style="accent-color:var(--emerald);"></th><th>Table</th><th>Rows</th><th>Sync Mode</th><th>Last Sync</th><th>Status</th></tr>
+              <tr><th style="width:24px;"><input type="checkbox" style="accent-color:var(--accent);"></th><th>Table</th><th>Rows</th><th>Sync Mode</th><th>Last Sync</th><th>Status</th></tr>
             </thead>
             <tbody>
-              <tr><td><input type="checkbox" checked style="accent-color:var(--emerald);"></td><td><span style="font-weight:500;color:var(--text-primary);">users</span></td><td class="font-mono">1,234,567</td><td><span class="tag green">Incremental</span></td><td class="text-sm">2 min ago</td><td><span class="status"><span class="dot green"></span><span class="label green">Synced</span></span></td></tr>
-              <tr><td><input type="checkbox" checked style="accent-color:var(--emerald);"></td><td><span style="font-weight:500;color:var(--text-primary);">transactions</span></td><td class="font-mono">8,945,234</td><td><span class="tag green">Incremental</span></td><td class="text-sm">2 min ago</td><td><span class="status"><span class="dot green"></span><span class="label green">Synced</span></span></td></tr>
-              <tr><td><input type="checkbox" checked style="accent-color:var(--emerald);"></td><td><span style="font-weight:500;color:var(--text-primary);">orders</span></td><td class="font-mono">456,789</td><td><span class="tag green">Incremental</span></td><td class="text-sm">5 min ago</td><td><span class="status"><span class="dot green"></span><span class="label green">Synced</span></span></td></tr>
-              <tr><td><input type="checkbox" checked style="accent-color:var(--emerald);"></td><td><span style="font-weight:500;color:var(--text-primary);">products</span></td><td class="font-mono">12,450</td><td><span class="tag purple">Full Refresh</span></td><td class="text-sm">1h ago</td><td><span class="status"><span class="dot green"></span><span class="label green">Synced</span></span></td></tr>
-              <tr><td><input type="checkbox" style="accent-color:var(--emerald);"></td><td><span style="font-weight:500;color:var(--text-primary);">audit_logs</span></td><td class="font-mono">45,678,901</td><td><span class="tag green">Incremental</span></td><td class="text-sm">—</td><td><span class="status"><span class="dot gray"></span><span class="label gray">Disabled</span></span></td></tr>
-              <tr><td><input type="checkbox" checked style="accent-color:var(--emerald);"></td><td><span style="font-weight:500;color:var(--text-primary);">sessions</span></td><td class="font-mono">234,567</td><td><span class="tag green">Incremental</span></td><td class="text-sm">2 min ago</td><td><span class="status"><span class="dot green"></span><span class="label green">Synced</span></span></td></tr>
+              <tr><td><input type="checkbox" checked style="accent-color:var(--accent);"></td><td><span style="font-weight:500;color:var(--text-primary);">users</span></td><td class="font-mono">1,234,567</td><td><span class="tag green">Incremental</span></td><td class="text-sm">2 min ago</td><td><span class="status"><span class="dot green"></span><span class="label green">Synced</span></span></td></tr>
+              <tr><td><input type="checkbox" checked style="accent-color:var(--accent);"></td><td><span style="font-weight:500;color:var(--text-primary);">transactions</span></td><td class="font-mono">8,945,234</td><td><span class="tag green">Incremental</span></td><td class="text-sm">2 min ago</td><td><span class="status"><span class="dot green"></span><span class="label green">Synced</span></span></td></tr>
+              <tr><td><input type="checkbox" checked style="accent-color:var(--accent);"></td><td><span style="font-weight:500;color:var(--text-primary);">orders</span></td><td class="font-mono">456,789</td><td><span class="tag green">Incremental</span></td><td class="text-sm">5 min ago</td><td><span class="status"><span class="dot green"></span><span class="label green">Synced</span></span></td></tr>
+              <tr><td><input type="checkbox" checked style="accent-color:var(--accent);"></td><td><span style="font-weight:500;color:var(--text-primary);">products</span></td><td class="font-mono">12,450</td><td><span class="tag purple">Full Refresh</span></td><td class="text-sm">1h ago</td><td><span class="status"><span class="dot green"></span><span class="label green">Synced</span></span></td></tr>
+              <tr><td><input type="checkbox" style="accent-color:var(--accent);"></td><td><span style="font-weight:500;color:var(--text-primary);">audit_logs</span></td><td class="font-mono">45,678,901</td><td><span class="tag green">Incremental</span></td><td class="text-sm">—</td><td><span class="status"><span class="dot gray"></span><span class="label gray">Disabled</span></span></td></tr>
+              <tr><td><input type="checkbox" checked style="accent-color:var(--accent);"></td><td><span style="font-weight:500;color:var(--text-primary);">sessions</span></td><td class="font-mono">234,567</td><td><span class="tag green">Incremental</span></td><td class="text-sm">2 min ago</td><td><span class="status"><span class="dot green"></span><span class="label green">Synced</span></span></td></tr>
             </tbody>
           </table>
         </div>
@@ -1458,7 +1458,7 @@
           Production PostgreSQL
         </div>
         <span class="pf-arrow">→</span>
-        <div class="pf-node" style="background:var(--emerald-dim);color:var(--emerald);">
+        <div class="pf-node" style="background:var(--accent-dim);color:var(--accent);">
           <span class="pf-icon">⚡</span>
           CDC Pipeline (22 tables)
         </div>
@@ -1540,7 +1540,7 @@
 
       <!-- Legend -->
       <div id="dag-legend" style="display:flex;gap:16px;padding:10px 16px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:16px;font-size:12px;">
-        <span class="inline-flex items-center gap-1"><span style="width:10px;height:10px;border-radius:50%;background:var(--emerald);box-shadow:0 0 6px rgba(16,185,129,0.4);"></span> Success</span>
+        <span class="inline-flex items-center gap-1"><span style="width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 0 6px rgba(234,179,8,0.4);"></span> Success</span>
         <span class="inline-flex items-center gap-1"><span style="width:10px;height:10px;border-radius:50%;background:var(--blue);box-shadow:0 0 6px rgba(59,130,246,0.4);"></span> Running</span>
         <span class="inline-flex items-center gap-1"><span style="width:10px;height:10px;border-radius:50%;background:var(--amber);box-shadow:0 0 6px rgba(245,158,11,0.4);"></span> Stale</span>
         <span class="inline-flex items-center gap-1"><span style="width:10px;height:10px;border-radius:50%;background:var(--red);box-shadow:0 0 6px rgba(239,68,68,0.4);"></span> Failed</span>
@@ -1604,17 +1604,17 @@
             <!-- SOURCE NODES (left column, x=100) -->
             <g>
               <rect x="60" y="56" width="80" height="28" rx="6" fill="#14171d" stroke="#23262e" stroke-width="1"/>
-              <circle cx="76" cy="70" r="5" fill="#10b981"/>
+              <circle cx="76" cy="70" r="5" fill="#eab308"/>
               <text x="88" y="74" fill="#e8eaed" font-size="11" font-family="Inter, sans-serif" font-weight="500">users</text>
             </g>
             <g>
               <rect x="60" y="116" width="80" height="28" rx="6" fill="#14171d" stroke="#23262e" stroke-width="1"/>
-              <circle cx="76" cy="130" r="5" fill="#10b981"/>
+              <circle cx="76" cy="130" r="5" fill="#eab308"/>
               <text x="88" y="134" fill="#e8eaed" font-size="11" font-family="Inter, sans-serif" font-weight="500">transactions</text>
             </g>
             <g>
               <rect x="60" y="176" width="80" height="28" rx="6" fill="#14171d" stroke="#23262e" stroke-width="1"/>
-              <circle cx="76" cy="190" r="5" fill="#10b981"/>
+              <circle cx="76" cy="190" r="5" fill="#eab308"/>
               <text x="88" y="194" fill="#e8eaed" font-size="11" font-family="Inter, sans-serif" font-weight="500">orders</text>
             </g>
             <g>
@@ -1624,7 +1624,7 @@
             </g>
             <g>
               <rect x="60" y="296" width="80" height="28" rx="6" fill="#14171d" stroke="#23262e" stroke-width="1"/>
-              <circle cx="76" cy="310" r="5" fill="#10b981"/>
+              <circle cx="76" cy="310" r="5" fill="#eab308"/>
               <text x="88" y="314" fill="#e8eaed" font-size="11" font-family="Inter, sans-serif" font-weight="500">sessions</text>
             </g>
             <g>
@@ -1635,23 +1635,23 @@
 
             <!-- STAGING NODES (middle, x=300) -->
             <g>
-              <rect x="260" y="56" width="80" height="28" rx="6" fill="#192d2c" stroke="#10b981" stroke-width="1"/>
+              <rect x="260" y="56" width="80" height="28" rx="6" fill="#192d2c" stroke="#eab308" stroke-width="1"/>
               <text x="276" y="74" fill="#6ee7b7" font-size="11" font-family="Inter, sans-serif" font-weight="500">stg_users</text>
             </g>
             <g>
-              <rect x="260" y="116" width="80" height="28" rx="6" fill="#192d2c" stroke="#10b981" stroke-width="1"/>
+              <rect x="260" y="116" width="80" height="28" rx="6" fill="#192d2c" stroke="#eab308" stroke-width="1"/>
               <text x="256" y="134" fill="#6ee7b7" font-size="11" font-family="Inter, sans-serif" font-weight="500">stg_transactions</text>
             </g>
             <g>
-              <rect x="260" y="176" width="80" height="28" rx="6" fill="#192d2c" stroke="#10b981" stroke-width="1"/>
+              <rect x="260" y="176" width="80" height="28" rx="6" fill="#192d2c" stroke="#eab308" stroke-width="1"/>
               <text x="268" y="194" fill="#6ee7b7" font-size="11" font-family="Inter, sans-serif" font-weight="500">stg_orders</text>
             </g>
             <g>
-              <rect x="260" y="236" width="80" height="28" rx="6" fill="#192d2c" stroke="#10b981" stroke-width="1"/>
+              <rect x="260" y="236" width="80" height="28" rx="6" fill="#192d2c" stroke="#eab308" stroke-width="1"/>
               <text x="260" y="254" fill="#6ee7b7" font-size="11" font-family="Inter, sans-serif" font-weight="500">stg_products</text>
             </g>
             <g>
-              <rect x="260" y="296" width="80" height="28" rx="6" fill="#192d2c" stroke="#10b981" stroke-width="1"/>
+              <rect x="260" y="296" width="80" height="28" rx="6" fill="#192d2c" stroke="#eab308" stroke-width="1"/>
               <text x="256" y="314" fill="#6ee7b7" font-size="11" font-family="Inter, sans-serif" font-weight="500">stg_sessions</text>
             </g>
 
@@ -1679,13 +1679,13 @@
 
             <!-- Pipeline dependency edges (cross-table) -->
             <!-- orders depends on users -->
-            <path d="M 140 188 Q 200 150 260 68" fill="none" stroke="#10b981" stroke-width="1.5" stroke-dasharray="4,2" opacity="0.4" marker-end="url(#arrow-green)"/>
+            <path d="M 140 188 Q 200 150 260 68" fill="none" stroke="#eab308" stroke-width="1.5" stroke-dasharray="4,2" opacity="0.4" marker-end="url(#arrow-green)"/>
             <!-- transactions depends on users -->
-            <path d="M 140 128 Q 200 95 260 128" fill="none" stroke="#10b981" stroke-width="1.5" stroke-dasharray="4,2" opacity="0.4" marker-end="url(#arrow-green)"/>
+            <path d="M 140 128 Q 200 95 260 128" fill="none" stroke="#eab308" stroke-width="1.5" stroke-dasharray="4,2" opacity="0.4" marker-end="url(#arrow-green)"/>
 
             <defs>
               <marker id="arrow-green" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-                <path d="M 0 0 L 6 3 L 0 6 Z" fill="#10b981" opacity="0.4"/>
+                <path d="M 0 0 L 6 3 L 0 6 Z" fill="#eab308" opacity="0.4"/>
               </marker>
             </defs>
           </svg>
@@ -1695,7 +1695,7 @@
             <div style="flex:1;padding:10px 14px;background:var(--bg-tertiary);border-radius:var(--radius-sm);border:1px solid var(--border);">
               <div style="font-size:11px;color:var(--text-tertiary);font-weight:500;">PROD-POSTGRES → DWH</div>
               <div style="display:flex;gap:16px;margin-top:6px;">
-                <span style="font-size:12px;"><strong style="color:var(--emerald);">22</strong> <span style="color:var(--text-tertiary);">assets</span></span>
+                <span style="font-size:12px;"><strong style="color:var(--accent);">22</strong> <span style="color:var(--text-tertiary);">assets</span></span>
                 <span style="font-size:12px;"><strong>1.2M</strong> <span style="color:var(--text-tertiary);">rows/h</span></span>
                 <span class="status"><span class="dot green"></span><span class="label green">Running</span></span>
               </div>
@@ -1703,7 +1703,7 @@
             <div style="flex:1;padding:10px 14px;background:var(--bg-tertiary);border-radius:var(--radius-sm);border:1px solid var(--border);">
               <div style="font-size:11px;color:var(--text-tertiary);font-weight:500;">PAYMENT → DWH</div>
               <div style="display:flex;gap:16px;margin-top:6px;">
-                <span style="font-size:12px;"><strong style="color:var(--emerald);">8</strong> <span style="color:var(--text-tertiary);">assets</span></span>
+                <span style="font-size:12px;"><strong style="color:var(--accent);">8</strong> <span style="color:var(--text-tertiary);">assets</span></span>
                 <span style="font-size:12px;"><strong>67K</strong> <span style="color:var(--text-tertiary);">rows/h</span></span>
                 <span class="status"><span class="dot green"></span><span class="label green">Running</span></span>
               </div>
@@ -1711,7 +1711,7 @@
             <div style="flex:1;padding:10px 14px;background:var(--bg-tertiary);border-radius:var(--radius-sm);border:1px solid var(--border);">
               <div style="font-size:11px;color:var(--text-tertiary);font-weight:500;">CLICKHOUSE → LAKE</div>
               <div style="display:flex;gap:16px;margin-top:6px;">
-                <span style="font-size:12px;"><strong style="color:var(--emerald);">12</strong> <span style="color:var(--text-tertiary);">assets</span></span>
+                <span style="font-size:12px;"><strong style="color:var(--accent);">12</strong> <span style="color:var(--text-tertiary);">assets</span></span>
                 <span style="font-size:12px;"><strong>430K</strong> <span style="color:var(--text-tertiary);">rows/h</span></span>
                 <span class="status"><span class="dot green"></span><span class="label green">Running</span></span>
               </div>
@@ -1911,7 +1911,7 @@
       </div>
       <div class="form-group">
         <label>Discovered Tables</label>
-        <div class="text-sm text-tertiary mb-4">22 tables found · <a href="#" style="color:var(--emerald);">rescan</a></div>
+        <div class="text-sm text-tertiary mb-4">22 tables found · <a href="#" style="color:var(--accent);">rescan</a></div>
         <div style="max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius-sm);">
           <div style="display:flex;flex-wrap:wrap;gap:6px;padding:12px;">
             <span class="checkbox-item checked"><input type="checkbox" checked> users</span>

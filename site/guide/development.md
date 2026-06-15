@@ -317,7 +317,7 @@ The frontend is a vanilla JS SPA with no build step:
 ### CSS Conventions
 
 - CSS variables for theming: `--bg-primary`, `--text-primary`, `--accent`, etc.
-- Dark theme: deep black `#0b0d11` background with emerald `#10b981` accents
+- Dark theme: deep black `#0b0d11` background with golden yellow `#eab308` accents
 - BEM-like class naming
 - Mobile-responsive via `mobile.css`
 
