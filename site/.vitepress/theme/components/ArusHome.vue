@@ -209,6 +209,8 @@ ARUS_ENCRYPTION_KEY=$(openssl rand -hex 32)
 ARUS_DB_USER=arus
 ARUS_DB_PASSWORD=arus_secret
 ARUS_DB_NAME=arus_warehouse
+ARUS_ADMIN_EMAIL=admin@arus.io
+ARUS_ADMIN_PASSWORD=admin123
 POSTGRES_USER=arus
 POSTGRES_PASSWORD=arus_secret
 POSTGRES_DB=arus_warehouse
@@ -232,7 +234,7 @@ docker run -d --network arus-net --name arus-console -p 8082:80 \
       </div>
       <p class="code-footnote">
         Your console will be at <a href="http://localhost:8082" style="color:#10b981">http://localhost:8082</a>
-        &mdash; login with <code>admin@arus.io</code> / <code>admin123</code>
+        &mdash; login with <code>ARUS_ADMIN_EMAIL</code> / <code>ARUS_ADMIN_PASSWORD</code> from your <code>.env</code> (defaults: <code>admin@arus.io</code> / <code>admin123</code>)
       </p>
     </section>
 
@@ -285,7 +287,7 @@ const copied = ref(null)
 
 function copyCode(idx) {
   const codes = [
-    'cat > .env << EOF\nARUS_JWT_SECRET=$(openssl rand -hex 32)\nARUS_ENCRYPTION_KEY=$(openssl rand -hex 32)\nARUS_DB_USER=arus\nARUS_DB_PASSWORD=arus_secret\nARUS_DB_NAME=arus_warehouse\nPOSTGRES_USER=arus\nPOSTGRES_PASSWORD=arus_secret\nPOSTGRES_DB=arus_warehouse\nEOF\n\ndocker network create arus-net\n\ndocker run -d --network arus-net --name arus-db \\\n  -v arus-db-data:/var/lib/postgresql/data \\\n  --env-file .env \\\n  postgres:15-alpine\n\ndocker run -d --network arus-net --name arus-api -p 8081:8081 \\\n  -e ARUS_DB_HOST=arus-db \\\n  --env-file .env \\\n  registry.edsuwarna.xyz/arus-api:main-latest\n\ndocker run -d --network arus-net --name arus-console -p 8082:80 \\\n  registry.edsuwarna.xyz/arus-console:main-latest',
+    'cat > .env << EOF\nARUS_JWT_SECRET=$(openssl rand -hex 32)\nARUS_ENCRYPTION_KEY=$(openssl rand -hex 32)\nARUS_DB_USER=arus\nARUS_DB_PASSWORD=arus_secret\nARUS_DB_NAME=arus_warehouse\nARUS_ADMIN_EMAIL=admin@arus.io\nARUS_ADMIN_PASSWORD=admin123\nPOSTGRES_USER=arus\nPOSTGRES_PASSWORD=arus_secret\nPOSTGRES_DB=arus_warehouse\nEOF\n\ndocker network create arus-net\n\ndocker run -d --network arus-net --name arus-db \\\n  -v arus-db-data:/var/lib/postgresql/data \\\n  --env-file .env \\\n  postgres:15-alpine\n\ndocker run -d --network arus-net --name arus-api -p 8081:8081 \\\n  -e ARUS_DB_HOST=arus-db \\\n  --env-file .env \\\n  registry.edsuwarna.xyz/arus-api:main-latest\n\ndocker run -d --network arus-net --name arus-console -p 8082:80 \\\n  registry.edsuwarna.xyz/arus-console:main-latest',
   ]
   navigator.clipboard.writeText(codes[idx])
   copied.value = idx

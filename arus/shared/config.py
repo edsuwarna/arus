@@ -30,6 +30,10 @@ class Settings(BaseSettings):
     telegram_bot_token: str = ""
     telegram_chat_id: str = ""
 
+    # Admin seed credentials
+    admin_email: str = "admin@arus.io"
+    admin_password: str = "admin123"
+
     tz: str = "UTC"
 
     model_config = {"env_prefix": "arus_"}

@@ -4,6 +4,7 @@ from fastapi.responses import JSONResponse
 import time
 import logging
 
+from arus.shared.config import settings
 from arus.shared.db.session import init_db, SessionLocal
 from arus.shared.exceptions import ArusError
 from arus.shared.crypto import encrypt_password
@@ -74,11 +75,11 @@ def _seed_admin():
     db = SessionLocal()
     try:
         repo = UserRepository(db)
-        existing = repo.get_by_email("admin@arus.io")
+        existing = repo.get_by_email(settings.admin_email)
         if not existing:
             service = AuthService(repo)
-            hashed = service.hash_password("admin123")
-            repo.create(email="admin@arus.io", name="Arus Admin", password_hash=hashed, role="admin")
+            hashed = service.hash_password(settings.admin_password)
+            repo.create(email=settings.admin_email, name="Arus Admin", password_hash=hashed, role="admin")
     finally:
         db.close()
 
