@@ -203,11 +203,23 @@
             <span>Copy &amp; paste in your terminal</span>
             <button class="copy-btn" @click="copyCode(0)">{{ copied === 0 ? 'Copied!' : 'Copy' }}</button>
           </div>
-          <pre><code>git clone https://github.com/edsuwarna/arus.git
-cd arus
-echo "ARUS_JWT_SECRET=$(openssl rand -hex 32)" > .env
-echo "ARUS_ENCRYPTION_KEY=$(openssl rand -hex 32)" >> .env
-docker compose up -d</code></pre>
+          <pre><code>docker network create arus-net
+
+docker run -d --network arus-net --name arus-db \
+  -e POSTGRES_USER=arus \
+  -e POSTGRES_PASSWORD=arus_secret \
+  -e POSTGRES_DB=arus_warehouse \
+  -v arus-db-data:/var/lib/postgresql/data \
+  postgres:15-alpine
+
+docker run -d --network arus-net --name arus-api -p 8081:8081 \
+  -e ARUS_DB_HOST=arus-db \
+  -e ARUS_JWT_SECRET=$(openssl rand -hex 32) \
+  -e ARUS_ENCRYPTION_KEY=$(openssl rand -hex 32) \
+  registry.edsuwarna.xyz/arus-api:main-latest
+
+docker run -d --network arus-net --name arus-console -p 8082:80 \
+  registry.edsuwarna.xyz/arus-console:main-latest</code></pre>
         </div>
       </div>
       <p class="code-footnote">
@@ -265,7 +277,7 @@ const copied = ref(null)
 
 function copyCode(idx) {
   const codes = [
-    'git clone https://github.com/edsuwarna/arus.git\ncd arus\necho "ARUS_JWT_SECRET=$(openssl rand -hex 32)" > .env\necho "ARUS_ENCRYPTION_KEY=$(openssl rand -hex 32)" >> .env\ndocker compose up -d',
+    'docker network create arus-net\n\ndocker run -d --network arus-net --name arus-db \\\n  -e POSTGRES_USER=arus \\\n  -e POSTGRES_PASSWORD=arus_secret \\\n  -e POSTGRES_DB=arus_warehouse \\\n  -v arus-db-data:/var/lib/postgresql/data \\\n  postgres:15-alpine\n\ndocker run -d --network arus-net --name arus-api -p 8081:8081 \\\n  -e ARUS_DB_HOST=arus-db \\\n  -e ARUS_JWT_SECRET=$(openssl rand -hex 32) \\\n  -e ARUS_ENCRYPTION_KEY=$(openssl rand -hex 32) \\\n  registry.edsuwarna.xyz/arus-api:main-latest\n\ndocker run -d --network arus-net --name arus-console -p 8082:80 \\\n  registry.edsuwarna.xyz/arus-console:main-latest',
   ]
   navigator.clipboard.writeText(codes[idx])
   copied.value = idx
