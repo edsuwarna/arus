@@ -83,6 +83,10 @@ export default defineConfig({
     },
   },
 
+  head: [
+    ['link', { rel: 'icon', href: '/arus-icon.svg', type: 'image/svg+xml' }],
+  ],
+
   // Override VitePress dark theme colors to match Arus branding
   appearance: true,
 })
