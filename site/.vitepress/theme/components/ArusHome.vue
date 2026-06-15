@@ -203,19 +203,27 @@
             <span>Copy &amp; paste in your terminal</span>
             <button class="copy-btn" @click="copyCode(0)">{{ copied === 0 ? 'Copied!' : 'Copy' }}</button>
           </div>
-          <pre><code>docker network create arus-net
+          <pre><code>cat > .env << EOF
+ARUS_JWT_SECRET=$(openssl rand -hex 32)
+ARUS_ENCRYPTION_KEY=$(openssl rand -hex 32)
+ARUS_DB_USER=arus
+ARUS_DB_PASSWORD=arus_secret
+ARUS_DB_NAME=arus_warehouse
+POSTGRES_USER=arus
+POSTGRES_PASSWORD=arus_secret
+POSTGRES_DB=arus_warehouse
+EOF
+
+docker network create arus-net
 
 docker run -d --network arus-net --name arus-db \
-  -e POSTGRES_USER=arus \
-  -e POSTGRES_PASSWORD=arus_secret \
-  -e POSTGRES_DB=arus_warehouse \
   -v arus-db-data:/var/lib/postgresql/data \
+  --env-file .env \
   postgres:15-alpine
 
 docker run -d --network arus-net --name arus-api -p 8081:8081 \
   -e ARUS_DB_HOST=arus-db \
-  -e ARUS_JWT_SECRET=$(openssl rand -hex 32) \
-  -e ARUS_ENCRYPTION_KEY=$(openssl rand -hex 32) \
+  --env-file .env \
   registry.edsuwarna.xyz/arus-api:main-latest
 
 docker run -d --network arus-net --name arus-console -p 8082:80 \
@@ -277,7 +285,7 @@ const copied = ref(null)
 
 function copyCode(idx) {
   const codes = [
-    'docker network create arus-net\n\ndocker run -d --network arus-net --name arus-db \\\n  -e POSTGRES_USER=arus \\\n  -e POSTGRES_PASSWORD=arus_secret \\\n  -e POSTGRES_DB=arus_warehouse \\\n  -v arus-db-data:/var/lib/postgresql/data \\\n  postgres:15-alpine\n\ndocker run -d --network arus-net --name arus-api -p 8081:8081 \\\n  -e ARUS_DB_HOST=arus-db \\\n  -e ARUS_JWT_SECRET=$(openssl rand -hex 32) \\\n  -e ARUS_ENCRYPTION_KEY=$(openssl rand -hex 32) \\\n  registry.edsuwarna.xyz/arus-api:main-latest\n\ndocker run -d --network arus-net --name arus-console -p 8082:80 \\\n  registry.edsuwarna.xyz/arus-console:main-latest',
+    'cat > .env << EOF\nARUS_JWT_SECRET=$(openssl rand -hex 32)\nARUS_ENCRYPTION_KEY=$(openssl rand -hex 32)\nARUS_DB_USER=arus\nARUS_DB_PASSWORD=arus_secret\nARUS_DB_NAME=arus_warehouse\nPOSTGRES_USER=arus\nPOSTGRES_PASSWORD=arus_secret\nPOSTGRES_DB=arus_warehouse\nEOF\n\ndocker network create arus-net\n\ndocker run -d --network arus-net --name arus-db \\\n  -v arus-db-data:/var/lib/postgresql/data \\\n  --env-file .env \\\n  postgres:15-alpine\n\ndocker run -d --network arus-net --name arus-api -p 8081:8081 \\\n  -e ARUS_DB_HOST=arus-db \\\n  --env-file .env \\\n  registry.edsuwarna.xyz/arus-api:main-latest\n\ndocker run -d --network arus-net --name arus-console -p 8082:80 \\\n  registry.edsuwarna.xyz/arus-console:main-latest',
   ]
   navigator.clipboard.writeText(codes[idx])
   copied.value = idx
