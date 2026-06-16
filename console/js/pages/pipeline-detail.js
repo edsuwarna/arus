@@ -12,6 +12,26 @@ async function renderPipelineDetailPage(container, pipelineId) {
 
     const runs = runsData || [];
 
+    window._pipelineTablesData = p.tables || [];
+    window._pipelineRunsData = runs;
+    window._pipelineId = pipelineId;
+    SortUtils.register('pipeline-tables-table', '_pipelineTablesData', [
+      t => (t.name || '').toLowerCase(),
+      t => (t.target_schema || '').toLowerCase(),
+      t => (t.sync_mode || '').toLowerCase(),
+      t => (t.load_mode || '').toLowerCase(),
+      t => (t.watermark_column || '').toLowerCase(),
+      t => (t.watermark_value || '').toLowerCase(),
+      t => t.enabled ? '0_enabled' : '1_disabled',
+    ], 'renderPipelineTablesTbody', 0);
+    SortUtils.register('pipeline-runs-table', '_pipelineRunsData', [
+      r => { const d = r.started_at; return d ? new Date(d).getTime() : 0; },
+      r => r.status || '',
+      r => r.duration_ms || 0,
+      r => (r.trigger_type || '').toLowerCase(),
+      r => (r.error_message || '').toLowerCase(),
+    ], 'renderPipelineRunsTbody', 0, 'desc');
+
     const statusColor = p.status === 'active' ? 'success' : p.status === 'paused' ? 'warning' : 'muted';
     const srcType = p.source?.type || '?';
     const destType = p.destination?.type || '?';
@@ -88,7 +108,7 @@ async function renderPipelineDetailPage(container, pipelineId) {
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
           </div>
           <div class="dmi-label">Schedule</div>
-          <div class="dmi-value" style="font-size:16px;font-family:'SF Mono',monospace;display:flex;align-items:center;gap:6px"><span>${scheduleLabel}</span> <button class="btn btn-ghost btn-xs" onclick="showEditScheduleModal('${pipelineId}','${p.schedule||''}')" title="Edit Schedule">✏</button></div>
+          <div class="dmi-value" style="font-size:16px;font-family:'SF Mono',monospace;display:flex;align-items:center;gap:6px"><span>${scheduleLabel}</span> <button style="font-size:20px;padding:0 6px;line-height:1" class="btn btn-ghost" onclick="showEditScheduleModal('${pipelineId}','${p.schedule||''}')" title="Edit Schedule">✏️</button></div>
         </div>
         <div class="detail-meta-item">
           <div class="dmi-icon blue">
@@ -106,76 +126,111 @@ async function renderPipelineDetailPage(container, pipelineId) {
         </div>
       </div>
 
-      <!-- Tables -->
-      <div class="card" style="margin-bottom:24px;">
-        <div class="card-header">
-          <h3>Tables (${p.tables?.length || 0})</h3>
-        </div>
-        ${p.tables?.length ? `
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr><th>Table</th><th>Target Schema</th><th>Sync Mode</th><th>Load Mode</th><th>Transform</th><th>Watermark</th><th>Watermark Value</th><th>Status</th></tr>
-            </thead>
-            <tbody>
-              ${p.tables.map(t => `
-              <tr>
-                <td><span style="font-weight:500;color:var(--text-primary);">${t.name}</span></td>
-                <td><span class="tag ${t.target_schema ? 'blue' : 'gray'}">${t.target_schema || '(default)'}</span></td>
-                <td><span class="tag ${t.sync_mode === 'incremental' ? 'green' : 'purple'}">${t.sync_mode || 'incremental'}</span></td>
-                <td><span class="tag ${t.load_mode === 'raw' ? 'blue' : 'green'}">${t.load_mode === 'raw' ? 'Raw → Normalize' : 'Direct'}</span></td>
-                <td>${renderTransformCell(t, pipelineId)}</td>
-                <td class="font-mono text-tertiary" style="font-size:12px;">${t.watermark_column || '-'}</td>
-                <td class="font-mono text-tertiary" style="font-size:12px;">${t.watermark_value || '-'}</td>
-                <td><span class="status"><span class="dot ${t.enabled ? 'green' : 'gray'}"></span><span class="label ${t.enabled ? 'green' : 'gray'}">${t.enabled ? 'Enabled' : 'Disabled'}</span></span></td>
-              </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </div>
-        ` : '<div class="card-body"><p style="color:var(--text-tertiary);font-size:13px;">No tables configured.</p></div>'}
-      </div>
-
-      <!-- Run History -->
+      <!-- Tables / Run History — Tabs -->
       <div class="card">
-        <div class="card-header">
-          <h3>Run History</h3>
-          <div class="flex items-center gap-2">
-            <span class="text-tertiary text-sm">Last 24 hours</span>
+        <div class="tab-bar">
+          <button class="tab-btn active" onclick="switchPipelineTab('tables')" data-tab="tables">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+            Tables (${p.tables?.length || 0})
+          </button>
+          <button class="tab-btn" onclick="switchPipelineTab('runs')" data-tab="runs">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Run History (${runs.length})
+          </button>
+        </div>
+        <div id="pipeline-tab-tables" class="tab-panel active">
+          ${p.tables?.length ? `
+          <div class="table-wrap">
+            <table id="pipeline-tables-table">
+              <thead>
+                <tr>
+                  ${SortUtils.th('pipeline-tables-table', 0, 'Table')}
+                  ${SortUtils.th('pipeline-tables-table', 1, 'Target Schema')}
+                  ${SortUtils.th('pipeline-tables-table', 2, 'Sync Mode')}
+                  ${SortUtils.th('pipeline-tables-table', 3, 'Load Mode')}
+                  <th>Transform</th>
+                  ${SortUtils.th('pipeline-tables-table', 4, 'Watermark')}
+                  ${SortUtils.th('pipeline-tables-table', 5, 'Watermark Value')}
+                  ${SortUtils.th('pipeline-tables-table', 6, 'Status')}
+                </tr>
+              </thead>
+              <tbody id="pipeline-tables-tbody">
+              </tbody>
+            </table>
+          </div>
+          ` : '<div class="card-body"><p style="color:var(--text-tertiary);font-size:13px;">No tables configured.</p></div>'}
+        </div>
+        <div id="pipeline-tab-runs" class="tab-panel">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-bottom:1px solid var(--border);">
+            <span style="color:var(--text-tertiary);font-size:12px;">Last 24 hours</span>
             <button class="btn btn-ghost btn-xs" onclick="App.render()">⟳ Refresh</button>
           </div>
+          ${runs.length ? `
+          <div class="table-wrap">
+            <table id="pipeline-runs-table">
+              <thead>
+                <tr>
+                  ${SortUtils.th('pipeline-runs-table', 0, 'Time')}
+                  ${SortUtils.th('pipeline-runs-table', 1, 'Status')}
+                  ${SortUtils.th('pipeline-runs-table', 2, 'Duration')}
+                  ${SortUtils.th('pipeline-runs-table', 3, 'Trigger')}
+                  ${SortUtils.th('pipeline-runs-table', 4, 'Error')}
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="pipeline-runs-tbody">
+              </tbody>
+            </table>
+          </div>
+          ` : '<div class="card-body"><p style="color:var(--text-tertiary);font-size:13px;">No runs yet.</p></div>'}
         </div>
-        ${runs.length ? `
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr><th>Time</th><th>Status</th><th>Duration</th><th>Trigger</th><th>Error</th><th></th></tr>
-            </thead>
-            <tbody>
-              ${runs.map(r => `
-              <tr>
-                <td style="white-space:nowrap;color:var(--text-tertiary);font-size:12px">${formatTime(r.started_at)}</td>
-                <td><span class="status"><span class="dot ${r.status === 'success' ? 'green' : r.status === 'failed' ? 'red' : 'blue'}"></span><span class="label ${r.status === 'success' ? 'green' : r.status === 'failed' ? 'red' : 'blue'}">${r.status}</span></span></td>
-                <td style="color:var(--text-secondary)">${formatDuration(r.duration_ms)}</td>
-                <td style="color:var(--text-tertiary);font-size:12px">${r.trigger_type || '-'}</td>
-                <td style="color:var(--red);font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis">${r.error_message || '-'}</td>
-                <td>
-                  <button class="btn btn-ghost btn-xs" onclick="showRunLogs('${r.id}')">Logs</button>
-                  ${r.status === 'running' || r.status === 'pending' ? `<button class="btn btn-ghost btn-xs" onclick="cancelRun('${r.id}','${pipelineId}')" style="color:var(--red)">Cancel</button>` : ''}
-                  ${r.status === 'failed' ? `<button class="btn btn-ghost btn-xs" onclick="retryRun('${r.id}','${pipelineId}')" style="color:var(--emerald)">Retry</button>` : ''}
-                </td>
-              </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </div>
-        ` : '<div class="card-body"><p style="color:var(--text-tertiary);font-size:13px;">No runs yet.</p></div>'}
       </div>
     `;
+    // Render sortable tbody
+    renderPipelineTablesTbody();
+    renderPipelineRunsTbody();
+    SortUtils.reapply('pipeline-tables-table');
+    SortUtils.reapply('pipeline-runs-table');
   } catch (err) {
     container.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><h3>Error</h3><p>${err.message}</p></div>`;
   }
 }
+window.renderPipelineTablesTbody = function() {
+  const data = window._pipelineTablesData || [];
+  const tbody = document.getElementById('pipeline-tables-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = data.map(t => `
+    <tr>
+      <td><span style="font-weight:500;color:var(--text-primary);">${t.name}</span></td>
+      <td><span class="tag ${t.target_schema ? 'blue' : 'gray'}">${t.target_schema || '(default)'}</span></td>
+      <td><span class="tag ${t.sync_mode === 'incremental' ? 'green' : 'purple'}">${t.sync_mode || 'incremental'}</span></td>
+      <td><span class="tag ${t.load_mode === 'raw' ? 'blue' : 'green'}">${t.load_mode === 'raw' ? 'Raw → Normalize' : 'Direct'}</span></td>
+      <td>${renderTransformCell(t, window._pipelineId)}</td>
+      <td class="font-mono text-tertiary" style="font-size:12px;">${t.watermark_column || '-'}</td>
+      <td class="font-mono text-tertiary" style="font-size:12px;">${t.watermark_value || '-'}</td>
+      <td><span class="status"><span class="dot ${t.enabled ? 'green' : 'gray'}"></span><span class="label ${t.enabled ? 'green' : 'gray'}">${t.enabled ? 'Enabled' : 'Disabled'}</span></span></td>
+    </tr>
+  `).join('');
+};
+window.renderPipelineRunsTbody = function() {
+  const data = window._pipelineRunsData || [];
+  const tbody = document.getElementById('pipeline-runs-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = data.map(r => `
+    <tr>
+      <td style="white-space:nowrap;color:var(--text-tertiary);font-size:12px">${formatTime(r.started_at)}</td>
+      <td><span class="status"><span class="dot ${r.status === 'success' ? 'green' : r.status === 'failed' ? 'red' : 'blue'}"></span><span class="label ${r.status === 'success' ? 'green' : r.status === 'failed' ? 'red' : 'blue'}">${r.status}</span></span></td>
+      <td style="color:var(--text-secondary)">${formatDuration(r.duration_ms)}</td>
+      <td style="color:var(--text-tertiary);font-size:12px">${r.trigger_type || '-'}</td>
+      <td style="color:var(--red);font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis">${r.error_message || '-'}</td>
+      <td>
+        <button class="btn btn-ghost btn-xs" onclick="showRunLogs('${r.id}')">Logs</button>
+        ${r.status === 'running' || r.status === 'pending' ? `<button class="btn btn-ghost btn-xs" onclick="cancelRun('${r.id}','${window._pipelineId}')\" style=\"color:var(--red)\">Cancel</button>` : ''}
+        ${r.status === 'failed' ? `<button class="btn btn-ghost btn-xs" onclick="retryRun('${r.id}','${window._pipelineId}')\" style=\"color:var(--emerald)\">Retry</button>` : ''}
+      </td>
+    </tr>
+  `).join('');
+};
 
 async function triggerDetailPipeline(id) {
   try {
@@ -1044,3 +1099,11 @@ async function handleEditConfigSave(event, pipelineId) {
   }
   return false;
 }
+
+/* ===== Tab Switcher ===== */
+function switchPipelineTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('pipeline-tab-' + tab).classList.add('active');
+}
+window.switchPipelineTab = switchPipelineTab;

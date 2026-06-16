@@ -19,13 +19,15 @@ async def list_runs(
     pipeline_id: str,
     limit: int = Query(20, le=100),
     offset: int = Query(0, ge=0),
+    asset_name: str = Query(None, description="Filter runs by asset/table name"),
     repo: RunLogRepository = Depends(get_run_log_repo),
     user: dict = Depends(get_current_user),
 ):
-    runs = repo.get_runs(pipeline_id, limit=limit, offset=offset)
-    return {
-        "status": "ok",
-        "data": [
+    if asset_name:
+        runs = repo.get_runs_by_asset(pipeline_id, asset_name, limit=limit, offset=offset)
+    else:
+        rows = repo.get_runs(pipeline_id, limit=limit, offset=offset)
+        runs = [
             {
                 "id": str(r.id),
                 "pipeline_id": str(r.pipeline_id),
@@ -34,10 +36,14 @@ async def list_runs(
                 "finished_at": r.finished_at,
                 "duration_ms": r.duration_ms,
                 "trigger_type": r.trigger_type,
+                "rows_synced": r.rows_synced or 0,
                 "error_message": r.error_message,
             }
-            for r in runs
-        ],
+            for r in rows
+        ]
+    return {
+        "status": "ok",
+        "data": runs,
     }
 
 

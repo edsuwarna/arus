@@ -34,6 +34,16 @@ async function renderDashboardPage(container) {
       sourcesList = resp?.sources || [];
     } catch(e) {}
 
+    window._sourcesOverviewData = sourcesList;
+    SortUtils.register('sources-overview-table', '_sourcesOverviewData', [
+      src => (src.name || '').toLowerCase(),
+      src => (src.type || '').toLowerCase(),
+      src => src.table_count || src.enabled_table_count || 0,
+      src => src.status || '',
+      src => { const d = src.last_tested || src.last_synced; return d ? new Date(d).getTime() : 0; },
+      src => src.rows_per_hour || 0,
+    ], 'renderSourcesTbody', 0);
+
     container.innerHTML = `
       <div class="page-header">
         <div>
@@ -109,17 +119,17 @@ async function renderDashboardPage(container) {
           <span class="text-tertiary text-sm">Auto-discovered: ${totalTables} tables across ${totalSources} sources</span>
         </div>
         <div class="table-wrap">
-          <table>
+          <table id="sources-overview-table">
             <thead>
-              <tr><th>Source</th><th>Type</th><th>Tables</th><th>Status</th><th>Last Sync</th><th></th></tr>
+              <tr>${SortUtils.th('sources-overview-table', 0, 'Source')}${SortUtils.th('sources-overview-table', 1, 'Type')}${SortUtils.th('sources-overview-table', 2, 'Tables')}${SortUtils.th('sources-overview-table', 3, 'Status')}${SortUtils.th('sources-overview-table', 4, 'Last Sync')}${SortUtils.th('sources-overview-table', 5, 'Rows/Hr')}<th></th></tr>
             </thead>
-            <tbody>
-              ${renderSourcesTable(sourcesList)}
-            </tbody>
+            <tbody></tbody>
           </table>
         </div>
       </div>
     `;
+    renderSourcesTbody();
+    SortUtils.reapply('sources-overview-table');
   } catch (err) {
     App.renderError(container, err.message, () => App.render());
   }
@@ -127,6 +137,13 @@ async function renderDashboardPage(container) {
   // Update sidebar badges
   if (window.App?.updateBadges) App.updateBadges();
 }
+
+window.renderSourcesTbody = function() {
+  const data = window._sourcesOverviewData || [];
+  const tbody = document.querySelector('#sources-overview-table tbody');
+  if (!tbody) return;
+  tbody.innerHTML = renderSourcesTable(data);
+};
 
 function chartDayLabel(data, idx) {
   if (!data || !data[idx]) return ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][idx] || '';

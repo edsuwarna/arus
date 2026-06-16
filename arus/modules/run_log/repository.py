@@ -32,6 +32,39 @@ class RunLogRepository:
             .all()
         )
 
+    def get_runs_by_asset(
+        self, pipeline_id: str, asset_name: str, limit: int = 20, offset: int = 0
+    ) -> list[dict]:
+        """Get runs for a pipeline, joined with RunTableStat filtered by asset_name.
+        Returns per-asset metrics instead of pipeline-level totals."""
+        rows = (
+            self.db.query(Run, RunTableStat)
+            .join(RunTableStat, RunTableStat.run_id == Run.id)
+            .filter(Run.pipeline_id == pipeline_id)
+            .filter(RunTableStat.table_name == asset_name)
+            .order_by(desc(Run.started_at))
+            .offset(offset)
+            .limit(limit)
+            .all()
+        )
+        return [
+            {
+                "id": str(run.Run.id),
+                "pipeline_id": str(run.Run.pipeline_id),
+                "status": run.Run.status,
+                "started_at": run.Run.started_at,
+                "finished_at": run.Run.finished_at,
+                "trigger_type": run.Run.trigger_type,
+                "rows_synced": (
+                    (run.RunTableStat.rows_loaded_analytics or 0)
+                    + (run.RunTableStat.rows_loaded_raw or 0)
+                ),
+                "duration_ms": run.RunTableStat.duration_ms or run.Run.duration_ms,
+                "error_message": run.RunTableStat.error_message or run.Run.error_message,
+            }
+            for run in rows
+        ]
+
     def get_recent_runs(self, limit: int = 10) -> list[Run]:
         return self.db.query(Run).order_by(desc(Run.started_at)).limit(limit).all()
 

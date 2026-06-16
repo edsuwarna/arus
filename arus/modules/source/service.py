@@ -2,6 +2,7 @@ from arus.shared.exceptions import NotFoundError, DiscoveryFailedError
 from arus.shared.crypto import decrypt_password
 from arus.modules.connector.registry import get_source
 from arus.modules.source.repository import SourceRepository
+from sqlalchemy import func
 
 
 class SourceService:
@@ -63,8 +64,15 @@ class SourceService:
                     "watermark_column": sync.watermark_column,
                     "enabled": True,
                 })
+            # Update source metadata after successful discovery
+            source.table_count = len(tables)
+            source.last_tested = func.now()
+            source.status = "connected"
+            self.repo.db.commit()
             return result
         except Exception as e:
+            source.status = "error"
+            self.repo.db.commit()
             raise DiscoveryFailedError(f"Discovery failed: {str(e)}")
 
     def discover_schemas(self, source_id: str) -> list[str]:

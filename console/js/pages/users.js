@@ -5,6 +5,14 @@ async function renderUsersPage(container) {
   try {
     const resp = await API.get('/auth/users');
     const users = resp?.users || [];
+    window._usersData = users;
+    SortUtils.register('users-table', '_usersData', [
+      u => (u.name || u.email || '').toLowerCase(),
+      u => (u.email || '').toLowerCase(),
+      u => u.role || '',
+      u => u.is_active ? '0_active' : '1_disabled',
+      u => { const d = u.last_login; return d ? new Date(d).getTime() : 0; },
+    ], 'renderUsersTbody', 0);
     const adminCount = users.filter(u => u.role === 'admin').length;
     const editorCount = users.filter(u => u.role === 'editor').length;
     const activeCount = users.filter(u => u.is_active).length;
@@ -22,31 +30,35 @@ async function renderUsersPage(container) {
 
       <div class="card">
         <div class="table-wrap">
-          <table>
+          <table id="users-table">
             <thead>
               <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Status</th>
-                <th>Last Login</th>
+                ${SortUtils.th('users-table', 0, 'Name')}
+                ${SortUtils.th('users-table', 1, 'Email')}
+                ${SortUtils.th('users-table', 2, 'Role')}
+                ${SortUtils.th('users-table', 3, 'Status')}
+                ${SortUtils.th('users-table', 4, 'Last Login')}
                 <th style="width:120px;">Actions</th>
               </tr>
             </thead>
-            <tbody>
-              ${users.length > 0
-                ? users.map(u => renderUserRow(u)).join('')
-                : `<tr><td colspan="6" style="text-align:center;color:var(--text-tertiary);padding:40px;">No users yet</td></tr>`
-              }
-            </tbody>
+            <tbody></tbody>
           </table>
         </div>
       </div>
     `;
+    renderUsersTbody();
+    SortUtils.reapply("users-table");
   } catch (err) {
     container.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><h3>Error loading users</h3><p>${err.message}</p></div>`;
   }
 }
+
+window.renderUsersTbody = function() {
+  const data = window._usersData || [];
+  const tbody = document.querySelector('#users-table tbody');
+  if (!tbody) return;
+  tbody.innerHTML = data.length ? data.map(u => renderUserRow(u)).join('') : '<tr><td colspan="6" style="text-align:center;color:var(--text-tertiary);padding:40px;">No users yet</td></tr>';
+};
 
 function renderUserRow(u) {
   const roleTag = u.role === 'admin' ? 'green' : u.role === 'editor' ? 'purple' : 'blue';

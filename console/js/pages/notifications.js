@@ -6,6 +6,13 @@ async function renderNotificationsPage(container) {
     const resp = await API.get('/notifications/targets');
     const targets = resp || [];
     const targetList = Array.isArray(targets) ? targets : [];
+    window._notifTargetsData = targetList;
+    SortUtils.register('notif-targets-table', '_notifTargetsData', [
+      t => (t.name || '').toLowerCase(),
+      t => (t.type || '').toLowerCase(),
+      t => t.is_active ? '0_active' : '1_disabled',
+      t => { const d = t.created_at; return d ? new Date(d).getTime() : 0; },
+    ], 'renderNotifTbody', 0);
 
     container.innerHTML = `
       <div class="page-header">
@@ -26,12 +33,36 @@ async function renderNotificationsPage(container) {
         </div>
         ${targetList.length > 0 ? `
         <div class="table-wrap">
-          <table>
+          <table id="notif-targets-table">
             <thead>
-              <tr><th>Name</th><th>Type</th><th>Status</th><th>Created</th><th></th></tr>
+              <tr>${SortUtils.th('notif-targets-table', 0, 'Name')}${SortUtils.th('notif-targets-table', 1, 'Type')}${SortUtils.th('notif-targets-table', 2, 'Status')}${SortUtils.th('notif-targets-table', 3, 'Created')}<th></th></tr>
             </thead>
-            <tbody>
-              ${targetList.map(t => `
+            <tbody></tbody>
+          </table>
+        </div>
+        ` : `
+        <div class="card-body">
+          <div class="empty-state" style="padding:40px">
+            <div class="empty-icon">🔔</div>
+            <h3>No notification targets configured</h3>
+            <p style="color:var(--text-tertiary);font-size:13px;margin-bottom:16px">
+              Add Telegram, Discord, or Slack targets to get alerts when pipelines fail, dead letters appear, or schema drifts detected.
+            </p>
+            <button class="btn btn-primary" onclick="showAddNotifTargetModal()">+ Add Your First Target</button>
+          </div>
+        </div>
+        `}
+      </div>
+    `;
+    renderNotifTbody();
+    SortUtils.reapply("notif-targets-table");
+  } catch (err) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><h3>Error</h3><p>${err.message}</p></div>`;
+  }
+}
+
+function renderNotifRow(t) {
+  return `
               <tr>
                 <td><span style="font-weight:500;color:var(--text-primary);">${t.name}</span></td>
                 <td><span class="tag ${t.type === 'telegram' ? 'blue' : t.type === 'discord' ? 'purple' : 'green'}">${getNotifIcon(t.type)} ${t.type}</span></td>
@@ -50,29 +81,15 @@ async function renderNotificationsPage(container) {
                   <button class="btn btn-ghost btn-xs" onclick="editNotifTarget('${t.id}')">✏</button>
                   ${App.canWrite() ? `<button class="btn btn-ghost btn-xs" style="color:var(--red)" onclick="deleteNotifTarget('${t.id}')">✕</button>` : ''}
                 </td>
-              </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </div>
-        ` : `
-        <div class="card-body">
-          <div class="empty-state" style="padding:40px">
-            <div class="empty-icon">🔔</div>
-            <h3>No notification targets configured</h3>
-            <p style="color:var(--text-tertiary);font-size:13px;margin-bottom:16px">
-              Add Telegram, Discord, or Slack targets to get alerts when pipelines fail, dead letters appear, or schema drifts detected.
-            </p>
-            <button class="btn btn-primary" onclick="showAddNotifTargetModal()">+ Add Your First Target</button>
-          </div>
-        </div>
-        `}
-      </div>
-    `;
-  } catch (err) {
-    container.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><h3>Error</h3><p>${err.message}</p></div>`;
-  }
+              </tr>`;
 }
+
+window.renderNotifTbody = function() {
+  const data = window._notifTargetsData || [];
+  const tbody = document.querySelector('#notif-targets-table tbody');
+  if (!tbody) return;
+  tbody.innerHTML = data.length ? data.map(t => renderNotifRow(t)).join('') : '<tr><td colspan="5" style="text-align:center;color:var(--text-tertiary);padding:20px;">No notification targets configured.</td></tr>';
+};
 
 function getNotifIcon(type) {
   const icons = {

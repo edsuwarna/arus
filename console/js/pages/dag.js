@@ -1,9 +1,13 @@
 /* DAG View Page — asset graph (Source → Raw → Target or Source → Target) */
+function escHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
 let dagState = { panX: 0, panY: 0, zoom: 1 };
 const DAG_LAYERS = ['source', 'raw', 'target'];
 const DAG_LABELS = { source: 'SOURCE LAYER', raw: 'RAW LAYER', target: 'TARGET LAYER' };
-const LAYER_COLORS = { source: '#3b82f6', raw: '#f59e0b', target: '#eab308' };
-const LAYER_FILLS = { source: 'rgba(59,130,246,0.08)', raw: 'rgba(245,158,11,0.08)', target: 'rgba(234,179,8,0.08)' };
+const LAYER_COLORS = { source: '#3b82f6', raw: '#f59e0b', target: '#8b5cf6' };
+const LAYER_FILLS = { source: 'rgba(59,130,246,0.08)', raw: 'rgba(245,158,11,0.08)', target: 'rgba(139,92,246,0.08)' };
 
 async function renderDagPage(container) {
     container.innerHTML = `<div class="loading"><div class="spinner"></div><p>Loading pipelines...</p></div>`;
@@ -35,10 +39,10 @@ async function renderDagPage(container) {
                 <span style="font-size:11px;color:var(--text-tertiary);margin-right:4px">LAYERS:</span>
                 <span class="legend-item"><span class="legend-bar" style="background:#3b82f6"></span> Source</span>
                 <span class="legend-item"><span class="legend-bar" style="background:#f59e0b"></span> Raw</span>
-                <span class="legend-item"><span class="legend-bar" style="background:#eab308"></span> Target</span>
+                <span class="legend-item"><span class="legend-bar" style="background:#22c55e"></span> Target</span>
                 <span style="width:1px;height:16px;background:var(--border);margin:0 8px"></span>
                 <span style="font-size:11px;color:var(--text-tertiary);margin-right:4px">STATUS:</span>
-                <span class="legend-item"><span class="legend-dot" style="background:#eab308"></span> Success</span>
+                <span class="legend-item"><span class="legend-dot" style="background:#22c55e"></span> Success</span>
                 <span class="legend-item"><span class="legend-dot" style="background:#3b82f6"></span> Running</span>
                 <span class="legend-item"><span class="legend-dot" style="background:#f59e0b"></span> Stale</span>
                 <span class="legend-item"><span class="legend-dot" style="background:#ef4444"></span> Failed</span>
@@ -178,9 +182,9 @@ function renderDagGraph(pipelines) {
     });
 
     const statusColors = {
-        success: '#eab308', failed: '#ef4444', running: '#3b82f6',
+        success: '#22c55e', failed: '#ef4444', running: '#3b82f6',
         stale: '#f59e0b', not_started: '#6b7280', paused: '#f59e0b',
-        active: '#eab308', inactive: '#6b7280',
+        active: '#22c55e', inactive: '#6b7280',
     };
 
     const layerLabels = {
@@ -315,15 +319,17 @@ async function dagNodeClick(nodeKey) {
     const panel = document.getElementById('dag-detail-panel');
     if (!panel) return;
 
-    // Composite key format: name@layer — extract actual asset name
-    const actualName = nodeKey.includes('@') ? nodeKey.slice(0, nodeKey.lastIndexOf('@')) : nodeKey;
+    // Composite key format: name@layer — extract both
+    const atIdx = nodeKey.lastIndexOf('@');
+    const actualName = atIdx >= 0 ? nodeKey.slice(0, atIdx) : nodeKey;
+    const nodeLayer = atIdx >= 0 ? nodeKey.slice(atIdx + 1) : null;
 
-    // Find which pipeline this node belongs to
+    // Find matching asset by name AND layer
     const pipelines = dagState.allPipelines || [];
     let pipeline;
     let assetInfo;
     for (const p of pipelines) {
-        const a = (p.assets || []).find(x => x.name === actualName);
+        const a = (p.assets || []).find(x => x.name === actualName && x.layer === nodeLayer);
         if (a) { pipeline = p; assetInfo = a; break; }
     }
 
@@ -332,34 +338,95 @@ async function dagNodeClick(nodeKey) {
         return;
     }
 
+    const layer = assetInfo?.layer || 'source';
+
     // Get runs for this pipeline
     try {
-        const runsData = await API.get('/pipelines/' + pipeline.id + '/runs?limit=10');
+        const runsData = await API.get('/pipelines/' + pipeline.id + '/runs?limit=10&asset_name=' + encodeURIComponent(actualName));
         const runs = Array.isArray(runsData) ? runsData : [];
 
-        const layer = assetInfo?.layer || 'source';
-        const upstream = (pipeline.edges || []).filter(e => e.to === actualName).map(e => e.from);
-        const downstream = (pipeline.edges || []).filter(e => e.from === actualName).map(e => e.to);
+        // Filter upstream/downstream based on layer to avoid cross-layer name collisions
+        // (same asset name can appear in both source and target layers)
+        let upstream, downstream;
+        if (layer === 'source') {
+            // Source is upstream-most — no incoming edges
+            upstream = [];
+            downstream = (pipeline.edges || []).filter(e => e.from === actualName).map(e => e.to);
+        } else if (layer === 'target') {
+            // Target is downstream-most — no outgoing edges
+            upstream = (pipeline.edges || []).filter(e => e.to === actualName).map(e => e.from);
+            downstream = [];
+        } else {
+            // Raw layer — data flows through in both directions
+            upstream = (pipeline.edges || []).filter(e => e.to === actualName).map(e => e.from);
+            downstream = (pipeline.edges || []).filter(e => e.from === actualName).map(e => e.to);
+        }
+
+        // --- Layer-specific detail info ---
+        let layerMetaHTML = '';
+        if (layer === 'source') {
+            layerMetaHTML = `
+                <div class="detail-metrics">
+                    ${assetInfo.source_type ? `<div class="metric-chip"><span class="metric-label">Source Type</span><span class="metric-value">${escHtml(assetInfo.source_type)}</span></div>` : ''}
+                    ${assetInfo.source_host ? `<div class="metric-chip"><span class="metric-label">Host</span><span class="metric-value">${escHtml(assetInfo.source_host)}:${assetInfo.source_port || ''}</span></div>` : ''}
+                    ${assetInfo.source_database ? `<div class="metric-chip"><span class="metric-label">Database</span><span class="metric-value">${escHtml(assetInfo.source_database)}</span></div>` : ''}
+                    ${assetInfo.schema ? `<div class="metric-chip"><span class="metric-label">Schema</span><span class="metric-value">${escHtml(assetInfo.schema)}</span></div>` : ''}
+                    <div class="metric-chip"><span class="metric-label">Table</span><span class="metric-value">${escHtml(assetInfo.table || actualName)}</span></div>
+                    <div class="metric-chip"><span class="metric-label">Sync Mode</span><span class="metric-value">${assetInfo.sync_mode || 'incremental'}</span></div>
+                    ${assetInfo.rows > 0 ? `<div class="metric-chip"><span class="metric-label">Extracted</span><span class="metric-value">${assetInfo.rows.toLocaleString()} rows</span></div>` : ''}
+                    ${assetInfo.duration_ms > 0 ? `<div class="metric-chip"><span class="metric-label">Duration</span><span class="metric-value">${formatDuration(assetInfo.duration_ms)}</span></div>` : ''}
+                    ${assetInfo.error ? `<div class="metric-chip error"><span class="metric-label">Error</span><span class="metric-value">${escHtml(assetInfo.error)}</span></div>` : ''}
+                </div>
+            `;
+        } else if (layer === 'raw') {
+            layerMetaHTML = `
+                <div class="detail-metrics">
+                    <div class="metric-chip"><span class="metric-label">Raw Table</span><span class="metric-value" style="font-family:monospace">${escHtml(assetInfo.raw_table || actualName)}</span></div>
+                    ${assetInfo.raw_schema ? `<div class="metric-chip"><span class="metric-label">Raw Schema</span><span class="metric-value">${escHtml(assetInfo.raw_schema)}</span></div>` : ''}
+                    ${assetInfo.table ? `<div class="metric-chip"><span class="metric-label">Source Table</span><span class="metric-value">${escHtml(assetInfo.table)}</span></div>` : ''}
+                    <div class="metric-chip"><span class="metric-label">Sync Mode</span><span class="metric-value">${assetInfo.sync_mode || 'incremental'}</span></div>
+                    ${assetInfo.rows > 0 ? `<div class="metric-chip"><span class="metric-label">Loaded to Raw</span><span class="metric-value">${assetInfo.rows.toLocaleString()} rows</span></div>` : ''}
+                    ${assetInfo.duration_ms > 0 ? `<div class="metric-chip"><span class="metric-label">Duration</span><span class="metric-value">${formatDuration(assetInfo.duration_ms)}</span></div>` : ''}
+                    ${assetInfo.error ? `<div class="metric-chip error"><span class="metric-label">Error</span><span class="metric-value">${escHtml(assetInfo.error)}</span></div>` : ''}
+                </div>
+            `;
+        } else if (layer === 'target') {
+            layerMetaHTML = `
+                <div class="detail-metrics">
+                    <div class="metric-chip"><span class="metric-label">Target Table</span><span class="metric-value">${escHtml(assetInfo.target_table || actualName)}</span></div>
+                    ${assetInfo.target_schema ? `<div class="metric-chip"><span class="metric-label">Target Schema</span><span class="metric-value">${escHtml(assetInfo.target_schema)}</span></div>` : ''}
+                    ${assetInfo.schema ? `<div class="metric-chip"><span class="metric-label">Source Schema</span><span class="metric-value">${escHtml(assetInfo.schema)}</span></div>` : ''}
+                    <div class="metric-chip"><span class="metric-label">Sync Mode</span><span class="metric-value">${assetInfo.sync_mode || 'incremental'}</span></div>
+                    ${assetInfo.rows > 0 ? `<div class="metric-chip"><span class="metric-label">Loaded</span><span class="metric-value">${assetInfo.rows.toLocaleString()} rows</span></div>` : ''}
+                    ${assetInfo.duration_ms > 0 ? `<div class="metric-chip"><span class="metric-label">Duration</span><span class="metric-value">${formatDuration(assetInfo.duration_ms)}</span></div>` : ''}
+                    ${assetInfo.error ? `<div class="metric-chip error"><span class="metric-label">Error</span><span class="metric-value">${escHtml(assetInfo.error)}</span></div>` : ''}
+                </div>
+            `;
+        }
 
         panel.style.display = 'block';
         panel.innerHTML = `
             <div class="card" style="margin-top:16px">
                 <div class="dag-detail-header">
                     <div>
-                        <strong style="font-size:15px">Asset: ${actualName}</strong>
+                        <strong style="font-size:15px">${escHtml(actualName)}</strong>
                         <span class="badge badge-${assetInfo?.status === 'success' ? 'success' : assetInfo?.status === 'failed' ? 'danger' : 'info'}" style="margin-left:8px">
                             <span class="status-dot ${assetInfo?.status || 'inactive'}"></span> ${assetInfo?.status || 'unknown'}
                         </span>
+                        <span style="margin-left:8px;font-size:11px;color:var(--text-tertiary);text-transform:uppercase">${layer === 'source' ? '🔵' : layer === 'raw' ? '🟠' : '🟣'} ${layer}</span>
                     </div>
                     <button class="btn btn-secondary btn-sm" onclick="document.getElementById('dag-detail-panel').style.display='none'">✕</button>
                 </div>
+
                 <div style="display:flex;gap:16px;margin:12px 0">
-                    <div><span style="color:var(--text-muted);font-size:11px">LAYER</span><br><span style="font-size:13px;text-transform:uppercase">${layer === 'source' ? '🔵' : layer === 'raw' ? '🟠' : '🟡'} ${layer}</span></div>
                     <div><span style="color:var(--text-muted);font-size:11px">UPSTREAM</span><br><span style="font-size:13px">${upstream.length ? upstream.join(', ') : '(none — root)'}</span></div>
                     <div><span style="color:var(--text-muted);font-size:11px">DOWNSTREAM</span><br><span style="font-size:13px">${downstream.length ? downstream.join(', ') : '(none — terminal)'}</span></div>
                 </div>
+
+                ${layerMetaHTML}
+
                 ${runs.length ? `
-                <div class="table-container" style="margin-top:12px">
+                <div class="table-container" style="margin-top:8px">
                     <table>
                         <thead>
                             <tr><th>Run ID</th><th>Status</th><th>Rows</th><th>Duration</th><th>Error</th></tr>
@@ -367,9 +434,9 @@ async function dagNodeClick(nodeKey) {
                         <tbody>
                             ${runs.slice(0, 5).map(r => `
                             <tr>
-                                <td style="font-size:11px;color:var(--text-muted);font-family:monospace">${r.id?.slice(0, 8) || '-'}...</td>
+                                <td style="font-size:11px;color:var(--text-muted);font-family:monospace">${(r.id || '').slice(0, 8)}...</td>
                                 <td><span class="badge badge-${r.status === 'success' ? 'success' : r.status === 'failed' ? 'danger' : 'info'}"><span class="status-dot ${r.status}"></span> ${r.status}</span></td>
-                                <td>-</td>
+                                <td>${(r.rows_synced || 0).toLocaleString()}</td>
                                 <td>${formatDuration(r.duration_ms)}</td>
                                 <td style="color:var(--danger);font-size:12px;max-width:150px;overflow:hidden;text-overflow:ellipsis">${r.error_message || '-'}</td>
                             </tr>

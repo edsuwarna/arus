@@ -170,6 +170,49 @@ async function submitEditDestination(e, id) {
   }
 }
 
+/* ===== PIPELINE FILTER STATE ===== */
+window._pipelineFilter = 'all';
+
+function humanSchedule(schedule) {
+  if (!schedule || schedule === 'manual') return 'Manual';
+  const map = {
+    '*/5 * * * *': 'Every 5 min',
+    '*/10 * * * *': 'Every 10 min',
+    '*/15 * * * *': 'Every 15 min',
+    '*/30 * * * *': 'Every 30 min',
+    '0 * * * *': 'Every hour',
+    '0 */2 * * *': 'Every 2 h',
+    '0 */6 * * *': 'Every 6 h',
+    '0 */12 * * *': 'Every 12 h',
+    '0 0 * * *': 'Daily',
+    '0 6 * * *': '06:00 daily',
+    '0 9 * * *': '09:00 daily',
+    '0 18 * * *': '18:00 daily',
+  };
+  return map[schedule] || schedule;
+}
+
+function renderPipelineFilter(all, active, paused, error) {
+  const counts = { all, active, paused, error };
+  const filters = [
+    { key: 'all', label: 'All' },
+    { key: 'active', label: 'Running' },
+    { key: 'paused', label: 'Paused' },
+    { key: 'error', label: 'Failed' },
+  ];
+  return `
+    <div class="pipeline-filters">
+      ${filters.map(f => `
+        <button class="pf-btn ${window._pipelineFilter === f.key ? 'active' : ''}"
+          onclick="window._pipelineFilter='${f.key}';App.render()">
+          ${f.label}
+          <span class="pf-count">${counts[f.key]}</span>
+        </button>
+      `).join('')}
+    </div>
+  `;
+}
+
 /* ===== PIPELINES ===== */
 async function renderPipelinesPage(container) {
   container.innerHTML = `<div class="loading"><div class="spinner"></div><p>Loading pipelines...</p></div>`;
@@ -179,17 +222,27 @@ async function renderPipelinesPage(container) {
     const pipelines = pipelinesResp?.pipelines || [];
 
     const activeCount = pipelines.filter(p => p.status === 'active').length;
-    const failingCount = pipelines.filter(p => p.status === 'error' || p.status === 'failed').length;
+    const pausedCount = pipelines.filter(p => p.status === 'paused').length;
+    const errorCount = pipelines.filter(p => p.status === 'error' || p.status === 'failed').length;
     const totalRows = pipelines.reduce((sum, p) => sum + (p.total_rows_synced || 0), 0);
 
     window._arusBadges.pipelines = pipelines.length;
     if (window.App?.updateBadges) App.updateBadges();
 
+    const filteredPipelines = window._pipelineFilter === 'all'
+      ? pipelines
+      : pipelines.filter(p => {
+          if (window._pipelineFilter === 'active') return p.status === 'active';
+          if (window._pipelineFilter === 'paused') return p.status === 'paused';
+          if (window._pipelineFilter === 'error') return p.status === 'error' || p.status === 'failed';
+          return true;
+        });
+
     container.innerHTML = `
       <div class="page-header">
         <div>
           <h1>Pipelines</h1>
-          <div class="subtitle">${activeCount} active pipelines · ${failingCount} failing · ${numberFormat(totalRows)} rows synced in last 24h</div>
+          <div class="subtitle">${activeCount} active pipelines · ${errorCount} failing · ${numberFormat(totalRows)} rows synced in last 24h</div>
         </div>
         <div class="header-actions-right">
           ${App.canWrite() ? `
@@ -200,9 +253,11 @@ async function renderPipelinesPage(container) {
         </div>
       </div>
 
+      ${renderPipelineFilter(pipelines.length, activeCount, pausedCount, errorCount)}
+
       <div class="pipeline-list">
-        ${pipelines.length > 0
-          ? pipelines.map(p => renderPipelineItem(p)).join('')
+        ${filteredPipelines.length > 0
+          ? filteredPipelines.map(p => renderPipelineItem(p)).join('')
           : `<div class="empty-state"><div class="empty-icon">🔄</div><h3>No pipelines yet</h3><p>Add a source and discover tables to auto-create pipelines.</p></div>`
         }
       </div>
@@ -219,30 +274,158 @@ function renderPipelineItem(p) {
   const statusDot = isRunning ? (isDegraded ? 'amber' : 'green') : (p.status === 'paused' ? 'amber' : 'gray');
   const statusLabel = isRunning ? (isDegraded ? 'Degraded' : 'Running') : (p.status === 'paused' ? 'Paused' : 'Inactive');
 
-  const rowsPerHour = numberFormat(p.rows_per_hour || p.total_rows_synced / Math.max(1, 24) || 0);
+  const rowsPerHour = numberFormat(p.rows_per_hour || Math.round((p.total_rows_synced || 0) / Math.max(1, 24)) || 0);
   const errors = p.error_count_7d || 0;
   const avgLatency = p.avg_latency_ms ? (p.avg_latency_ms / 1000).toFixed(1) + 's' : '-';
   const tableCount = p.enabled_table_count || p.tables?.length || 0;
-  const scheduleLabel = p.schedule_label || p.schedule || 'manual';
+  const scheduleLabel = humanSchedule(p.schedule_label || p.schedule);
   const syncType = p.sync_type || 'incremental';
   const targetSchema = p.target_schema || 'public';
   const loadMode = p.load_mode || 'direct';
+  const srcName = p.source?.name || null;
+  const destName = p.destination?.name || null;
+
+  const kebabId = `kebab-${p.id}`;
+  const menuId = `kebab-menu-${p.id}`;
 
   return `
-    <div class="pipeline-item" onclick="location.hash='pipeline/${p.id}'">
+    <div class="pipeline-item" onclick="event.stopPropagation();location.hash='pipeline/${p.id}'">
       <div class="pi-indicator ${indicatorColor}"></div>
-      <div class="pi-info">
-        <div class="pi-name">${p.name || 'Unnamed Pipeline'}</div>
-        <div class="pi-meta">${tableCount} tables · ${syncType} · ${scheduleLabel} · <span class="tag blue" style="font-size:10px;padding:1px 4px;">${targetSchema}</span> <span class="tag ${loadMode === 'raw' ? 'blue' : 'green'}" style="font-size:10px;padding:1px 4px;">${loadMode === 'raw' ? 'Raw' : 'Direct'}</span></div>
+      <div class="pi-body">
+        <div class="pi-info">
+          <div class="pi-name">
+            ${p.name || 'Unnamed Pipeline'}
+            ${srcName && destName ? `
+              <span class="pi-source-dest">
+                <span class="tag gray" style="font-size:9px;padding:1px 6px">${srcName}</span>
+                <span class="arrow">→</span>
+                <span class="tag gray" style="font-size:9px;padding:1px 6px">${destName}</span>
+              </span>
+            ` : ''}
+          </div>
+          <div class="pi-meta">
+            <strong>${tableCount}</strong> tables · ${syncType}
+            <span class="tag blue" style="font-size:10px;padding:1px 6px;">${targetSchema}</span>
+            <span class="tag ${loadMode === 'raw' ? 'blue' : 'green'}" style="font-size:10px;padding:1px 6px;">${loadMode === 'raw' ? 'Raw' : 'Direct'}</span>
+            <span class="pi-schedule">🔄 ${scheduleLabel}</span>
+          </div>
+        </div>
+        <div class="pi-stats">
+          <div class="ps-item">
+            <div class="ps-val text-emerald">${rowsPerHour}</div>
+            <div class="ps-label">Rows/h</div>
+          </div>
+          <div class="ps-item">
+            <div class="ps-val ${errors > 0 ? 'text-red' : ''}">${errors}</div>
+            <div class="ps-label">${errors === 1 ? 'Error' : 'Errors'}</div>
+          </div>
+          <div class="ps-item">
+            <div class="ps-val">${avgLatency}</div>
+            <div class="ps-label">Avg</div>
+          </div>
+        </div>
+        <div class="pi-right">
+          <span class="status"><span class="dot ${statusDot}"></span><span class="label ${statusDot}">${statusLabel}</span></span>
+          <div class="pi-kebab">
+            <button class="pi-kebab-trigger" onclick="event.stopPropagation();toggleKebab('${menuId}')">⋯</button>
+            <div class="pi-kebab-menu" id="${menuId}">
+              <button class="pi-kebab-item" onclick="event.stopPropagation();location.hash='pipeline/${p.id}'">👁 View Details</button>
+              <button class="pi-kebab-item" onclick="event.stopPropagation();this.closest('.pi-kebab-menu').classList.remove('show');triggerPipelineRun('${p.id}')">⟳ Sync Now</button>
+              ${App.canWrite() ? `
+              <div class="pi-kebab-divider"></div>
+              <button class="pi-kebab-item" onclick="event.stopPropagation();this.closest('.pi-kebab-menu').classList.remove('show');showEditPipelineModal('${p.id}','${(p.name||'').replace(/'/g,"\\'")}','${(p.target_schema||'public').replace(/'/g,"\\'")}','${(p.load_mode||'direct')}','${(p.schedule||'').replace(/'/g,"\\'")}','${(p.sync_type||'incremental')}')">⚙️ Edit Config</button>
+              <button class="pi-kebab-item ${loadMode === 'raw' ? '' : ''}" onclick="event.stopPropagation();this.closest('.pi-kebab-menu').classList.remove('show');togglePipeline('${p.id}', '${p.status}')">${isRunning ? '⏸ Pause' : '▶ Resume'}</button>
+              <div class="pi-kebab-divider"></div>
+              <button class="pi-kebab-item danger" onclick="event.stopPropagation();this.closest('.pi-kebab-menu').classList.remove('show');deletePipeline('${p.id}')">🗑 Delete</button>
+              ` : ''}
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="pi-stats">
-        <div class="ps-item"><div class="ps-val text-emerald">${rowsPerHour}</div><div class="ps-label">Rows/h</div></div>
-        <div class="ps-item"><div class="ps-val">${errors}</div><div class="ps-label">${errors === 1 ? 'Error' : 'Errors'}</div></div>
-        <div class="ps-item"><div class="ps-val">${avgLatency}</div><div class="ps-label">Avg</div></div>
-      </div>
-      <span class="status"><span class="dot ${statusDot}"></span><span class="label ${statusDot}">${statusLabel}</span></span>
     </div>
   `;
+}
+
+/* ===== KEBAB TOGGLE ===== */
+function toggleKebab(menuId) {
+  // Close all other kebabs
+  document.querySelectorAll('.pi-kebab-menu.show').forEach(m => {
+    if (m.id !== menuId) m.classList.remove('show');
+  });
+  const menu = document.getElementById(menuId);
+  if (menu) menu.classList.toggle('show');
+}
+
+// Close kebab on outside click
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.pi-kebab')) {
+    document.querySelectorAll('.pi-kebab-menu.show').forEach(m => m.classList.remove('show'));
+  }
+});
+
+/* ===== PIPELINE ACTIONS FROM LIST ===== */
+async function triggerPipelineRun(id) {
+  try {
+    await API.post('/pipelines/' + id + '/trigger');
+    App.toast('✅ Pipeline triggered', 'success');
+  } catch (err) {
+    App.toast(err.message, 'error');
+  }
+}
+
+async function togglePipeline(id, currentStatus) {
+  try {
+    if (currentStatus === 'active') {
+      await API.post('/pipelines/' + id + '/pause');
+      App.toast('⏸ Pipeline paused', 'success');
+    } else {
+      await API.post('/pipelines/' + id + '/resume');
+      App.toast('▶ Pipeline resumed', 'success');
+    }
+    App.render();
+  } catch (err) {
+    App.toast(err.message, 'error');
+  }
+}
+
+async function deletePipeline(id) {
+  App.showModal(`
+    <div class="modal-header">
+      <h2>🗑 Delete Pipeline</h2>
+      <button class="modal-close" onclick="App.closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="margin-bottom:16px">
+        <div style="font-size:14px;font-weight:600;margin-bottom:4px">Are you sure?</div>
+        <p style="color:var(--text-secondary);font-size:13px;margin:0">This action cannot be undone. The pipeline will be permanently removed.</p>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn btn-secondary" onclick="App.closeModal()">Cancel</button>
+        <button class="btn btn-danger" id="confirmDeletePipeline">🗑 Delete Pipeline</button>
+      </div>
+    </div>
+  `);
+  document.getElementById('confirmDeletePipeline').addEventListener('click', async () => {
+    App.closeModal();
+    try {
+      await API.del('/pipelines/' + id);
+      App.toast('🗑 Pipeline deleted', 'success');
+      App.render();
+    } catch (err) {
+      App.toast(err.message, 'error');
+    }
+  });
+}
+
+async function showEditPipelineModal(id, name, targetSchema, loadMode, schedule, syncType) {
+  // Fetch fresh data then open edit config modal inline
+  try {
+    const p = await API.get('/pipelines/' + id);
+    showEditConfigModal(id, p.name || name, p.target_schema || targetSchema, p.load_mode || loadMode, p.schedule || schedule, p.sync_type || syncType);
+  } catch (err) {
+    // Fallback with passed data
+    showEditConfigModal(id, name, targetSchema, loadMode, schedule, syncType);
+  }
 }
 
 /* ===== PIPELINE ACTIONS ===== */

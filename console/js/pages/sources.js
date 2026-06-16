@@ -22,12 +22,31 @@ async function renderSourcesPage(container) {
     if (selectedSourceId) {
       try {
         const disc = await API.post(`/sources/${selectedSourceId}/discover`).catch(() => null);
-        if (disc?.tables) {
-          discoveredSource = sources.find(s => s.id === selectedSourceId) || sources[0];
-          discoveredTables = Array.isArray(disc.tables) ? disc.tables : [];
-        }
+    if (disc?.tables) {
+      discoveredSource = sources.find(s => s.id === selectedSourceId) || sources[0];
+      discoveredTables = Array.isArray(disc.tables) ? disc.tables : [];
+      window._arusDiscoveredTables = discoveredTables;
+      window._arusSort = window._arusSort || { col: 2, dir: 'asc' };
+      // Re-apply existing sort if active
+      if (window._arusSort.col !== null) {
+        const col = window._arusSort.col;
+        const dir = window._arusSort.dir === 'asc' ? 1 : -1;
+        discoveredTables.sort((a, b) => {
+          const va = getSortValue(a, col);
+          const vb = getSortValue(b, col);
+          if (typeof va === 'number' && typeof vb === 'number') return (va - vb) * dir;
+          return String(va).localeCompare(String(vb)) * dir;
+        });
+      }
+    }
       } catch {}
     }
+
+    // Store full discovered data + init schema filter
+    const schemas = [...new Set(discoveredTables.map(t => t.schema || 'public'))].sort();
+    window._arusDiscoveredTablesFull = discoveredTables;
+    window._arusSchemaFilter = '';
+    const filteredTables = discoveredTables;
 
     container.innerHTML = `
       <div class="page-header">
@@ -43,28 +62,63 @@ async function renderSourcesPage(container) {
         </div>
       </div>
 
-      <div class="source-grid">
-        ${sources.length > 0
-          ? sources.map(src => renderSourceCard(src)).join('')
-          : `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🗄️</div><h3>No sources yet</h3><p>Add your first data source to get started.</p><button class="btn btn-primary" onclick="showAddSourceModal()">+ Add Source</button></div>`
-        }
+      <div class="card">
+        <div class="card-header">
+          <h3>Data Sources</h3>
+          <span class="text-tertiary text-sm">${sources.length} sources</span>
+        </div>
+        ${sources.length > 0 ? `
+        <div class="table-wrap" style="max-height:320px;overflow-y:auto;">
+          <table class="source-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th style="width:70px">Tables</th>
+                <th style="width:70px">Sync</th>
+                <th style="width:60px">Status</th>
+                <th style="width:70px"></th>
+              </tr>
+            </thead>
+            <tbody>
+              ${sources.map(src => renderSourceRow(src, selectedSourceId)).join('')}
+            </tbody>
+          </table>
+        </div>
+        ` : `<div class="empty-state"><div class="empty-icon">🗄️</div><h3>No sources yet</h3><p>Add your first data source to get started.</p><button class="btn btn-primary" onclick="showAddSourceModal()">+ Add Source</button></div>`}
       </div>
 
       ${discoveredSource ? `
       <div class="card mt-4">
         <div class="card-header">
           <h3>Discovered Tables — ${discoveredSource.name || 'Source'}</h3>
-          <span class="text-tertiary text-sm">${discoveredTables.length} tables</span>
+          <div style="display:flex;align-items:center;gap:10px;">
+            ${schemas.length > 1 ? `
+            <select class="filter-select" id="schema-filter" onchange="filterBySchema(this.value)" style="font-size:11px;padding:2px 8px;min-width:120px;">
+              <option value="">All Schemas</option>
+              ${schemas.map(s => `<option value="${s}">${escapeHtml(s)}</option>`).join('')}
+            </select>
+            ` : ''}
+            <span class="text-tertiary text-sm" id="filtered-count">${discoveredTables.length} tables</span>
+          </div>
         </div>
-        <div class="table-wrap">
+        <div class="table-wrap" id="disc-table-wrap">
           <table>
             <thead>
-              <tr><th style="width:24px;"><input type="checkbox" onchange="toggleAllTables(this)" style="accent-color:var(--emerald);"></th><th>Table</th><th>Rows</th><th>Sync Mode</th><th>Load Mode</th><th>Last Sync</th><th>Status</th></tr>
+              <tr>
+                <th style="width:24px;"><input type="checkbox" onchange="toggleAllTables(this)" style="accent-color:var(--accent);"></th>
+                ${renderSortableTh(1, 'Schema')}
+                ${renderSortableTh(2, 'Table')}
+                ${renderSortableTh(3, 'Rows')}
+                ${renderSortableTh(4, 'Sync Mode')}
+                ${renderSortableTh(5, 'Load Mode')}
+                ${renderSortableTh(6, 'Last Sync')}
+                ${renderSortableTh(7, 'Status')}
+              </tr>
             </thead>
             <tbody>
-              ${discoveredTables.length > 0
-                ? discoveredTables.map(t => renderDiscoveredRow(t)).join('')
-                : `<tr><td colspan="7" style="text-align:center;color:var(--text-tertiary);padding:20px;">No tables discovered. Run a scan.</td></tr>`
+              ${filteredTables.length > 0
+                ? filteredTables.map(t => renderDiscoveredRow(t)).join('')
+                : `<tr><td colspan="8" style="text-align:center;color:var(--text-tertiary);padding:20px;">No tables discovered. Run a scan.</td></tr>`
               }
             </tbody>
           </table>
@@ -93,7 +147,7 @@ async function renderSourcesPage(container) {
   }
 }
 
-function renderSourceCard(src) {
+function renderSourceRow(src, selectedId) {
   const type = src.type || 'postgresql';
   const iconType = type === 'postgresql' || type === 'pg' ? 'postgres'
     : type === 'mariadb' ? 'mariadb'
@@ -104,23 +158,24 @@ function renderSourceCard(src) {
   const statusDot = src.status === 'connected' || src.status === 'active' ? 'green' : (src.status === 'error' ? 'red' : 'amber');
   const tableCount = src.table_count || src.enabled_table_count || 0;
   const syncInterval = src.sync_interval || src.schedule || '5m';
+  const isSelected = src.id === selectedId;
 
   return `
-    <div class="source-card" onclick="selectSource('${src.id}')">
-      <div class="sc-top">
-        <div class="sc-icon ${iconType}">${getDbIcon(type, 22)}</div>
-        <div>
-          <div class="sc-name">${src.name || 'Unnamed Source'}</div>
-          <div class="sc-desc">${src.host || 'localhost'}:${src.port || 5432} · ${src.database || '-'}</div>
+    <tr class="source-row${isSelected ? ' selected' : ''}" onclick="selectSource('${src.id}')">
+      <td>
+        <div style="display:flex;align-items:center;gap:8px;">
+          ${getDbIcon(type, 20)}
+          <div>
+            <div class="sr-name">${src.name || 'Unnamed Source'}</div>
+            <div class="sr-desc">${src.host || 'localhost'}:${src.port || 5432} · ${src.database || '-'}</div>
+          </div>
         </div>
-        <span class="status" style="margin-left:auto;"><span class="dot ${statusDot}"></span></span>
-      </div>
-      <div class="sc-info">
-        <span class="tables-count"><strong>${tableCount}</strong> tables</span>
-        <span class="text-sm text-tertiary">Sync: ${syncInterval}</span>
-        <button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();showSourceManage('${src.id}')">Manage</button>
-      </div>
-    </div>
+      </td>
+      <td class="font-mono">${tableCount}</td>
+      <td class="text-sm text-tertiary">${syncInterval}</td>
+      <td><span class="status"><span class="dot ${statusDot}"></span></span></td>
+      <td><button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();showSourceManage('${src.id}')">⚙</button></td>
+    </tr>
   `;
 }
 
@@ -137,6 +192,7 @@ function renderDiscoveredRow(table) {
   return `
     <tr>
       <td><input type="checkbox" ${enabled ? 'checked' : ''} onchange="toggleTable('${table.name}', this.checked)" style="accent-color:var(--emerald);"></td>
+      <td><code class="schema-badge">${table.schema || 'public'}</code></td>
       <td><span style="font-weight:500;color:var(--text-primary);">${table.name}</span></td>
       <td class="font-mono">${numberFormat(rows)}</td>
       <td><span class="tag ${syncTag}">${syncMode === 'incremental' ? 'Incremental' : 'Full Refresh'}</span></td>
@@ -151,6 +207,98 @@ function renderDiscoveredRow(table) {
     </tr>
   `;
 }
+
+/* ===== TABLE SORTING ===== */
+function getSortValue(table, col) {
+  switch (col) {
+    case 1: return (table.schema || 'public').toLowerCase();
+    case 2: return table.name.toLowerCase();
+    case 3: return table.row_count_estimate || table.row_count || 0;
+    case 4: return (table.sync_mode || table.detected_sync || 'incremental').toLowerCase();
+    case 5: return (table.load_mode || 'direct').toLowerCase();
+    case 6: return table.last_synced || '';
+    case 7: return table.enabled !== false ? 'synced' : 'disabled';
+    default: return '';
+  }
+}
+
+function renderSortableTh(col, label) {
+  const state = window._arusSort || {};
+  const active = state.col === col;
+  const icon = active ? (state.dir === 'asc' ? '▲' : '▼') : '↕';
+  const opacity = active ? '' : 'opacity:0.45;';
+  return `<th class="sortable" onclick="toggleSort(${col})" style="cursor:pointer;user-select:none;">${label} <span class="sort-indicator" style="font-size:10px;${opacity}">${icon}</span></th>`;
+}
+
+function toggleSort(col) {
+  const state = window._arusSort = window._arusSort || { col: 2, dir: 'asc' };
+  if (state.col === col) {
+    state.dir = state.dir === 'asc' ? 'desc' : 'asc';
+  } else {
+    state.col = col;
+    state.dir = 'asc';
+  }
+  const tables = window._arusDiscoveredTables;
+  if (!tables || tables.length === 0) return;
+  const dir = state.dir === 'asc' ? 1 : -1;
+  tables.sort((a, b) => {
+    const va = getSortValue(a, col);
+    const vb = getSortValue(b, col);
+    if (typeof va === 'number' && typeof vb === 'number') return (va - vb) * dir;
+    return String(va).localeCompare(String(vb)) * dir;
+  });
+  renderDiscoveredTbody();
+  updateSortIndicators();
+}
+
+function updateSortIndicators() {
+  const thead = document.querySelector('#disc-table-wrap table thead');
+  if (!thead) return;
+  const state = window._arusSort || {};
+  const ths = thead.querySelectorAll('th.sortable');
+  ths.forEach((th, idx) => {
+    const active = state.col === idx;
+    let indicator = th.querySelector('.sort-indicator');
+    if (!indicator) {
+      indicator = document.createElement('span');
+      indicator.className = 'sort-indicator';
+      indicator.style.cssText = 'font-size:10px;';
+      th.appendChild(indicator);
+    }
+    indicator.textContent = active ? (state.dir === 'asc' ? ' ▲' : ' ▼') : ' ↕';
+    if (!active) indicator.style.opacity = '0.45';
+    else indicator.style.opacity = '';
+  });
+}
+
+function renderDiscoveredTbody() {
+  const tbody = document.querySelector('#disc-table-wrap table tbody');
+  if (!tbody) return;
+  const full = window._arusDiscoveredTablesFull || [];
+  const filter = window._arusSchemaFilter || '';
+  const tables = filter ? full.filter(t => (t.schema || 'public') === filter) : full;
+  window._arusDiscoveredTables = tables;
+  tbody.innerHTML = tables.length > 0
+    ? tables.map(t => renderDiscoveredRow(t)).join('')
+    : '<tr><td colspan="8" style="text-align:center;color:var(--text-tertiary);padding:20px;">No tables in this schema.</td></tr>';
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+window.filterBySchema = function(schema) {
+  window._arusSchemaFilter = schema || '';
+  renderDiscoveredTbody();
+  const full = window._arusDiscoveredTablesFull || [];
+  const filtered = schema ? full.filter(t => (t.schema || 'public') === schema) : full;
+  const countEl = document.getElementById('filtered-count');
+  if (countEl) countEl.textContent = filtered.length + ' tables';
+  const selectAll = document.querySelector('#disc-table-wrap thead input[type="checkbox"]');
+  if (selectAll) selectAll.style.display = schema ? 'none' : '';
+};
 
 /* ===== SOURCE CRUD ===== */
 async function rescanAllSources() {
@@ -375,8 +523,11 @@ async function submitEditSource(e, id) {
 }
 
 function toggleAllTables(checkbox) {
-  document.querySelectorAll('.table-wrap table tbody input[type="checkbox"]').forEach(cb => {
-    cb.checked = checkbox.checked;
+  document.querySelectorAll('#disc-table-wrap table tbody tr').forEach(row => {
+    if (row.style.display !== 'none') {
+      const cb = row.querySelector('input[type="checkbox"]');
+      if (cb) cb.checked = checkbox.checked;
+    }
   });
 }
 
@@ -579,3 +730,4 @@ window.submitEditSource = submitEditSource;
 window.toggleAllTables = toggleAllTables;
 window.toggleTable = toggleTable;
 window.setTableLoadMode = setTableLoadMode;
+window.toggleSort = toggleSort;

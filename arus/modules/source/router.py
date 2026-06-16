@@ -40,8 +40,8 @@ async def list_sources(
                     "uri": s.uri,
                     "auth_source": s.auth_source,
                     "status": s.status,
-                    "table_count": 0,
-                    "enabled_table_count": 0,
+                    "table_count": s.table_count or 0,
+                    "enabled_table_count": s.enabled_table_count or 0,
                     "schema_include": s.schema_include or [],
                     "last_tested": s.last_tested,
                     "created_at": s.created_at,
@@ -92,6 +92,8 @@ async def get_source(
             "table_include": source.table_include,
             "table_exclude": source.table_exclude,
             "schema_include": source.schema_include or [],
+            "table_count": source.table_count or 0,
+            "enabled_table_count": source.enabled_table_count or 0,
             "status": source.status,
             "last_tested": source.last_tested,
             "created_at": source.created_at,
@@ -178,4 +180,15 @@ async def update_source_tables(
 
     pipe_service = PipelineService(PipelineRepository(db), db)
     result = pipe_service.auto_create_from_source(source_id, str(default_dest.id), req.tables)
+
+    # Update source table counts after saving selection
+    source_repo = SourceRepository(db)
+    source = source_repo.get_by_id(source_id)
+    if source:
+        enabled = sum(1 for t in req.tables if t.get("enabled", True))
+        source.table_count = len(req.tables)
+        source.enabled_table_count = enabled
+        source.status = "connected"
+        db.commit()
+
     return {"status": "ok", "data": result}
