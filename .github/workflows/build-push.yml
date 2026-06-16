@@ -3,6 +3,7 @@ name: Build & Push to ghcr.io
 on:
   push:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -33,10 +34,12 @@ jobs:
               - 'alembic.ini'
               - 'config/**'
               - 'scripts/**'
+              - '.github/workflows/**'
             console:
               - 'console/**'
               - 'Dockerfile.console'
               - 'nginx/**'
+              - '.github/workflows/**'
 
   api:
     needs: changes
