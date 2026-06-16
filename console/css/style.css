@@ -1278,6 +1278,13 @@ table tr:last-child td:last-child { border-radius: 0 0 var(--radius) 0; }
   border-radius: 50%;
 }
 
+.legend-bar {
+  width: 12px;
+  height: 4px;
+  border-radius: 2px;
+  display: inline-block;
+}
+
 .dag-pipeline-selector {
   display: flex;
   gap: 12px;

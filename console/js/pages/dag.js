@@ -3,6 +3,7 @@ let dagState = { panX: 0, panY: 0, zoom: 1 };
 const DAG_LAYERS = ['source', 'raw', 'target'];
 const DAG_LABELS = { source: 'SOURCE LAYER', raw: 'RAW LAYER', target: 'TARGET LAYER' };
 const LAYER_COLORS = { source: '#3b82f6', raw: '#f59e0b', target: '#eab308' };
+const LAYER_FILLS = { source: 'rgba(59,130,246,0.08)', raw: 'rgba(245,158,11,0.08)', target: 'rgba(234,179,8,0.08)' };
 
 async function renderDagPage(container) {
     container.innerHTML = `<div class="loading"><div class="spinner"></div><p>Loading pipelines...</p></div>`;
@@ -31,6 +32,12 @@ async function renderDagPage(container) {
             </div>
 
             <div class="dag-legend" id="dag-legend" style="display:none">
+                <span style="font-size:11px;color:var(--text-tertiary);margin-right:4px">LAYERS:</span>
+                <span class="legend-item"><span class="legend-bar" style="background:#3b82f6"></span> Source</span>
+                <span class="legend-item"><span class="legend-bar" style="background:#f59e0b"></span> Raw</span>
+                <span class="legend-item"><span class="legend-bar" style="background:#eab308"></span> Target</span>
+                <span style="width:1px;height:16px;background:var(--border);margin:0 8px"></span>
+                <span style="font-size:11px;color:var(--text-tertiary);margin-right:4px">STATUS:</span>
                 <span class="legend-item"><span class="legend-dot" style="background:#eab308"></span> Success</span>
                 <span class="legend-item"><span class="legend-dot" style="background:#3b82f6"></span> Running</span>
                 <span class="legend-item"><span class="legend-dot" style="background:#f59e0b"></span> Stale</span>
@@ -177,9 +184,9 @@ function renderDagGraph(pipelines) {
     };
 
     const layerLabels = {
-        source: { x: layerX.source, label: 'SOURCE LAYER', color: '#3b82f6' },
-        raw: { x: layerX.raw, label: 'RAW LAYER', color: '#f59e0b' },
-        target: { x: layerX.target, label: 'TARGET LAYER', color: '#eab308' },
+        source: { x: layerX.source, label: 'SOURCE LAYER', color: LAYER_COLORS.source },
+        raw: { x: layerX.raw, label: 'RAW LAYER', color: LAYER_COLORS.raw },
+        target: { x: layerX.target, label: 'TARGET LAYER', color: LAYER_COLORS.target },
     };
 
     const g = dagState;
@@ -227,16 +234,23 @@ function renderDagGraph(pipelines) {
 
     // Nodes
     Object.entries(nodePositions).forEach(([key, pos]) => {
-        const color = statusColors[pos.status] || '#6b7280';
+        const statusColor = statusColors[pos.status] || '#6b7280';
+        const layerColor = LAYER_COLORS[pos.layer] || '#6b7280';
+        const layerFill = LAYER_FILLS[pos.layer] || 'rgba(107,114,128,0.08)';
         const isSelected = g.selectedNode === key;
         const displayName = pos.displayName || key;
         const maxChars = Math.floor((NODE_W - 40) / 8);
+        const nodeBg = isSelected ? '#1c1f26' : '#14171d';
+        const nodeBorder = isSelected ? statusColor : '#4a4e5a';
         html += `<g class="dag-node" onclick="dagNodeClick('${key}')" style="cursor:pointer">
+            <!-- Main node body with layer tint -->
             <rect x="${pos.x}" y="${pos.y}" width="${NODE_W}" height="${NODE_H}" rx="6"
-                  fill="${isSelected ? '#1c1f26' : '#14171d'}"
-                  stroke="${isSelected ? color : '#4a4e5a'}"
+                  fill="${isSelected ? '#1c1f26' : layerFill}" stroke="${nodeBorder}"
                   stroke-width="${isSelected ? 2 : 1.5}"/>
-            <circle cx="${pos.x + 14}" cy="${pos.y + NODE_H / 2}" r="5" fill="${color}"/>
+            <!-- Layer accent bar (left) -->
+            <rect x="${pos.x + 1}" y="${pos.y + 1}" width="4" height="${NODE_H - 2}" rx="1" fill="${layerColor}"/>
+            <!-- Status dot -->
+            <circle cx="${pos.x + 14}" cy="${pos.y + NODE_H / 2}" r="5" fill="${statusColor}"/>
             <text x="${pos.x + 24}" y="${pos.y + NODE_H / 2 + 4}" fill="#e8eaed" font-size="12"
                   font-family="'Inter',sans-serif" font-weight="500">${displayName.length > maxChars ? displayName.slice(0, maxChars - 2) + '...' : displayName}</text>
         </g>`;
@@ -340,7 +354,7 @@ async function dagNodeClick(nodeKey) {
                     <button class="btn btn-secondary btn-sm" onclick="document.getElementById('dag-detail-panel').style.display='none'">✕</button>
                 </div>
                 <div style="display:flex;gap:16px;margin:12px 0">
-                    <div><span style="color:var(--text-muted);font-size:11px">LAYER</span><br><span style="font-size:13px;text-transform:uppercase">${layer === 'source' ? '🔵' : layer === 'raw' ? '🟠' : '🟢'} ${layer}</span></div>
+                    <div><span style="color:var(--text-muted);font-size:11px">LAYER</span><br><span style="font-size:13px;text-transform:uppercase">${layer === 'source' ? '🔵' : layer === 'raw' ? '🟠' : '🟡'} ${layer}</span></div>
                     <div><span style="color:var(--text-muted);font-size:11px">UPSTREAM</span><br><span style="font-size:13px">${upstream.length ? upstream.join(', ') : '(none — root)'}</span></div>
                     <div><span style="color:var(--text-muted);font-size:11px">DOWNSTREAM</span><br><span style="font-size:13px">${downstream.length ? downstream.join(', ') : '(none — terminal)'}</span></div>
                 </div>
