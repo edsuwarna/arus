@@ -53,7 +53,12 @@ function renderSidebar(user) {
   return `
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-logo">
-        <span class="logo-icon" style="width:28px;height:28px;background:linear-gradient(135deg,#eab308,#ca8a04);border-radius:7px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:#fff;flex-shrink:0;">Ar</span>
+        <svg width="28" height="28" viewBox="0 0 32 32" fill="none" style="flex-shrink:0">
+          <rect x="1" y="1" width="30" height="30" rx="7" fill="#14171d" stroke="#23262e" stroke-width="0.5"/>
+          <polyline points="8,10 12,14 8,18" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          <polyline points="14,10 18,14 14,18" stroke="#ca8a04" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.6"/>
+          <polyline points="20,10 24,14 20,18" stroke="#a16207" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.3"/>
+        </svg>
         <span>Ar<em>us</em></span>
       </div>
       <nav class="sidebar-nav">${navHtml}</nav>
