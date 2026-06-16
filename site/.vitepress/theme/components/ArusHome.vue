@@ -81,10 +81,33 @@
       </div>
     </section>
 
-    <!-- Preview -->
-    <section class="preview">
-      <div class="screenshot-card">
-        <img src="/sketches/arus-dashboard.png" alt="Arus Console Dashboard" class="screenshot" />
+    <!-- Preview Slider -->
+    <section class="preview-slider">
+      <div class="slider-container">
+        <div class="slider-track" :style="{ transform: `translateX(-${currentSlide * 100}%)` }">
+          <div class="slider-slide" v-for="(s, i) in slides" :key="i">
+            <div class="screenshot-card">
+              <img :src="s.src" :alt="s.alt" class="screenshot" />
+              <div class="slide-label">{{ s.label }}</div>
+            </div>
+          </div>
+        </div>
+        <button class="slider-arrow slider-prev" @click="prevSlide" :disabled="currentSlide === 0" aria-label="Previous slide">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <button class="slider-arrow slider-next" @click="nextSlide" :disabled="currentSlide === slides.length - 1" aria-label="Next slide">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+        <div class="slider-dots">
+          <button
+            v-for="(s, i) in slides"
+            :key="i"
+            class="slider-dot"
+            :class="{ active: currentSlide === i }"
+            @click="currentSlide = i"
+            :aria-label="`Go to slide ${i + 1}`"
+          ></button>
+        </div>
       </div>
     </section>
 
@@ -286,9 +309,42 @@ docker run -d --network arus-net --name arus-console -p 8082:80 \
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 
 const copied = ref(null)
+
+const currentSlide = ref(0)
+
+const slides = [
+  { src: '/sketches/arus-dashboard.png', alt: 'Arus Dashboard', label: 'Dashboard — monitor all pipelines at a glance' },
+  { src: '/sketches/arus-sources.png', alt: 'Arus Sources', label: 'Sources — manage your database connections' },
+  { src: '/sketches/arus-pipelines.png', alt: 'Arus Pipelines', label: 'Pipelines — configure CDC & sync schedules' },
+  { src: '/sketches/arus-dag.png', alt: 'Arus DAG View', label: 'DAG View — visualize your data lineage' },
+  { src: '/sketches/arus-add-source.png', alt: 'Arus Add Source', label: 'Add Source — connect in under a minute' },
+]
+
+let slideTimer
+function startAutoplay() {
+  stopAutoplay()
+  slideTimer = setInterval(() => {
+    nextSlide()
+  }, 4000)
+}
+function stopAutoplay() {
+  if (slideTimer) clearInterval(slideTimer)
+  slideTimer = null
+}
+function nextSlide() {
+  if (currentSlide.value < slides.length - 1) currentSlide.value++
+  else currentSlide.value = 0
+}
+function prevSlide() {
+  if (currentSlide.value > 0) currentSlide.value--
+  else currentSlide.value = slides.length - 1
+}
+
+onMounted(() => startAutoplay())
+onUnmounted(() => stopAutoplay())
 
 function copyCode(idx) {
   const codes = [
@@ -434,17 +490,50 @@ function checkClass(v) {
 .dag-node.target { background: rgba(234,179,8,0.1); border: 1px solid rgba(234,179,8,0.2); color: #fde68a; }
 .dag-arrow { color: #5c626e; display: flex; align-items: center; }
 
-/* === PREVIEW === */
-.preview {
+/* === PREVIEW SLIDER === */
+.preview-slider {
   max-width: 1100px; margin: 0 auto; padding: 0 24px 48px;
+}
+.slider-container {
+  position: relative; overflow: hidden;
+  border-radius: 12px;
+}
+.slider-track {
+  display: flex; transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.slider-slide {
+  min-width: 100%; box-sizing: border-box;
 }
 .screenshot-card {
   background: #14171d; border: 1px solid #23262e; border-radius: 12px;
   overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.3);
 }
-.screenshot {
-  display: block; width: 100%; height: auto;
+.screenshot { display: block; width: 100%; height: auto; }
+.slide-label {
+  padding: 12px 20px; font-size: 13px; color: #9aa0a8;
+  border-top: 1px solid #23262e; text-align: center;
 }
+.slider-arrow {
+  position: absolute; top: 50%; transform: translateY(-50%); z-index: 2;
+  width: 40px; height: 40px; border-radius: 50%;
+  background: rgba(11,13,17,0.7); border: 1px solid #23262e;
+  color: #e8eaed; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s; backdrop-filter: blur(4px);
+}
+.slider-arrow:hover { background: rgba(234,179,8,0.15); border-color: #eab308; color: #eab308; }
+.slider-arrow:disabled { opacity: 0.3; cursor: default; }
+.slider-arrow:disabled:hover { background: rgba(11,13,17,0.7); border-color: #23262e; color: #e8eaed; }
+.slider-prev { left: 16px; }
+.slider-next { right: 16px; }
+.slider-dots {
+  display: flex; justify-content: center; gap: 8px; padding: 16px 0 4px;
+}
+.slider-dot {
+  width: 8px; height: 8px; border-radius: 50%; border: none; cursor: pointer;
+  background: #23262e; transition: all 0.3s; padding: 0;
+}
+.slider-dot.active { background: #eab308; width: 24px; border-radius: 4px; }
+.slider-dot:hover { background: #5c626e; }
 
 /* === STATS === */
 .stats {
