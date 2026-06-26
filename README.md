@@ -2,6 +2,8 @@
 
 > **Arus** (Indonesian: *flow*) — Lightweight, self-hosted **CDC & ETL** platform. Data flows without the cluster.
 
+[![Build](https://github.com/edsuwarna/arus/actions/workflows/build-push.yml/badge.svg)](https://github.com/edsuwarna/arus/actions/workflows/build-push.yml)
+[![Go](https://img.shields.io/badge/Go-1.25-00ADD8?logo=go)](https://go.dev)
 [![License](https://img.shields.io/badge/License-Apache%202.0-eab308.svg)](LICENSE)
 
 ## Quick Start
